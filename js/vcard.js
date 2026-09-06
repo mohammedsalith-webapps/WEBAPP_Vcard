@@ -265,10 +265,6 @@ export class VCardController {
                 <div class="tab-topbar-subtitle">Select services to request a quote</div>
               </div>
             </div>
-            <button class="btn-pill active" id="btn-open-services-cart" style="font-size: 0.78rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="View Selected Services">
-              <span>🛒</span>
-              <span id="services-cart-badge" style="background: rgba(0,0,0,0.5); color: var(--theme-primary); border-radius: 10px; padding: 1px 7px; font-weight: 800; font-size: 0.72rem;">${this.selectedServices.size}</span>
-            </button>
           </div>
 
           <!-- Category filter chips -->
@@ -279,11 +275,6 @@ export class VCardController {
           <!-- Services List -->
           <div id="services-list-container">
             ${this.renderServicesList()}
-          </div>
-
-          <!-- Floating selection bar (opens list modal) -->
-          <div id="services-floating-bar-container">
-            ${this.renderServicesFloatingBar()}
           </div>
         </div>
 
@@ -297,20 +288,11 @@ export class VCardController {
                 <div class="tab-topbar-subtitle">Order items directly via WhatsApp</div>
               </div>
             </div>
-            <button class="btn-pill active" id="btn-open-products-cart" style="font-size: 0.78rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="View Cart">
-              <span>🛒</span>
-              <span id="shop-cart-badge" style="background: rgba(0,0,0,0.5); color: var(--theme-primary); border-radius: 10px; padding: 1px 7px; font-weight: 800; font-size: 0.72rem;">${this.getCartTotalItems()}</span>
-            </button>
           </div>
 
           <!-- Products Listing Stack -->
           <div class="products-listing-stack" id="products-list-container">
             ${this.renderProductsList(currency)}
-          </div>
-
-          <!-- Floating cart bar (opens checkout modal) -->
-          <div id="shop-floating-bar-container">
-            ${this.renderShopFloatingBar(currency)}
           </div>
         </div>
 
@@ -442,6 +424,7 @@ export class VCardController {
         <button class="dock-item ${this.activeTab === 'services' ? 'active' : ''}" data-tab="services">
           <span class="dock-icon">📋</span>
           <span class="dock-label">Services</span>
+          ${this.selectedServices.size > 0 ? `<span class="badge-cart-count">${this.selectedServices.size}</span>` : ""}
         </button>
         ${v.features.ecommerceShop ? `
           <button class="dock-item ${this.activeTab === 'shop' ? 'active' : ''}" data-tab="shop">
@@ -465,6 +448,20 @@ export class VCardController {
     dockRoot.querySelectorAll(".dock-item").forEach(btn => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-tab");
+        const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+
+        if (tab === "services" && this.selectedServices.size > 0) {
+          this.switchTab("services");
+          this.openServicesCartModal();
+          return;
+        }
+
+        if (tab === "shop" && this.getCartTotalItems() > 0) {
+          this.switchTab("shop");
+          this.openProductsCartModal(currency);
+          return;
+        }
+
         this.switchTab(tab);
       });
     });
@@ -919,22 +916,6 @@ export class VCardController {
   }
 
   bindServicesEvents() {
-    // Topbar kart icon button
-    const cartIconBtn = this.container.querySelector("#btn-open-services-cart");
-    if (cartIconBtn) {
-      cartIconBtn.addEventListener("click", () => {
-        this.openServicesCartModal();
-      });
-    }
-
-    // Floating selection bar button
-    const floatBtn = this.container.querySelector("#btn-floating-services-cart");
-    if (floatBtn) {
-      floatBtn.addEventListener("click", () => {
-        this.openServicesCartModal();
-      });
-    }
-
     this.bindServiceCheckboxEvents();
   }
 
@@ -962,19 +943,20 @@ export class VCardController {
   updateServicesCartState() {
     const count = this.selectedServices.size;
 
-    // 1. Update topbar kart badge
-    const badge = this.container.querySelector("#services-cart-badge");
-    if (badge) badge.textContent = count;
-
-    // 2. Update floating bar container
-    const floatContainer = this.container.querySelector("#services-floating-bar-container");
-    if (floatContainer) {
-      floatContainer.innerHTML = this.renderServicesFloatingBar();
-      const floatBtn = floatContainer.querySelector("#btn-floating-services-cart");
-      if (floatBtn) {
-        floatBtn.addEventListener("click", () => {
-          this.openServicesCartModal();
-        });
+    // 1. Update Services Task Bar Badge (in red)
+    const dockRoot = document.getElementById("app-dock-root");
+    const dockServices = dockRoot?.querySelector(".dock-item[data-tab='services']");
+    if (dockServices) {
+      let badge = dockServices.querySelector(".badge-cart-count");
+      if (count > 0) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "badge-cart-count";
+          dockServices.appendChild(badge);
+        }
+        badge.textContent = count;
+      } else if (badge) {
+        badge.remove();
       }
     }
 
@@ -1052,22 +1034,6 @@ export class VCardController {
   bindCartEvents() {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
 
-    // Topbar kart icon button
-    const shopCartBtn = this.container.querySelector("#btn-open-products-cart");
-    if (shopCartBtn) {
-      shopCartBtn.addEventListener("click", () => {
-        this.openProductsCartModal(currency);
-      });
-    }
-
-    // Floating bar button
-    const floatShopBtn = this.container.querySelector("#btn-floating-shop-cart");
-    if (floatShopBtn) {
-      floatShopBtn.addEventListener("click", () => {
-        this.openProductsCartModal(currency);
-      });
-    }
-
     // Quantity increment / decrement buttons on catalog items
     this.container.querySelectorAll("[data-cart-action]").forEach(btn => {
       btn.addEventListener("click", (e) => {
@@ -1106,11 +1072,7 @@ export class VCardController {
       }
     });
 
-    // 2. Update Topbar Cart Badge
-    const shopBadge = this.container.querySelector("#shop-cart-badge");
-    if (shopBadge) shopBadge.textContent = totalItems;
-
-    // 3. Update Dock Cart Badge
+    // 2. Update Dock Cart Badge (in red)
     const dockRoot = document.getElementById("app-dock-root");
     const dockShop = dockRoot?.querySelector(".dock-item[data-tab='shop']");
     if (dockShop) {
@@ -1124,18 +1086,6 @@ export class VCardController {
         badge.textContent = totalItems;
       } else if (badge) {
         badge.remove();
-      }
-    }
-
-    // 4. Update Floating Bar
-    const floatContainer = this.container.querySelector("#shop-floating-bar-container");
-    if (floatContainer) {
-      floatContainer.innerHTML = this.renderShopFloatingBar(currency);
-      const floatBtn = floatContainer.querySelector("#btn-floating-shop-cart");
-      if (floatBtn) {
-        floatBtn.addEventListener("click", () => {
-          this.openProductsCartModal(currency);
-        });
       }
     }
 
