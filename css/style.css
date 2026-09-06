@@ -1681,30 +1681,45 @@ button, input, select, textarea {
 .cal-day-btn {
   aspect-ratio: 1;
   background: transparent;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--theme-text);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
+  position: relative;
+  outline: none;
 }
 
-.cal-day-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+/* Hover: use subtle bright highlight instead of dull grey */
+.cal-day-btn:hover:not(:disabled):not(.selected) {
+  background: rgba(212, 255, 0, 0.16) !important;
+  border-color: rgba(212, 255, 0, 0.45) !important;
+  color: #FFFFFF !important;
 }
 
-.cal-day-btn.selected {
-  background: var(--theme-primary);
-  color: var(--theme-text-dark);
-  font-weight: 800;
+/* Selected Date: Bold, vibrant highlight that persists and never turns grey */
+.cal-day-btn.selected,
+.cal-day-btn.selected:hover,
+.cal-day-btn.selected:focus,
+.cal-day-btn.selected:active {
+  background: var(--theme-primary, #D4FF00) !important;
+  color: #000000 !important;
+  border-color: var(--theme-primary, #D4FF00) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 16px var(--theme-primary, #D4FF00), inset 0 0 4px rgba(0, 0, 0, 0.35) !important;
+  transform: scale(1.06);
+  z-index: 2;
 }
 
-.cal-day-btn.today {
-  border-color: var(--theme-secondary);
+.cal-day-btn.today:not(.selected) {
+  border-color: var(--theme-secondary, #00E5FF) !important;
+  color: var(--theme-secondary, #00E5FF) !important;
+  font-weight: 700;
 }
 
 .cal-day-btn:disabled {
@@ -1731,17 +1746,24 @@ button, input, select, textarea {
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
+  outline: none;
 }
 
-.slot-btn:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+.slot-btn:hover:not(.selected) {
+  border-color: var(--theme-secondary, #00E5FF) !important;
+  background: rgba(0, 229, 255, 0.12) !important;
+  color: #FFFFFF !important;
 }
 
-.slot-btn.selected {
-  background: var(--theme-secondary);
-  color: var(--theme-text-dark);
-  border-color: var(--theme-secondary);
-  font-weight: 700;
+.slot-btn.selected,
+.slot-btn.selected:hover,
+.slot-btn.selected:focus,
+.slot-btn.selected:active {
+  background: var(--theme-secondary, #00E5FF) !important;
+  color: #000000 !important;
+  border-color: var(--theme-secondary, #00E5FF) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 14px var(--theme-secondary, #00E5FF) !important;
 }
 
 /* Tab 5: Ratings & Customer Reviews */
@@ -1932,6 +1954,31 @@ select option, .form-select option, .topbar-select option {
 
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   border-color: var(--theme-primary);
+}
+
+/* Date input styling - always highlighted, never turns grey when blurred/moved away */
+input[type="date"] {
+  color-scheme: dark;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  border: 1.5px solid var(--theme-border-highlight) !important;
+}
+
+input[type="date"]:hover,
+input[type="date"]:focus {
+  border-color: var(--theme-primary, #D4FF00) !important;
+  box-shadow: 0 0 10px rgba(212, 255, 0, 0.25) !important;
+}
+
+input[type="date"]:not(:placeholder-shown),
+input[type="date"]:valid {
+  border-color: var(--theme-primary, #D4FF00) !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5) sepia(1) saturate(5) hue-rotate(25deg);
+  cursor: pointer;
+  opacity: 0.95;
 }
 
 .btn-submit-primary {

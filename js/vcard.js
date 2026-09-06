@@ -315,6 +315,12 @@ export class VCardController {
             <div class="calendar-days-grid" id="cal-days-grid"></div>
           </div>
 
+          <!-- Highlighted Selected Date Indicator -->
+          <div id="cal-selected-date-badge" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(212, 255, 0, 0.08); border: 1.5px solid var(--theme-primary, #D4FF00); border-radius: 12px; margin: 12px 0;">
+            <span style="font-size: 0.78rem; font-weight: 600; color: #FFF;">Selected Date:</span>
+            <span id="cal-selected-date-text" style="font-size: 0.84rem; font-weight: 800; color: var(--theme-primary, #D4FF00);"></span>
+          </div>
+
           <!-- Available Slots -->
           <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--theme-text-muted); margin-bottom: 6px;">
             Available Time Slots
@@ -1198,14 +1204,16 @@ export class VCardController {
 
     if (prev) {
       prev.addEventListener("click", () => {
-        this.selectedDate.setMonth(this.selectedDate.getMonth() - 1);
+        if (!this.viewDate) this.viewDate = new Date(this.selectedDate || Date.now());
+        this.viewDate.setMonth(this.viewDate.getMonth() - 1);
         this.renderCalendar();
       });
     }
 
     if (next) {
       next.addEventListener("click", () => {
-        this.selectedDate.setMonth(this.selectedDate.getMonth() + 1);
+        if (!this.viewDate) this.viewDate = new Date(this.selectedDate || Date.now());
+        this.viewDate.setMonth(this.viewDate.getMonth() + 1);
         this.renderCalendar();
       });
     }
@@ -1226,7 +1234,11 @@ export class VCardController {
         const service = this.container.querySelector("#booking-service-select")?.value;
         const notes = this.container.querySelector("#booking-client-notes")?.value.trim() || "";
 
-        const dateStr = this.selectedDate.toISOString().split("T")[0];
+        const yearStr = this.selectedDate.getFullYear();
+        const monthStr = String(this.selectedDate.getMonth() + 1).padStart(2, "0");
+        const dayStr = String(this.selectedDate.getDate()).padStart(2, "0");
+        const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
+
         const bookingData = {
           clientName: "WhatsApp Client",
           clientPhone: "",
@@ -1251,19 +1263,36 @@ export class VCardController {
     }
   }
 
+  updateSelectedDateDisplay() {
+    const badgeText = this.container.querySelector("#cal-selected-date-text");
+    if (!badgeText) return;
+    if (!this.selectedDate) {
+      this.selectedDate = new Date();
+    }
+    const options = { weekday: "short", day: "numeric", month: "short", year: "numeric" };
+    badgeText.textContent = this.selectedDate.toLocaleDateString("en-US", options);
+  }
+
   renderCalendar() {
     const monthTitle = this.container.querySelector("#cal-month-title");
     const daysGrid = this.container.querySelector("#cal-days-grid");
     if (!monthTitle || !daysGrid) return;
 
-    const year = this.selectedDate.getFullYear();
-    const month = this.selectedDate.getMonth();
+    if (!this.selectedDate) {
+      this.selectedDate = new Date();
+    }
+    if (!this.viewDate) {
+      this.viewDate = new Date(this.selectedDate);
+    }
+
+    const viewYear = this.viewDate.getFullYear();
+    const viewMonth = this.viewDate.getMonth();
 
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    monthTitle.textContent = `${monthNames[month]} ${year}`;
+    monthTitle.textContent = `${monthNames[viewMonth]} ${viewYear}`;
 
-    const firstDayIndex = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const today = new Date();
 
     let html = "";
@@ -1272,10 +1301,14 @@ export class VCardController {
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
-      const isSelected = this.selectedDate.getDate() === day;
+      const isToday = today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === day;
+      const isSelected = this.selectedDate &&
+        this.selectedDate.getFullYear() === viewYear &&
+        this.selectedDate.getMonth() === viewMonth &&
+        this.selectedDate.getDate() === day;
+
       html += `
-        <button class="cal-day-btn ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-day="${day}">
+        <button type="button" class="cal-day-btn ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-day="${day}">
           ${day}
         </button>
       `;
@@ -1286,11 +1319,15 @@ export class VCardController {
     // Bind Day clicks
     daysGrid.querySelectorAll(".cal-day-btn").forEach(btn => {
       btn.addEventListener("click", () => {
+        const day = Number(btn.getAttribute("data-day"));
+        this.selectedDate = new Date(viewYear, viewMonth, day);
         daysGrid.querySelectorAll(".cal-day-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
-        this.selectedDate.setDate(Number(btn.getAttribute("data-day")));
+        this.updateSelectedDateDisplay();
       });
     });
+
+    this.updateSelectedDateDisplay();
   }
 
   bindModalEvents() {
