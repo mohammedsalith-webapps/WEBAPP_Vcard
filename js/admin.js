@@ -787,10 +787,6 @@ export class AdminConsoleController {
                   <input type="text" class="form-input" id="admin-new-srv-cat" placeholder="e.g. Buffet / Styling / Consultation" />
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Scope & Description</label>
-                <input type="text" class="form-input" id="admin-new-srv-desc" placeholder="Details of deliverables for custom client quoting" />
-              </div>
               <button type="button" class="btn-pill active" id="btn-admin-save-new-srv">Save New Service</button>
             </div>
 
@@ -836,13 +832,9 @@ export class AdminConsoleController {
                   <input type="number" class="form-input" id="admin-new-prod-price" placeholder="250" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Unit Type</label>
+                  <label class="form-label">Unit Type (e.g. pack, box, kg, plate)</label>
                   <input type="text" class="form-input" id="admin-new-prod-unit" placeholder="e.g. pack, box, kg, plate" />
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" class="form-input" id="admin-new-prod-desc" placeholder="Brief product description" />
               </div>
               <button type="button" class="btn-pill active" id="btn-admin-save-new-prod">Save Product</button>
             </div>
@@ -1565,17 +1557,15 @@ export class AdminConsoleController {
         const vId = this.container.querySelector("#admin-srv-vendor-id").value;
         const name = this.container.querySelector("#admin-new-srv-name").value.trim();
         const cat = this.container.querySelector("#admin-new-srv-cat").value.trim() || "General";
-        const desc = this.container.querySelector("#admin-new-srv-desc").value.trim();
 
         if (!name) {
           window.OmniApp.showToast("Please enter a service name.");
           return;
         }
 
-        await db.addService(vId, { name, category: cat, description: desc, visible: true });
+        await db.addService(vId, { name, category: cat, description: "", visible: true });
         window.OmniApp.showToast("New service added for vendor!");
         this.container.querySelector("#admin-new-srv-name").value = "";
-        this.container.querySelector("#admin-new-srv-desc").value = "";
         this.container.querySelector("#admin-add-srv-panel").style.display = "none";
         this.renderAdminServicesList(vId);
         this.refreshVendorsList();
@@ -1602,19 +1592,17 @@ export class AdminConsoleController {
         const emoji = this.container.querySelector("#admin-new-prod-emoji").value.trim() || "🛍️";
         const price = Number(this.container.querySelector("#admin-new-prod-price").value || 0);
         const unit = this.container.querySelector("#admin-new-prod-unit").value.trim() || "unit";
-        const desc = this.container.querySelector("#admin-new-prod-desc").value.trim();
 
         if (!name) {
           window.OmniApp.showToast("Please enter a product name.");
           return;
         }
 
-        await db.addProduct(vId, { name, emoji, price, unit, description: desc, visible: true });
+        await db.addProduct(vId, { name, emoji, price, unit, description: "", visible: true });
         window.OmniApp.showToast("New product added for vendor!");
         this.container.querySelector("#admin-new-prod-name").value = "";
         this.container.querySelector("#admin-new-prod-price").value = "";
         this.container.querySelector("#admin-new-prod-unit").value = "";
-        this.container.querySelector("#admin-new-prod-desc").value = "";
         this.container.querySelector("#admin-add-prod-panel").style.display = "none";
         this.renderAdminProductsList(vId);
         this.refreshVendorsList();
@@ -2013,9 +2001,6 @@ export class AdminConsoleController {
                   ${s.visible ? 'Visible' : 'Hidden'}
                 </span>
               </div>
-              <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 2px;">
-                ${s.description || 'No description'}
-              </div>
             </div>
             <div style="font-size: 0.78rem; color: var(--theme-primary); font-weight: 700; white-space: nowrap;">
               💬 Quote on Request
@@ -2061,13 +2046,11 @@ export class AdminConsoleController {
         if (newName === null) return;
         const newCat = prompt("Category:", s.category || "General");
         if (newCat === null) return;
-        const newDesc = prompt("Scope & Description:", s.description || "");
-        if (newDesc === null) return;
 
         await db.updateService(vendorId, sId, {
           name: newName.trim(),
           category: newCat.trim(),
-          description: newDesc.trim()
+          description: ""
         });
         window.OmniApp.showToast("Service updated!");
         this.renderAdminServicesList(vendorId);
@@ -2102,9 +2085,6 @@ export class AdminConsoleController {
                   <span class="${p.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.65rem; padding: 1px 6px;">
                     ${p.visible !== false ? 'In Stock' : 'Hidden'}
                   </span>
-                </div>
-                <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 2px;">
-                  ${p.description || 'No description'}
                 </div>
               </div>
             </div>
@@ -2154,17 +2134,15 @@ export class AdminConsoleController {
         if (newEmoji === null) return;
         const newPrice = prompt(`Price (${currency}):`, prod.price);
         if (newPrice === null) return;
-        const newUnit = prompt("Unit Type (pack, box, kg, etc.):", prod.unit || "unit");
+        const newUnit = prompt("Unit Type (e.g. pack, box, kg, plate):", prod.unit || "unit");
         if (newUnit === null) return;
-        const newDesc = prompt("Description:", prod.description || "");
-        if (newDesc === null) return;
 
         await db.updateProduct(vendorId, pId, {
           name: newName.trim(),
           emoji: newEmoji.trim() || "🛍️",
           price: Number(newPrice || 0),
           unit: newUnit.trim() || "unit",
-          description: newDesc.trim()
+          description: ""
         });
         window.OmniApp.showToast("Product updated!");
         this.renderAdminProductsList(vendorId);

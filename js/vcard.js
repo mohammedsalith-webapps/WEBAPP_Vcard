@@ -469,11 +469,10 @@ export class VCardController {
         <div class="service-card ${isChecked ? 'selected' : ''}" data-service-id="${s.id}">
           <input type="checkbox" class="service-checkbox" ${isChecked ? 'checked' : ''} />
           <div class="service-body">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
               <div class="service-name" style="margin-bottom: 0;">${s.name}</div>
               <span class="pill-status-pending" style="font-size: 0.68rem; padding: 2px 7px; color: var(--theme-primary); border-color: rgba(212,255,0,0.25); white-space: nowrap;">Quote on Request</span>
             </div>
-            <div class="service-desc">${s.description || 'Custom tailored service delivery based on your specifications.'}</div>
           </div>
         </div>
       `;
@@ -496,7 +495,6 @@ export class VCardController {
               <span class="prod-title">${p.name}</span>
               <span class="prod-unit-tag">${p.unit || 'unit'}</span>
             </div>
-            <div class="prod-desc-text">${p.description}</div>
             <div class="prod-price-text">${currency}${Number(p.price).toLocaleString()}</div>
           </div>
           <div class="prod-action-col">

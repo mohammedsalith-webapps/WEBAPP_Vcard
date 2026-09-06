@@ -346,7 +346,6 @@ export class VendorConsoleController {
                     <tr data-srv-row="${s.id}">
                       <td>
                         <div style="font-weight: 700; color: #FFF;">${s.name}</div>
-                        <div style="font-size: 0.72rem; color: var(--theme-text-muted);">${s.description || 'No description provided'}</div>
                       </td>
                       <td><span class="pill-status-pending">${s.category || 'General'}</span></td>
                       <td>
@@ -402,7 +401,6 @@ export class VendorConsoleController {
                           <span style="font-size: 1.5rem;">${p.emoji || '🛍️'}</span>
                           <div>
                             <div style="font-weight: 700; color: #FFF;">${p.name}</div>
-                            <div style="font-size: 0.72rem; color: var(--theme-text-muted);">${p.description}</div>
                           </div>
                         </div>
                       </td>
@@ -549,10 +547,6 @@ export class VendorConsoleController {
               <label class="form-label">Category</label>
               <input type="text" class="form-input" id="new-srv-category" placeholder="e.g. Hair Therapy / Buffet / Consultation" required />
             </div>
-            <div class="form-group">
-              <label class="form-label">Service Scope & Description</label>
-              <textarea class="form-textarea" id="new-srv-desc" rows="3" placeholder="Describe the inclusions and deliverables so customers can request a quote..." required></textarea>
-            </div>
             <button type="submit" class="btn-submit-primary">Create Service</button>
           </form>
         </div>
@@ -574,10 +568,6 @@ export class VendorConsoleController {
             <div class="form-group">
               <label class="form-label">Category</label>
               <input type="text" class="form-input" id="edit-srv-category" placeholder="e.g. Hair Therapy / Buffet / Consultation" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Service Scope & Description</label>
-              <textarea class="form-textarea" id="edit-srv-desc" rows="3" required></textarea>
             </div>
             <div class="form-group">
               <label class="switch-label">
@@ -615,10 +605,6 @@ export class VendorConsoleController {
               <label class="form-label">Price (${currency})</label>
               <input type="number" class="form-input" id="new-prod-price" required />
             </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="new-prod-desc" rows="2" required></textarea>
-            </div>
             <button type="submit" class="btn-submit-primary">Add Product</button>
           </form>
         </div>
@@ -650,10 +636,6 @@ export class VendorConsoleController {
             <div class="form-group">
               <label class="form-label">Price (${currency})</label>
               <input type="number" class="form-input" id="edit-prod-price" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="edit-prod-desc" rows="2" required></textarea>
             </div>
             <div class="form-group">
               <label class="switch-label">
@@ -852,7 +834,7 @@ export class VendorConsoleController {
         const newSrv = {
           name: this.container.querySelector("#new-srv-name").value.trim(),
           category: this.container.querySelector("#new-srv-category").value.trim(),
-          description: this.container.querySelector("#new-srv-desc").value.trim(),
+          description: "",
           visible: true
         };
         await db.addService(v.id, newSrv);
@@ -873,7 +855,6 @@ export class VendorConsoleController {
           modal.querySelector("#edit-srv-id").value = s.id;
           modal.querySelector("#edit-srv-name").value = s.name;
           modal.querySelector("#edit-srv-category").value = s.category || "General";
-          modal.querySelector("#edit-srv-desc").value = s.description || "";
           modal.querySelector("#edit-srv-visible").checked = s.visible !== false;
           modal.classList.add("active");
         }
@@ -887,10 +868,9 @@ export class VendorConsoleController {
         const id = this.container.querySelector("#edit-srv-id").value;
         const name = this.container.querySelector("#edit-srv-name").value.trim();
         const category = this.container.querySelector("#edit-srv-category").value.trim();
-        const description = this.container.querySelector("#edit-srv-desc").value.trim();
         const visible = this.container.querySelector("#edit-srv-visible").checked;
 
-        await db.updateService(v.id, id, { name, category, description, visible });
+        await db.updateService(v.id, id, { name, category, description: "", visible });
         this.container.querySelector("#modal-edit-service")?.classList.remove("active");
         window.OmniApp.showToast("Service updated successfully!");
         this.renderDashboard();
@@ -935,7 +915,7 @@ export class VendorConsoleController {
           emoji: this.container.querySelector("#new-prod-emoji").value.trim(),
           unit: this.container.querySelector("#new-prod-unit").value.trim(),
           price: Number(this.container.querySelector("#new-prod-price").value || 0),
-          description: this.container.querySelector("#new-prod-desc").value.trim(),
+          description: "",
           visible: true
         };
         if (!v.products) v.products = [];
@@ -958,7 +938,6 @@ export class VendorConsoleController {
           modal.querySelector("#edit-prod-emoji").value = p.emoji || "🛍️";
           modal.querySelector("#edit-prod-unit").value = p.unit || "unit";
           modal.querySelector("#edit-prod-price").value = p.price || 0;
-          modal.querySelector("#edit-prod-desc").value = p.description || "";
           modal.querySelector("#edit-prod-visible").checked = p.visible !== false;
           modal.classList.add("active");
         }
@@ -975,10 +954,9 @@ export class VendorConsoleController {
         const emoji = this.container.querySelector("#edit-prod-emoji").value.trim() || "🛍️";
         const unit = this.container.querySelector("#edit-prod-unit").value.trim() || "unit";
         const price = Number(this.container.querySelector("#edit-prod-price").value || 0);
-        const description = this.container.querySelector("#edit-prod-desc").value.trim();
         const visible = this.container.querySelector("#edit-prod-visible").checked;
 
-        await db.updateProduct(v.id, id, { name, emoji, unit, price, description, visible });
+        await db.updateProduct(v.id, id, { name, emoji, unit, price, description: "", visible });
         this.container.querySelector("#modal-edit-product")?.classList.remove("active");
         window.OmniApp.showToast(`Updated product '${name}' successfully!`);
         this.renderDashboard();
