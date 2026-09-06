@@ -1047,7 +1047,7 @@ export class AdminConsoleController {
             </span>
           </td>
           <td>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <div class="vendor-action-cluster">
               <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;">Preview ↗</a>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>

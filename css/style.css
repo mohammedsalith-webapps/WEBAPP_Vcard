@@ -1712,12 +1712,350 @@ select option, .form-select option, .topbar-select option {
 }
 
 /* ==========================================================================
-   Mobile Native Responsiveness (<640px)
+   Home Showcase & Public Landing Framework
    ========================================================================== */
-@media (max-width: 640px) {
+.home-showcase-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+  box-sizing: border-box;
+}
+
+.home-hero-card {
+  padding: 36px 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at top right, rgba(212,255,0,0.06), transparent 60%), #0F131C;
+  border-color: rgba(212,255,0,0.25);
+}
+
+.home-hero-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.22;
+  color: #FFFFFF;
+  margin-bottom: 14px;
+  max-width: 820px;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.home-hero-desc {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--theme-text-muted);
+  margin-bottom: 24px;
+  max-width: 760px;
+}
+
+.home-hero-cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.home-btn-primary {
+  padding: 12px 24px;
+  font-size: 0.92rem;
+  text-decoration: none;
+  width: auto;
+}
+
+.home-btn-pill {
+  padding: 12px 20px;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.home-trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-top: 1px solid var(--theme-border);
+  padding-top: 20px;
+  font-size: 0.78rem;
+  color: #E2E8F0;
+}
+
+.home-support-card {
+  padding: 28px;
+  margin-bottom: 30px;
+  text-align: center;
+  border-color: rgba(16,185,129,0.3);
+  background: radial-gradient(circle at center, rgba(16,185,129,0.06), transparent 70%), #0F131C;
+}
+
+.home-support-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #FFF;
+  margin-bottom: 6px;
+}
+
+.home-support-desc {
+  font-size: 0.85rem;
+  color: var(--theme-text-muted);
+  max-width: 600px;
+  margin: 0 auto 18px;
+  line-height: 1.5;
+}
+
+.home-support-btn {
+  display: inline-flex;
+  width: auto;
+  padding: 12px 28px;
+  text-decoration: none;
+  background: #10B981;
+  border-color: #10B981;
+  color: #000;
+  font-weight: 700;
+}
+
+.home-footer {
+  border-top: 1px solid var(--theme-border);
+  padding-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--theme-text-muted);
+}
+
+.home-footer-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.vendor-action-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 270px;
+}
+
+.vendor-action-cluster .btn-pill {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Mobile Native Responsiveness (<768px & <480px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 1. Omni Topbar on Mobile */
+  .omni-topbar {
+    padding: 8px 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .brand-badge {
+    font-size: 0.88rem;
+  }
+
+  .topbar-actions {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .topbar-actions .btn-pill {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .topbar-select {
+    max-width: 120px !important;
+    font-size: 0.72rem !important;
+    padding: 4px 6px !important;
+  }
+
+  #btn-toggle-frame {
+    display: none !important;
+  }
+
+  /* 2. Portal & Admin Container */
+  .portal-container, .home-showcase-container {
+    padding: 12px 10px 80px !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .portal-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .portal-header h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .portal-nav-tabs {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    gap: 6px;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+  }
+
+  .portal-nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .portal-tab-btn {
+    padding: 7px 12px;
+    font-size: 0.76rem;
+    flex-shrink: 0;
+  }
+
+  /* 3. Bento Grids stack vertically on mobile */
+  .bento-grid-2, .bento-grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .bento-card {
+    padding: 16px 14px !important;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .kpi-card {
+    padding: 12px 10px;
+  }
+
+  .kpi-number {
+    font-size: 1.35rem;
+  }
+
+  /* 4. Responsive Tables and Admin Vendor Cards */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm);
+  }
+
+  .data-table {
+    min-width: 660px;
+  }
+
+  .data-table th, .data-table td {
+    padding: 8px 8px;
+    font-size: 0.74rem;
+  }
+
+  /* 5. Modals on Mobile */
+  .modal-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 14px 24px;
+    box-sizing: border-box;
+    max-height: 90vh;
+  }
+
+  .modal-card .bento-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  /* 6. Home / Packages View on Mobile */
+  .home-hero-card {
+    padding: 20px 14px !important;
+  }
+
+  .home-hero-title {
+    font-size: 1.45rem !important;
+    line-height: 1.28 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .home-hero-desc {
+    font-size: 0.85rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 18px !important;
+  }
+
+  .home-hero-cta-group {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .home-hero-cta-group .home-btn-primary,
+  .home-hero-cta-group .home-btn-pill {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    justify-content: center !important;
+    padding: 11px 16px !important;
+    font-size: 0.86rem !important;
+  }
+
+  .home-trust-badges {
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
+    font-size: 0.75rem;
+  }
+
+  .home-support-card {
+    padding: 20px 14px !important;
+  }
+
+  .home-support-title {
+    font-size: 1.15rem !important;
+  }
+
+  .home-support-btn {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+    padding: 12px 16px !important;
+    font-size: 0.82rem !important;
+    text-align: center !important;
+  }
+
+  .home-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .home-footer-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* 7. Canvas Shell */
   .stage-container {
     padding: 0;
     min-height: 100vh;
+  }
+
+  .stage-container.view-fullwidth {
+    padding: 0;
   }
 
   .device-shell {
@@ -1727,6 +2065,12 @@ select option, .form-select option, .topbar-select option {
     border-radius: 0;
     border: none;
     box-shadow: none;
+  }
+
+  .stage-container.view-fullwidth .device-shell {
+    border-radius: 0;
+    border: none;
+    min-height: 100vh;
   }
 
   .device-screen {
@@ -1751,9 +2095,19 @@ select option, .form-select option, .topbar-select option {
   .sticky-quote-bar, .sticky-cart-bar {
     position: fixed;
     bottom: 68px;
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
     z-index: 9998;
     margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #topbar-vendor-select {
+    max-width: 95px !important;
   }
 }

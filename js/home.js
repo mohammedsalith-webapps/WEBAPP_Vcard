@@ -34,39 +34,39 @@ export class HomeController {
     const demoWaUrl = `https://wa.me/${cleanWa}?text=${demoInquiryText}`;
 
     this.container.innerHTML = `
-      <div class="portal-container" style="max-width: 1140px; padding: 24px 16px 80px;">
+      <div class="portal-container home-showcase-container">
 
         <!-- 1. Hero Section -->
-        <div class="bento-card" style="padding: 36px 28px; margin-bottom: 24px; position: relative; overflow: hidden; background: radial-gradient(circle at top right, rgba(212,255,0,0.06), transparent 60%), #0F131C; border-color: rgba(212,255,0,0.25);">
+        <div class="bento-card home-hero-card">
           <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212,255,0,0.1); border: 1px solid rgba(212,255,0,0.3); border-radius: 999px; padding: 4px 12px; margin-bottom: 16px;">
             <span style="font-size: 0.8rem;">⚡</span>
             <span style="font-size: 0.75rem; font-weight: 700; color: var(--theme-primary); text-transform: uppercase; letter-spacing: 0.05em;">Smart Business vCard & SaaS OS</span>
           </div>
 
-          <h1 style="font-size: 2.2rem; font-weight: 800; line-height: 1.2; color: #FFFFFF; margin-bottom: 14px; max-width: 820px;">
+          <h1 class="home-hero-title">
             Supercharge Your Business With An Interactive Smart vCard
           </h1>
 
-          <p style="font-size: 1rem; line-height: 1.6; color: var(--theme-text-muted); margin-bottom: 24px; max-width: 760px;">
+          <p class="home-hero-desc">
             Upgrade from flat paper cards to a high-converting digital storefront built directly for WhatsApp. Showcase services, take product orders, schedule calendar bookings, and collect 5-star reviews — all in a sleek, offline-capable PWA.
           </p>
 
-          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 28px;">
-            <a href="${demoWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-submit-primary" style="padding: 12px 24px; font-size: 0.92rem; text-decoration: none; width: auto;">
+          <div class="home-hero-cta-group">
+            <a href="${demoWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-submit-primary home-btn-primary">
               <span>🎁 Claim ${demoDays}-Day Free Demo on WhatsApp</span>
               <span>↗</span>
             </a>
-            <a href="#section-pricing" class="btn-pill active" style="padding: 12px 20px; font-size: 0.92rem; text-decoration: none;">
+            <a href="#section-pricing" class="btn-pill active home-btn-pill">
               <span>💎 View All Packages & Prices</span>
               <span>↓</span>
             </a>
-            <a href="#section-demos" class="btn-pill" style="padding: 12px 20px; font-size: 0.92rem; text-decoration: none;">
+            <a href="#section-demos" class="btn-pill home-btn-pill">
               <span>👀 Test Live Demo Cards</span>
             </a>
           </div>
 
           <!-- Quick Trust Badges -->
-          <div style="display: flex; flex-wrap: wrap; gap: 16px; border-top: 1px solid var(--theme-border); padding-top: 20px; font-size: 0.78rem; color: #E2E8F0;">
+          <div class="home-trust-badges">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="color: var(--theme-primary);">✓</span> Zero App Store Download Required
             </div>
@@ -355,26 +355,26 @@ export class HomeController {
         </div>
 
         <!-- 5. 1-Click Admin WhatsApp Support Banner -->
-        <div class="bento-card" style="padding: 28px; margin-bottom: 30px; text-align: center; border-color: rgba(16,185,129,0.3); background: radial-gradient(circle at center, rgba(16,185,129,0.06), transparent 70%), #0F131C;">
+        <div class="bento-card home-support-card">
           <div style="font-size: 2.2rem; margin-bottom: 10px;">💬</div>
-          <h2 style="font-size: 1.3rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
+          <h2 class="home-support-title">
             Have Questions or Need a Custom Business Card Solution?
           </h2>
-          <p style="font-size: 0.85rem; color: var(--theme-text-muted); max-width: 600px; margin: 0 auto 18px; line-height: 1.5;">
+          <p class="home-support-desc">
             Chat directly with our platform team on WhatsApp. We will help you select the ideal package, configure your services and products, and launch your vCard in minutes.
           </p>
-          <a href="${generalWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-submit-primary" style="display: inline-flex; width: auto; padding: 12px 28px; text-decoration: none; background: #10B981; border-color: #10B981; color: #000; font-weight: 700;">
+          <a href="${generalWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-submit-primary home-support-btn">
             <span>💬 Chat Directly with Admin on WhatsApp (${rawWa})</span>
             <span>↗</span>
           </a>
         </div>
 
         <!-- 6. Footer / Portal Access -->
-        <div style="border-top: 1px solid var(--theme-border); padding-top: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; font-size: 0.8rem; color: var(--theme-text-muted);">
+        <div class="home-footer">
           <div>
             <b>${settings.platformName || "OmniCard OS"}</b> • The Modern Digital Business Card & Operating System
           </div>
-          <div style="display: flex; gap: 12px; align-items: center;">
+          <div class="home-footer-actions">
             <span>Are you a registered business?</span>
             <a href="?v=elite-catering" class="btn-pill" style="font-size: 0.72rem; padding: 4px 10px; text-decoration: none;">
               Open Card & Hold Logo to Login
