@@ -90,13 +90,10 @@ export class AdminConsoleController {
         <!-- Admin Header -->
         <div class="portal-header">
           <div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.8rem;">🛡️</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.6rem;">🛡️</span>
               <div>
-                <h2 style="font-size: 1.3rem;">${settings.platformName} Super Admin</h2>
-                <div style="font-size: 0.78rem; color: var(--theme-text-muted);">
-                  Master Operating Console • v2.6
-                </div>
+                <h2 style="font-size: 1.2rem; margin: 0;">${settings.platformName} Admin</h2>
               </div>
             </div>
           </div>
@@ -108,19 +105,19 @@ export class AdminConsoleController {
         <!-- Navigation Tabs -->
         <div class="portal-nav-tabs">
           <button class="portal-tab-btn ${this.activeTab === 'overview' ? 'active' : ''}" data-atab="overview">
-            📊 Overview & Stats
+            📊 Stats
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'vendors' ? 'active' : ''}" data-atab="vendors">
-            👥 Vendor Directory
+            👥 Vendors
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'create' ? 'active' : ''}" data-atab="create">
-            ＋ Create New Card
+            ＋ New Card
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'plans' ? 'active' : ''}" data-atab="plans">
-            💎 Subscription Plans
+            💎 Plans
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'settings' ? 'active' : ''}" data-atab="settings">
-            ⚙️ Platform & Backup
+            ⚙️ Settings
           </button>
         </div>
 

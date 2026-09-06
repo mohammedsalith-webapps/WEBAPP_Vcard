@@ -33,53 +33,16 @@ class OmniAppManager {
     this.vendorCtrl = new VendorConsoleController(rootEl);
     this.adminCtrl = new AdminConsoleController(rootEl);
 
-    // 4. Update Clock in iOS status bar
-    this.startNotchClock();
-
-    // 5. Populate Vendor Selector in Topbar
-    this.populateVendorDropdown();
-
-    // 6. Bind Topbar Event Listeners
+    // 4. Bind Topbar Event Listeners
     this.bindTopbarEvents();
 
-    // 7. Subscribe to DB live changes
-    db.subscribe(() => {
-      this.populateVendorDropdown();
-    });
-
-    // 8. Handle Initial Route
+    // 5. Handle Initial Route
     this.handleRoute();
 
-    // 9. Listen for browser back/forward buttons
+    // 6. Listen for browser back/forward buttons
     window.addEventListener("popstate", () => {
       this.handleRoute();
     });
-  }
-
-  startNotchClock() {
-    const clockEl = document.getElementById("notch-clock");
-    const updateTime = () => {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      if (hours > 12) hours -= 12;
-      if (hours === 0) hours = 12;
-      if (clockEl) clockEl.textContent = `${hours}:${minutes}`;
-    };
-    updateTime();
-    setInterval(updateTime, 30000);
-  }
-
-  populateVendorDropdown() {
-    const select = document.getElementById("topbar-vendor-select");
-    if (!select) return;
-
-    const vendors = db.getVendors();
-    select.innerHTML = vendors.map(v => `
-      <option value="${v.slug || v.id}" ${v.slug === this.currentVendorSlug ? 'selected' : ''}>
-        ${v.branding.avatarEmoji || '🏢'} ${v.branding.businessName}
-      </option>
-    `).join("");
   }
 
   bindTopbarEvents() {
@@ -97,37 +60,6 @@ class OmniAppManager {
     document.getElementById("btn-portal-admin")?.addEventListener("click", () => {
       this.navigate("admin");
     });
-
-    // Demo Card selector dropdown
-    const select = document.getElementById("topbar-vendor-select");
-    if (select) {
-      select.addEventListener("change", (e) => {
-        const slug = e.target.value;
-        if (slug) {
-          this.navigate("card", slug);
-        }
-      });
-    }
-
-    // Device Shell Toggle (Phone mockup vs expanded)
-    const toggleBtn = document.getElementById("btn-toggle-frame");
-    const stageContainer = document.getElementById("main-stage");
-    const toggleIcon = document.getElementById("frame-toggle-icon");
-    const toggleLabel = document.getElementById("frame-toggle-label");
-
-    if (toggleBtn && stageContainer) {
-      toggleBtn.addEventListener("click", () => {
-        this.isFullWidth = !this.isFullWidth;
-        stageContainer.classList.toggle("view-fullwidth", this.isFullWidth);
-        if (this.isFullWidth) {
-          toggleIcon.textContent = "💻";
-          toggleLabel.textContent = "Expanded";
-        } else {
-          toggleIcon.textContent = "📱";
-          toggleLabel.textContent = "Phone View";
-        }
-      });
-    }
 
     // PWA Install Button
     document.getElementById("btn-pwa-install")?.addEventListener("click", () => {
@@ -179,53 +111,39 @@ class OmniAppManager {
   setView(viewName, vendorSlug = null) {
     this.currentView = viewName;
     const stageContainer = document.getElementById("main-stage");
-    const toggleBtn = document.getElementById("btn-toggle-frame");
     const dockRoot = document.getElementById("app-dock-root");
-    const topTitle = document.getElementById("topbar-title");
+    const topbar = document.getElementById("app-topbar");
 
-    // Update active topbar buttons
-    const btnHome = document.getElementById("btn-portal-home");
-    const btnAdmin = document.getElementById("btn-portal-admin");
-
-    if (btnHome) btnHome.classList.toggle("active", viewName === "home");
-    if (btnAdmin) btnAdmin.classList.toggle("active", viewName === "admin");
+    // Only show the platform topbar on the public SaaS home page; hide completely on customer vCards, vendor console, and admin
+    if (topbar) {
+      topbar.style.display = (viewName === "home") ? "flex" : "none";
+    }
 
     if (viewName === "home") {
       // In Home mode: fullwidth modern bento showcase
       if (dockRoot) dockRoot.style.display = "none";
       stageContainer.classList.add("view-fullwidth");
-      if (toggleBtn) toggleBtn.style.display = "none";
-      if (topTitle) topTitle.textContent = "OmniCard OS • Packages & Features";
       this.homeCtrl.init();
 
     } else if (viewName === "card") {
-      // In Card mode: phone frame by default
+      // In Card mode: clean mobile webapp canvas with bottom dock (no admin or phone buttons)
       if (dockRoot) dockRoot.style.display = "block";
-      stageContainer.classList.toggle("view-fullwidth", this.isFullWidth);
-      if (toggleBtn) toggleBtn.style.display = "inline-flex";
+      stageContainer.classList.remove("view-fullwidth");
 
       const slug = vendorSlug || this.currentVendorSlug || "elite-catering";
       this.currentVendorSlug = slug;
-      const v = db.getVendor(slug);
-      if (topTitle && v) {
-        topTitle.textContent = v.branding.businessName;
-      }
       this.vcardCtrl.loadVendor(slug);
 
     } else if (viewName === "vendor") {
-      // In Vendor mode: fullwidth expanded view for optimal management
+      // In Vendor mode: fullwidth clean dashboard
       if (dockRoot) dockRoot.style.display = "none";
       stageContainer.classList.add("view-fullwidth");
-      if (toggleBtn) toggleBtn.style.display = "none";
-      if (topTitle) topTitle.textContent = "Vendor Operating Console";
       this.vendorCtrl.init();
 
     } else if (viewName === "admin") {
-      // In Admin mode: fullwidth expanded view
+      // In Admin mode: fullwidth clean admin dashboard
       if (dockRoot) dockRoot.style.display = "none";
       stageContainer.classList.add("view-fullwidth");
-      if (toggleBtn) toggleBtn.style.display = "none";
-      if (topTitle) topTitle.textContent = "Super Admin Console";
       this.adminCtrl.init();
     }
   }

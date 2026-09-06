@@ -140,21 +140,21 @@ export class VendorConsoleController {
         <!-- Portal Tabs Navigation -->
         <div class="portal-nav-tabs">
           <button class="portal-tab-btn ${this.activeTab === 'profile' ? 'active' : ''}" data-vtab="profile">
-            🎨 Branding & Profile
+            🎨 Profile
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'services' ? 'active' : ''}" data-vtab="services">
-            📋 Services Catalog (${v.services?.length || 0})
+            📋 Services (${v.services?.length || 0})
           </button>
           ${v.features.ecommerceShop ? `
             <button class="portal-tab-btn ${this.activeTab === 'shop' ? 'active' : ''}" data-vtab="shop">
-              🛍️ Shop Products (${v.products?.length || 0})
+              🛍️ Shop (${v.products?.length || 0})
             </button>
           ` : ""}
           <button class="portal-tab-btn ${this.activeTab === 'bookings' ? 'active' : ''}" data-vtab="bookings">
             📅 Bookings (${v.bookings?.length || 0})
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'reviews' ? 'active' : ''}" data-vtab="reviews">
-            ★ Reviews & Feedback (${v.reviews?.length || 0})
+            ★ Reviews (${v.reviews?.length || 0})
           </button>
         </div>
 

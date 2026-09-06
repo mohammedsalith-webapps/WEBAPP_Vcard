@@ -128,56 +128,52 @@ button, input, select, textarea {
 }
 
 /* ==========================================================================
-   Desktop / iOS Phone Container Framework
+   Modern App Canvas Framework (Desktop & Mobile)
    ========================================================================== */
 .stage-container {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 30px 16px 60px;
-  min-height: calc(100vh - 60px);
+  padding: 0;
+  min-height: 100vh;
+  background: #07090E;
 }
 
-/* Phone Mockup Frame for Desktop */
+/* App Canvas for vCard Mode */
 .device-shell {
   width: 100%;
   max-width: 440px;
-  height: 88vh;
-  max-height: 880px;
-  background: #000000;
-  border-radius: 50px;
-  border: 4px solid #1E2330;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  min-height: 100vh;
+  height: 100vh;
+  background: var(--theme-bg);
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Expanded full-width mode toggle */
+/* Full-width mode for Home, Vendor & Admin Portals */
+.stage-container.view-fullwidth {
+  padding: 0;
+  background: #07090E;
+}
+
 .stage-container.view-fullwidth .device-shell {
-  max-width: 1100px;
+  max-width: 100%;
   height: auto;
-  min-height: 85vh;
-  max-height: none;
-  border-radius: 20px;
-  border: 1px solid var(--theme-border);
+  min-height: 100vh;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
-.stage-container.view-fullwidth .phone-notch-container {
-  display: none;
-}
-
-/* iOS Dynamic Notch / Island */
 .phone-notch-container {
-  flex-shrink: 0;
-  background: #000000;
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  z-index: 120;
+  display: none !important;
 }
 
 .phone-status-bar {

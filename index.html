@@ -30,8 +30,8 @@
 </head>
 <body data-theme="Sunset Dark">
 
-  <!-- Top System Utility Navigation Bar -->
-  <header class="omni-topbar">
+  <!-- Top System Utility Navigation Bar (Shown exclusively on Public Showcase) -->
+  <header class="omni-topbar" id="app-topbar" style="display: none;">
     <div class="brand-badge" id="brand-home-trigger" title="OmniCard OS">
       <div class="badge-icon">⚡</div>
       <span id="topbar-title">OmniCard OS</span>
@@ -39,26 +39,13 @@
 
     <div class="topbar-actions">
       <!-- Platform Home / Packages Link -->
-      <button class="btn-pill active" id="btn-portal-home" title="View Business Packages & Features">
-        <span>🏠 Packages & Features</span>
-      </button>
-
-      <!-- Demo Cards Selector -->
-      <div style="display: flex; align-items: center; gap: 4px;">
-        <select class="form-select topbar-select" id="topbar-vendor-select" title="Switch Demo vCard" style="max-width: 175px; font-size: 0.75rem; padding: 5px 8px;">
-          <!-- Populated dynamically -->
-        </select>
-      </div>
-
-      <!-- Device Layout Toggle (Phone Shell vs Desktop Canvas) -->
-      <button class="btn-pill" id="btn-toggle-frame" title="Toggle Phone Mockup Shell">
-        <span id="frame-toggle-icon">📱</span>
-        <span id="frame-toggle-label">Phone View</span>
+      <button class="btn-pill active" id="btn-portal-home" title="View Packages & Features">
+        <span>🏠 Packages</span>
       </button>
 
       <!-- Super Admin Access Button -->
       <button class="btn-pill" id="btn-portal-admin" title="Super Admin Portal">
-        <span>🛡️ Admin</span>
+        <span>🛡️ Admin Portal</span>
       </button>
 
       <!-- PWA Install Prompt Button -->
@@ -70,24 +57,8 @@
 
   <!-- Main Stage Canvas -->
   <main class="stage-container" id="main-stage">
-    <!-- Interactive Phone Container for vCard Mode -->
+    <!-- Clean App Container -->
     <div class="device-shell" id="app-shell">
-      <!-- iOS Dynamic Island & Status Bar -->
-      <div class="phone-notch-container">
-        <div class="phone-status-bar">
-          <span id="notch-clock">9:41</span>
-          <div style="display: flex; gap: 6px; align-items: center; font-size: 0.7rem;">
-            <span>5G</span>
-            <span>📶</span>
-            <span>🔋 100%</span>
-          </div>
-        </div>
-        <div class="phone-notch">
-          <div class="notch-sensor"></div>
-          <div class="notch-camera"></div>
-        </div>
-      </div>
-
       <!-- App Content Screen (Scrollable Body) -->
       <div class="device-screen" id="app-content-root">
         <!-- Injected via JavaScript Controller -->

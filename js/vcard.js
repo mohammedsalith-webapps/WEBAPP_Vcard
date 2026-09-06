@@ -79,13 +79,6 @@ export class VCardController {
 
     this.container.innerHTML = `
       <div class="vcard-app">
-        ${isExpiring ? `
-          <div class="expiry-warning-banner">
-            <span>⏳ <b>Hosting Alert:</b> Card expires soon. Please renew to avoid service pause.</span>
-            <button class="btn-pill" style="font-size: 0.7rem; padding: 3px 8px; background: #000;" onclick="window.OmniApp.openVendorPortal()">Renew</button>
-          </div>
-        ` : ""}
-
         ${v.notices?.marquee ? `
           <div class="notice-marquee">
             <div class="marquee-content">
@@ -186,28 +179,19 @@ export class VCardController {
               </div>
             ` : ""}
 
-            ${v.about.consultationFee ? `
-              <div class="fee-badge-card">
-                <div>
-                  <div class="fee-badge-title">Consultation Base Fee</div>
-                  <div style="font-size: 0.72rem; color: var(--theme-text-muted);">Applicable towards first quote/booking</div>
-                </div>
-                <div class="fee-badge-amount">${currency}${v.about.consultationFee}</div>
-              </div>
-            ` : ""}
-
             <div class="location-card">
               <div class="location-header">
                 <span>📍</span>
                 <div>
-                  <div style="font-weight: 600; color: #FFF;">Address & Working Hours</div>
-                  <div style="font-size: 0.78rem; color: var(--theme-text-muted);">${v.contacts.location}</div>
-                  <div style="font-size: 0.75rem; color: var(--theme-primary); margin-top: 3px;">⏰ ${v.openHours}</div>
+                  <div style="font-weight: 600; color: #FFF; font-size: 0.88rem;">${v.contacts.location}</div>
+                  <div style="font-size: 0.76rem; color: var(--theme-primary); margin-top: 2px;">⏰ ${v.openHours}</div>
                 </div>
               </div>
-              <a href="${v.contacts.mapUrl}" target="_blank" rel="noopener" class="btn-pill" style="width: 100%; justify-content: center;">
-                Open in Google Maps ↗
-              </a>
+              ${v.contacts.mapUrl ? `
+                <a href="${v.contacts.mapUrl}" target="_blank" rel="noopener" class="btn-pill" style="width: 100%; justify-content: center; margin-top: 6px;">
+                  Open Directions ↗
+                </a>
+              ` : ""}
             </div>
           </div>
         </div>
