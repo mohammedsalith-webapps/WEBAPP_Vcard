@@ -20,11 +20,10 @@ export const WhatsAppEngine = {
   },
 
   // 1. Service Quote Request
-  buildQuoteMessage(vendor, selectedServices, client) {
+  buildQuoteMessage(vendor, selectedServices, client = {}) {
     const lines = selectedServices.map((srv, index) => {
       const cat = srv.category ? ` [${srv.category}]` : "";
-      const desc = srv.description ? `\n   ↳ _${srv.description}_` : "";
-      return `${index + 1}. *${srv.name}*${cat}${desc}`;
+      return `${index + 1}. *${srv.name}*${cat}`;
     });
 
     const itemsText = lines.join("\n\n");
@@ -34,10 +33,10 @@ export const WhatsAppEngine = {
     return `*📋 NEW SERVICE QUOTE REQUEST (${srvCount} Service${srvCount > 1 ? 's' : ''})*\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*Business:* ${vendor.branding.businessName}\n` +
-      `*Client Name:* ${client.name}\n` +
-      `*Contact Phone:* ${client.phone}\n` +
+      (client.name ? `*Client Name:* ${client.name}\n` : "") +
+      (client.phone ? `*Contact Phone:* ${client.phone}\n` : "") +
       (client.eventDate ? `*Preferred Date / Timeline:* ${client.eventDate}\n` : "") +
-      (client.notes ? `*Client Requirements & Scope:* ${client.notes}\n` : "") +
+      (client.notes ? `*Requirements & Scope:* ${client.notes}\n` : "") +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*SELECTED SERVICES TO QUOTE:*\n\n${itemsText}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -48,7 +47,7 @@ export const WhatsAppEngine = {
   },
 
   // 2. E-Commerce Cart Order
-  buildOrderMessage(vendor, cartItems, client) {
+  buildOrderMessage(vendor, cartItems, client = {}) {
     const currency = vendor.currency || "₹";
     let total = 0;
     const lines = cartItems.map((item, index) => {
@@ -64,9 +63,9 @@ export const WhatsAppEngine = {
     return `*🛍️ NEW PRODUCT ORDER*\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*Store:* ${vendor.branding.businessName}\n` +
-      `*Customer:* ${client.name}\n` +
-      `*Customer WhatsApp:* ${client.phone}\n` +
-      (client.address ? `*Delivery / Table Address:* ${client.address}\n` : "") +
+      (client.name ? `*Customer:* ${client.name}\n` : "") +
+      (client.phone ? `*Customer WhatsApp:* ${client.phone}\n` : "") +
+      (client.address ? `*Delivery / Table / Notes:* ${client.address}\n` : "") +
       (client.notes ? `*Order Instructions:* ${client.notes}\n` : "") +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*ORDERED ITEMS:*\n\n${itemsText}\n\n` +
@@ -78,15 +77,15 @@ export const WhatsAppEngine = {
   },
 
   // 3. Appointment & Booking Confirmation
-  buildBookingMessage(vendor, booking) {
+  buildBookingMessage(vendor, booking = {}) {
     const currency = vendor.currency || "₹";
     const now = new Date().toLocaleString();
 
     return `*📅 NEW APPOINTMENT BOOKING*\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `*Provider:* ${vendor.branding.businessName}\n` +
-      `*Client:* ${booking.clientName}\n` +
-      `*Phone:* ${booking.clientPhone}\n` +
+      (booking.clientName && booking.clientName !== "WhatsApp Client" ? `*Client:* ${booking.clientName}\n` : "") +
+      (booking.clientPhone ? `*Phone:* ${booking.clientPhone}\n` : "") +
       `*Service:* *${booking.service}*\n` +
       `*Date:* 🗓️ *${booking.date}*\n` +
       `*Time Slot:* ⏰ *${booking.timeSlot}*\n` +

@@ -325,29 +325,19 @@ export class VCardController {
               <label class="form-label">Select Service / Purpose</label>
               <select class="form-select" id="booking-service-select">
                 ${v.services.filter(s => s.visible).map(s => `
-                  <option value="${s.name}">${s.name} (${currency}${s.price})</option>
+                  <option value="${s.name}">${s.name}</option>
                 `).join("")}
-                <option value="General Consultation">General Consultation (${currency}${v.about.consultationFee || 0})</option>
+                <option value="General Consultation">General Consultation</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Your Full Name</label>
-              <input type="text" class="form-input" id="booking-client-name" placeholder="e.g. Ramesh Chandra" required />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">WhatsApp Mobile Number</label>
-              <input type="tel" class="form-input" id="booking-client-phone" placeholder="e.g. 9876543210" required />
-            </div>
-
-            <div class="form-group">
               <label class="form-label">Special Notes / Requirements (Optional)</label>
-              <textarea class="form-textarea" id="booking-client-notes" rows="2" placeholder="Mention guest count, dietary preference, or specific concerns..."></textarea>
+              <input type="text" class="form-input" id="booking-client-notes" placeholder="Mention guest count, timing preference, or concerns..." />
             </div>
 
             <button class="btn-submit-primary" id="btn-submit-booking">
-              <span>Confirm & Send on WhatsApp</span>
+              <span>Confirm & Book on WhatsApp</span>
               <span>📅</span>
             </button>
           </div>
@@ -574,34 +564,21 @@ export class VCardController {
             `).join("")}
           </div>
 
-          <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 12px; margin-bottom: 12px;">
-            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--theme-text-muted); margin-bottom: 8px;">
-              Customer Inquiry Details for WhatsApp:
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 10px 12px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">Your Name *</label>
-                <input type="text" class="form-input" id="quote-inline-name" placeholder="e.g. Priya Sharma" style="padding: 7px 10px; font-size: 0.8rem;" />
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">WhatsApp Number *</label>
-                <input type="tel" class="form-input" id="quote-inline-phone" placeholder="e.g. 9811223344" style="padding: 7px 10px; font-size: 0.8rem;" />
-              </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">Timeline / Event Date</label>
+                <label class="form-label" style="font-size: 0.68rem;">Timeline / Event Date (Optional)</label>
                 <input type="date" class="form-input" id="quote-inline-date" style="padding: 6px 10px; font-size: 0.8rem;" />
               </div>
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">Special Requirements</label>
+                <label class="form-label" style="font-size: 0.68rem;">Special Requirements (Optional)</label>
                 <input type="text" class="form-input" id="quote-inline-notes" placeholder="e.g. Budget, location" style="padding: 7px 10px; font-size: 0.8rem;" />
               </div>
             </div>
           </div>
 
           <button type="button" class="btn-submit-primary" id="btn-submit-inline-quote" style="width: 100%; justify-content: center; padding: 11px;">
-            <span>Submit Quote Request to ${v.branding.businessName}</span>
+            <span>Submit Quote Request via WhatsApp</span>
             <span>💬 ↗</span>
           </button>
         `}
@@ -680,27 +657,14 @@ export class VCardController {
               <span style="color: var(--theme-primary); font-size: 1.2rem;">${currency}${subtotal.toLocaleString()}</span>
             </div>
 
-            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--theme-text-muted); margin-bottom: 8px;">
-              Customer Order Details for WhatsApp:
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">Your Name *</label>
-                <input type="text" class="form-input" id="cart-inline-name" placeholder="e.g. Anish Gupta" style="padding: 7px 10px; font-size: 0.8rem;" />
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">WhatsApp Number *</label>
-                <input type="tel" class="form-input" id="cart-inline-phone" placeholder="e.g. 9822334455" style="padding: 7px 10px; font-size: 0.8rem;" />
-              </div>
-            </div>
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label" style="font-size: 0.68rem;">Delivery Address or Table Number *</label>
-              <textarea class="form-textarea" id="cart-inline-address" rows="2" placeholder="e.g. Flat 302, Green Valley Apartments or Table 4" style="padding: 7px 10px; font-size: 0.8rem;"></textarea>
+              <label class="form-label" style="font-size: 0.68rem;">Delivery Address / Table / Note (Optional)</label>
+              <input type="text" class="form-input" id="cart-inline-address" placeholder="e.g. Table 4 or Address / special notes" style="padding: 7px 10px; font-size: 0.8rem;" />
             </div>
           </div>
 
           <button type="button" class="btn-submit-primary" id="btn-submit-inline-cart" style="width: 100%; justify-content: center; padding: 11px;">
-            <span>Submit Order to ${v.branding.businessName}</span>
+            <span>Submit Order via WhatsApp</span>
             <span>🛍️ ↗</span>
           </button>
         `}
@@ -903,22 +867,12 @@ export class VCardController {
   updateQuotePreview() {
     const container = this.container.querySelector("#quote-preview-container");
     if (container) {
-      // Preserve customer inputs if already typed
-      const prevName = this.container.querySelector("#quote-inline-name")?.value;
-      const prevPhone = this.container.querySelector("#quote-inline-phone")?.value;
+      // Preserve inputs if already typed
       const prevDate = this.container.querySelector("#quote-inline-date")?.value;
       const prevNotes = this.container.querySelector("#quote-inline-notes")?.value;
 
       container.innerHTML = this.renderQuotePreviewCard();
 
-      if (prevName) {
-        const nameInput = this.container.querySelector("#quote-inline-name");
-        if (nameInput) nameInput.value = prevName;
-      }
-      if (prevPhone) {
-        const phoneInput = this.container.querySelector("#quote-inline-phone");
-        if (phoneInput) phoneInput.value = prevPhone;
-      }
       if (prevDate) {
         const dateInput = this.container.querySelector("#quote-inline-date");
         if (dateInput) dateInput.value = prevDate;
@@ -958,15 +912,8 @@ export class VCardController {
     const submitBtn = this.container.querySelector("#btn-submit-inline-quote");
     if (submitBtn) {
       submitBtn.addEventListener("click", () => {
-        const name = this.container.querySelector("#quote-inline-name")?.value.trim();
-        const phone = this.container.querySelector("#quote-inline-phone")?.value.trim();
         const eventDate = this.container.querySelector("#quote-inline-date")?.value;
         const notes = this.container.querySelector("#quote-inline-notes")?.value.trim();
-
-        if (!name || !phone) {
-          window.OmniApp.showToast("Please enter your name and WhatsApp number.");
-          return;
-        }
 
         const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
         if (selectedList.length === 0) {
@@ -974,9 +921,9 @@ export class VCardController {
           return;
         }
 
-        const msg = WhatsAppEngine.buildQuoteMessage(v, selectedList, { name, phone, eventDate, notes });
+        const msg = WhatsAppEngine.buildQuoteMessage(v, selectedList, { eventDate, notes });
         WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
-        window.OmniApp.showToast("Quote inquiry prepared for WhatsApp!");
+        window.OmniApp.showToast("Quote inquiry opened in WhatsApp!");
       });
     }
   }
@@ -1023,14 +970,7 @@ export class VCardController {
     const submitCartBtn = this.container.querySelector("#btn-submit-inline-cart");
     if (submitCartBtn) {
       submitCartBtn.addEventListener("click", () => {
-        const name = this.container.querySelector("#cart-inline-name")?.value.trim();
-        const phone = this.container.querySelector("#cart-inline-phone")?.value.trim();
         const address = this.container.querySelector("#cart-inline-address")?.value.trim();
-
-        if (!name || !phone || !address) {
-          window.OmniApp.showToast("Please provide your name, WhatsApp phone, and delivery/table address.");
-          return;
-        }
 
         const cartItems = Object.entries(this.cart).map(([id, qty]) => {
           const prod = (v.products || []).find(p => p.id === id);
@@ -1042,7 +982,7 @@ export class VCardController {
           return;
         }
 
-        const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { name, phone, address });
+        const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { address });
         WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
         window.OmniApp.showToast("Order prepared for WhatsApp!");
       });
@@ -1082,21 +1022,11 @@ export class VCardController {
     // 3. Re-render Cart Preview Card
     const cartContainer = this.container.querySelector("#cart-preview-container");
     if (cartContainer) {
-      // Preserve customer inputs if already typed
-      const prevName = this.container.querySelector("#cart-inline-name")?.value;
-      const prevPhone = this.container.querySelector("#cart-inline-phone")?.value;
+      // Preserve customer address if already typed
       const prevAddr = this.container.querySelector("#cart-inline-address")?.value;
 
       cartContainer.innerHTML = this.renderCartPreviewCard(currency);
 
-      if (prevName) {
-        const nameInput = this.container.querySelector("#cart-inline-name");
-        if (nameInput) nameInput.value = prevName;
-      }
-      if (prevPhone) {
-        const phoneInput = this.container.querySelector("#cart-inline-phone");
-        if (phoneInput) phoneInput.value = prevPhone;
-      }
       if (prevAddr) {
         const addrInput = this.container.querySelector("#cart-inline-address");
         if (addrInput) addrInput.value = prevAddr;
@@ -1137,20 +1067,13 @@ export class VCardController {
     const submitBooking = this.container.querySelector("#btn-submit-booking");
     if (submitBooking) {
       submitBooking.addEventListener("click", async () => {
-        const clientName = this.container.querySelector("#booking-client-name")?.value.trim();
-        const clientPhone = this.container.querySelector("#booking-client-phone")?.value.trim();
         const service = this.container.querySelector("#booking-service-select")?.value;
-        const notes = this.container.querySelector("#booking-client-notes")?.value.trim();
-
-        if (!clientName || !clientPhone) {
-          window.OmniApp.showToast("Please enter your name and phone number.");
-          return;
-        }
+        const notes = this.container.querySelector("#booking-client-notes")?.value.trim() || "";
 
         const dateStr = this.selectedDate.toISOString().split("T")[0];
         const bookingData = {
-          clientName,
-          clientPhone,
+          clientName: "WhatsApp Client",
+          clientPhone: "",
           service,
           date: dateStr,
           timeSlot: this.selectedSlot,
@@ -1166,9 +1089,8 @@ export class VCardController {
         WhatsAppEngine.openChat(this.vendor.contacts.whatsapp, msg);
 
         // Reset form
-        this.container.querySelector("#booking-client-name").value = "";
-        this.container.querySelector("#booking-client-phone").value = "";
-        this.container.querySelector("#booking-client-notes").value = "";
+        const notesInput = this.container.querySelector("#booking-client-notes");
+        if (notesInput) notesInput.value = "";
       });
     }
   }
