@@ -237,10 +237,14 @@ export class VCardController {
             <div class="tab-topbar-left">
               <div class="tab-topbar-avatar" data-tab-avatar="true" title="Hold for Owner">${v.branding.avatarEmoji || "📋"}</div>
               <div>
-                <div class="tab-topbar-title">Services & Quote Request</div>
-                <div class="tab-topbar-subtitle">Select services to receive an itemized quote on WhatsApp</div>
+                <div class="tab-topbar-title">Services & Quote</div>
+                <div class="tab-topbar-subtitle">Select services to request a quote</div>
               </div>
             </div>
+            <button class="btn-pill active" id="btn-open-services-cart" style="font-size: 0.78rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="View Selected Services">
+              <span>🛒</span>
+              <span id="services-cart-badge" style="background: rgba(0,0,0,0.5); color: var(--theme-primary); border-radius: 10px; padding: 1px 7px; font-weight: 800; font-size: 0.72rem;">${this.selectedServices.size}</span>
+            </button>
           </div>
 
           <!-- Category filter chips -->
@@ -253,9 +257,9 @@ export class VCardController {
             ${this.renderServicesList()}
           </div>
 
-          <!-- Inline Quote Request Preview (Replaces overlapping popup) -->
-          <div id="quote-preview-container">
-            ${this.renderQuotePreviewCard()}
+          <!-- Floating selection bar (opens list modal) -->
+          <div id="services-floating-bar-container">
+            ${this.renderServicesFloatingBar()}
           </div>
         </div>
 
@@ -269,6 +273,10 @@ export class VCardController {
                 <div class="tab-topbar-subtitle">Order items directly via WhatsApp</div>
               </div>
             </div>
+            <button class="btn-pill active" id="btn-open-products-cart" style="font-size: 0.78rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="View Cart">
+              <span>🛒</span>
+              <span id="shop-cart-badge" style="background: rgba(0,0,0,0.5); color: var(--theme-primary); border-radius: 10px; padding: 1px 7px; font-weight: 800; font-size: 0.72rem;">${this.getCartTotalItems()}</span>
+            </button>
           </div>
 
           <!-- Products Listing Stack -->
@@ -276,9 +284,9 @@ export class VCardController {
             ${this.renderProductsList(currency)}
           </div>
 
-          <!-- Inline Cart Preview & Order (Replaces overlapping popup) -->
-          <div id="cart-preview-container">
-            ${this.renderCartPreviewCard(currency)}
+          <!-- Floating cart bar (opens checkout modal) -->
+          <div id="shop-floating-bar-container">
+            ${this.renderShopFloatingBar(currency)}
           </div>
         </div>
 
@@ -524,151 +532,158 @@ export class VCardController {
     `).join("");
   }
 
-  renderQuotePreviewCard() {
-    const v = this.vendor;
-    const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
-    const count = selectedList.length;
-
+  renderServicesFloatingBar() {
+    const count = this.selectedServices.size;
+    if (count === 0) return "";
     return `
-      <div class="quote-preview-card" id="quote-preview-card">
-        <div class="quote-preview-header">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(212,255,0,0.15); color: var(--theme-primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">📋</div>
-            <div>
-              <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF;">Selected Services Preview</div>
-              <div style="font-size: 0.74rem; color: var(--theme-text-muted);">
-                ${count > 0 ? `${count} service(s) selected for inquiry` : "Select services from the catalog above"}
-              </div>
-            </div>
+      <div class="floating-selection-bar">
+        <button type="button" class="btn-floating-action" id="btn-floating-services-cart">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="floating-cart-icon">🛒</span>
+            <span>${count} Service${count > 1 ? 's' : ''} Selected</span>
           </div>
-          ${count > 0 ? `<span class="pill-status-active" style="font-size: 0.68rem; padding: 2px 8px;">${count} Selected</span>` : ''}
-        </div>
-
-        ${count === 0 ? `
-          <div class="preview-empty-notice">
-            No services selected yet. Tap any service card above to add it to your custom quote inquiry.
-          </div>
-        ` : `
-          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;">
-            ${selectedList.map(s => `
-              <div class="quote-preview-item">
-                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                  <span style="color: var(--theme-primary); font-size: 0.9rem;">✓</span>
-                  <div style="min-width: 0;">
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</div>
-                    <div style="font-size: 0.68rem; color: var(--theme-text-muted);">${s.category || 'Service'} · Quote on Request</div>
-                  </div>
-                </div>
-                <button type="button" class="cart-preview-remove-btn" data-remove-service="${s.id}" title="Remove Service">✕</button>
-              </div>
-            `).join("")}
-          </div>
-
-          <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 10px 12px; margin-bottom: 12px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">Timeline / Event Date (Optional)</label>
-                <input type="date" class="form-input" id="quote-inline-date" style="padding: 6px 10px; font-size: 0.8rem;" />
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.68rem;">Special Requirements (Optional)</label>
-                <input type="text" class="form-input" id="quote-inline-notes" placeholder="e.g. Budget, location" style="padding: 7px 10px; font-size: 0.8rem;" />
-              </div>
-            </div>
-          </div>
-
-          <button type="button" class="btn-submit-primary" id="btn-submit-inline-quote" style="width: 100%; justify-content: center; padding: 11px;">
-            <span>Submit Quote Request via WhatsApp</span>
-            <span>💬 ↗</span>
-          </button>
-        `}
+          <span style="font-size: 0.8rem; font-weight: 700; opacity: 0.9;">View Quote List →</span>
+        </button>
       </div>
     `;
   }
 
-  renderCartPreviewCard(currency) {
+  renderServicesModalContent() {
+    const v = this.vendor;
+    const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
+    const count = selectedList.length;
+
+    if (count === 0) {
+      return `
+        <div style="text-align: center; padding: 32px 16px; color: var(--theme-text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🛒</div>
+          <div style="font-size: 0.95rem; font-weight: 700; color: #FFF; margin-bottom: 4px;">No Services Selected</div>
+          <div style="font-size: 0.78rem;">Tap on any service from the catalog to add it to your quote request.</div>
+        </div>
+      `;
+    }
+
+    return `
+      <!-- Selected services in clean list format -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; max-height: 48vh; overflow-y: auto;">
+        ${selectedList.map((s, index) => `
+          <div class="quote-preview-item" style="margin-bottom: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+              <span style="font-weight: 800; color: var(--theme-primary); font-size: 0.88rem; flex-shrink: 0;">${index + 1}.</span>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-size: 0.86rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</div>
+                <div style="font-size: 0.7rem; color: var(--theme-text-muted);">${s.category || 'Service'} · Quote on Request</div>
+              </div>
+            </div>
+            <button type="button" class="cart-preview-remove-btn" data-modal-remove-service="${s.id}" title="Remove Service">✕</button>
+          </div>
+        `).join("")}
+      </div>
+
+      <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 10px 12px; margin-bottom: 14px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.68rem;">Timeline / Event Date (Optional)</label>
+            <input type="date" class="form-input" id="quote-modal-date" style="padding: 6px 10px; font-size: 0.8rem;" />
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.68rem;">Special Requirements (Optional)</label>
+            <input type="text" class="form-input" id="quote-modal-notes" placeholder="e.g. Budget, location" style="padding: 7px 10px; font-size: 0.8rem;" />
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-submit-primary" id="btn-submit-modal-quote" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.92rem;">
+        <span>Submit Quote Request via WhatsApp</span>
+        <span>💬 ↗</span>
+      </button>
+    `;
+  }
+
+  renderShopFloatingBar(currency) {
+    const count = this.getCartTotalItems();
+    if (count === 0) return "";
+    const subtotal = this.getCartSubtotal();
+    return `
+      <div class="floating-selection-bar">
+        <button type="button" class="btn-floating-action" id="btn-floating-shop-cart" style="background: #10B981; color: #FFF;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="floating-cart-icon">🛒</span>
+            <span>${count} Item${count > 1 ? 's' : ''} · ${currency}${subtotal.toLocaleString()}</span>
+          </div>
+          <span style="font-size: 0.8rem; font-weight: 700; opacity: 0.9;">View Cart & Order →</span>
+        </button>
+      </div>
+    `;
+  }
+
+  renderProductsModalContent(currency) {
     const v = this.vendor;
     const totalItems = this.getCartTotalItems();
     const subtotal = this.getCartSubtotal();
     const cartEntries = Object.entries(this.cart).filter(([_, qty]) => qty > 0);
 
-    return `
-      <div class="cart-preview-card" id="cart-preview-card">
-        <div class="cart-preview-header">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16,185,129,0.15); color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">🛒</div>
-            <div>
-              <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF;">Cart Preview & Order</div>
-              <div style="font-size: 0.74rem; color: var(--theme-text-muted);">
-                ${totalItems > 0 ? `${totalItems} item(s) selected in your order` : "Add items above to preview order"}
-              </div>
-            </div>
-          </div>
-          ${totalItems > 0 ? `
-            <div style="text-align: right;">
-              <div style="font-size: 1.15rem; font-weight: 800; color: var(--theme-primary);">
-                ${currency}${subtotal.toLocaleString()}
-              </div>
-            </div>
-          ` : ''}
+    if (totalItems === 0) {
+      return `
+        <div style="text-align: center; padding: 32px 16px; color: var(--theme-text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🛍️</div>
+          <div style="font-size: 0.95rem; font-weight: 700; color: #FFF; margin-bottom: 4px;">Your Cart is Empty</div>
+          <div style="font-size: 0.78rem;">Add products from the catalog to order directly via WhatsApp.</div>
         </div>
+      `;
+    }
 
-        ${totalItems === 0 ? `
-          <div class="preview-empty-notice">
-            Your cart is currently empty. Tap <b>+</b> on any product above to preview your order and submit to ${v.branding.businessName}.
-          </div>
-        ` : `
-          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
-            ${cartEntries.map(([id, qty]) => {
-              const p = (v.products || []).find(prod => prod.id === id);
-              if (!p) return "";
-              const lineTotal = p.price * qty;
-              return `
-                <div class="cart-preview-item">
-                  <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                    <span style="font-size: 1.3rem;">${p.emoji || '🛍️'}</span>
-                    <div style="min-width: 0; flex: 1;">
-                      <div style="font-size: 0.85rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
-                      <div style="font-size: 0.72rem; color: var(--theme-text-muted);">
-                        ${currency}${p.price.toLocaleString()} / ${p.unit || 'unit'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <div class="qty-counter">
-                      <button class="qty-btn" data-cart-action="dec" data-prod-id="${p.id}">−</button>
-                      <span class="qty-val">${qty}</span>
-                      <button class="qty-btn" data-cart-action="inc" data-prod-id="${p.id}">+</button>
-                    </div>
-                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--theme-primary); min-width: 54px; text-align: right;">
-                      ${currency}${lineTotal.toLocaleString()}
-                    </div>
-                    <button type="button" class="cart-preview-remove-btn" data-cart-remove="${p.id}" title="Remove item">🗑️</button>
+    return `
+      <!-- Selected products in clean list format -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 48vh; overflow-y: auto;">
+        ${cartEntries.map(([id, qty]) => {
+          const p = (v.products || []).find(prod => prod.id === id);
+          if (!p) return "";
+          const lineTotal = p.price * qty;
+          return `
+            <div class="cart-preview-item" style="margin-bottom: 0;">
+              <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                <span style="font-size: 1.3rem; flex-shrink: 0;">${p.emoji || '🛍️'}</span>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-size: 0.85rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                  <div style="font-size: 0.72rem; color: var(--theme-text-muted);">
+                    ${currency}${p.price.toLocaleString()} / ${p.unit || 'unit'}
                   </div>
                 </div>
-              `;
-            }).join("")}
-          </div>
+              </div>
 
-          <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 12px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 800; color: #FFF; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-              <span>Total Payable:</span>
-              <span style="color: var(--theme-primary); font-size: 1.2rem;">${currency}${subtotal.toLocaleString()}</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <div class="qty-counter">
+                  <button class="qty-btn" data-modal-cart-action="dec" data-prod-id="${p.id}">−</button>
+                  <span class="qty-val">${qty}</span>
+                  <button class="qty-btn" data-modal-cart-action="inc" data-prod-id="${p.id}">+</button>
+                </div>
+                <div style="font-size: 0.88rem; font-weight: 700; color: var(--theme-primary); min-width: 50px; text-align: right;">
+                  ${currency}${lineTotal.toLocaleString()}
+                </div>
+                <button type="button" class="cart-preview-remove-btn" data-modal-cart-remove="${p.id}" title="Remove item">🗑️</button>
+              </div>
             </div>
-
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label" style="font-size: 0.68rem;">Delivery Address / Table / Note (Optional)</label>
-              <input type="text" class="form-input" id="cart-inline-address" placeholder="e.g. Table 4 or Address / special notes" style="padding: 7px 10px; font-size: 0.8rem;" />
-            </div>
-          </div>
-
-          <button type="button" class="btn-submit-primary" id="btn-submit-inline-cart" style="width: 100%; justify-content: center; padding: 11px;">
-            <span>Submit Order via WhatsApp</span>
-            <span>🛍️ ↗</span>
-          </button>
-        `}
+          `;
+        }).join("")}
       </div>
+
+      <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 12px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 800; color: #FFF; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <span>Total Payable:</span>
+          <span style="color: var(--theme-primary); font-size: 1.2rem;">${currency}${subtotal.toLocaleString()}</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.68rem;">Delivery Address / Table / Note (Optional)</label>
+          <input type="text" class="form-input" id="cart-modal-address" placeholder="e.g. Table 4 or Address / special notes" style="padding: 7px 10px; font-size: 0.8rem;" />
+        </div>
+      </div>
+
+      <button type="button" class="btn-submit-primary" id="btn-submit-modal-cart" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.92rem;">
+        <span>Submit Order via WhatsApp</span>
+        <span>🛍️ ↗</span>
+      </button>
     `;
   }
 
@@ -715,6 +730,38 @@ export class VCardController {
             <span>Publish Review</span>
             <span>🚀</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Modal: Selected Services Quote Preview -->
+      <div class="modal-overlay" id="modal-services-cart">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              <span>🛒</span>
+              <span>Selected Services (<span id="modal-srv-count">${this.selectedServices.size}</span>)</span>
+            </h3>
+            <button class="btn-modal-close" data-close-modal="modal-services-cart">×</button>
+          </div>
+          <div id="modal-services-content">
+            ${this.renderServicesModalContent()}
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Products Cart & Order -->
+      <div class="modal-overlay" id="modal-products-cart">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              <span>🛒</span>
+              <span>Cart & Checkout (<span id="modal-prod-count">${this.getCartTotalItems()}</span>)</span>
+            </h3>
+            <button class="btn-modal-close" data-close-modal="modal-products-cart">×</button>
+          </div>
+          <div id="modal-products-content">
+            ${this.renderProductsModalContent(currency)}
+          </div>
         </div>
       </div>
 
@@ -818,11 +865,11 @@ export class VCardController {
         this.container.querySelector("#services-filter-container").innerHTML = this.renderServiceCategoryChips();
         this.container.querySelector("#services-list-container").innerHTML = this.renderServicesList();
         this.bindCategoryEvents();
-        this.bindServiceCheckboxEvents();
+        this.bindServicesEvents();
       });
     });
 
-    this.bindServiceCheckboxEvents();
+    this.bindServicesEvents();
     this.bindCartEvents();
     this.bindCalendarEvents();
     this.bindModalEvents();
@@ -836,9 +883,29 @@ export class VCardController {
         this.container.querySelector("#services-filter-container").innerHTML = this.renderServiceCategoryChips();
         this.container.querySelector("#services-list-container").innerHTML = this.renderServicesList();
         this.bindCategoryEvents();
-        this.bindServiceCheckboxEvents();
+        this.bindServicesEvents();
       });
     });
+  }
+
+  bindServicesEvents() {
+    // Topbar kart icon button
+    const cartIconBtn = this.container.querySelector("#btn-open-services-cart");
+    if (cartIconBtn) {
+      cartIconBtn.addEventListener("click", () => {
+        this.openServicesCartModal();
+      });
+    }
+
+    // Floating selection bar button
+    const floatBtn = this.container.querySelector("#btn-floating-services-cart");
+    if (floatBtn) {
+      floatBtn.addEventListener("click", () => {
+        this.openServicesCartModal();
+      });
+    }
+
+    this.bindServiceCheckboxEvents();
   }
 
   bindServiceCheckboxEvents() {
@@ -857,43 +924,66 @@ export class VCardController {
           if (cb) cb.checked = true;
         }
 
-        this.updateQuotePreview();
+        this.updateServicesCartState();
       });
     });
-
-    this.bindInlineQuoteEvents();
   }
 
-  updateQuotePreview() {
-    const container = this.container.querySelector("#quote-preview-container");
-    if (container) {
-      // Preserve inputs if already typed
-      const prevDate = this.container.querySelector("#quote-inline-date")?.value;
-      const prevNotes = this.container.querySelector("#quote-inline-notes")?.value;
+  updateServicesCartState() {
+    const count = this.selectedServices.size;
 
-      container.innerHTML = this.renderQuotePreviewCard();
+    // 1. Update topbar kart badge
+    const badge = this.container.querySelector("#services-cart-badge");
+    if (badge) badge.textContent = count;
 
-      if (prevDate) {
-        const dateInput = this.container.querySelector("#quote-inline-date");
-        if (dateInput) dateInput.value = prevDate;
+    // 2. Update floating bar container
+    const floatContainer = this.container.querySelector("#services-floating-bar-container");
+    if (floatContainer) {
+      floatContainer.innerHTML = this.renderServicesFloatingBar();
+      const floatBtn = floatContainer.querySelector("#btn-floating-services-cart");
+      if (floatBtn) {
+        floatBtn.addEventListener("click", () => {
+          this.openServicesCartModal();
+        });
       }
-      if (prevNotes) {
-        const notesInput = this.container.querySelector("#quote-inline-notes");
-        if (notesInput) notesInput.value = prevNotes;
-      }
+    }
 
-      this.bindInlineQuoteEvents();
+    // 3. If modal is currently active, re-render its content
+    const modal = this.container.querySelector("#modal-services-cart");
+    if (modal && modal.classList.contains("active")) {
+      const countEl = modal.querySelector("#modal-srv-count");
+      if (countEl) countEl.textContent = count;
+      const contentEl = modal.querySelector("#modal-services-content");
+      if (contentEl) {
+        contentEl.innerHTML = this.renderServicesModalContent();
+        this.bindServicesModalEvents();
+      }
     }
   }
 
-  bindInlineQuoteEvents() {
-    const v = this.vendor;
+  openServicesCartModal() {
+    const modal = this.container.querySelector("#modal-services-cart");
+    if (!modal) return;
+    const countEl = modal.querySelector("#modal-srv-count");
+    if (countEl) countEl.textContent = this.selectedServices.size;
+    const contentEl = modal.querySelector("#modal-services-content");
+    if (contentEl) {
+      contentEl.innerHTML = this.renderServicesModalContent();
+      this.bindServicesModalEvents();
+    }
+    modal.classList.add("active");
+  }
 
-    // Remove service button inside quote preview
-    this.container.querySelectorAll("[data-remove-service]").forEach(btn => {
+  bindServicesModalEvents() {
+    const v = this.vendor;
+    const modal = this.container.querySelector("#modal-services-cart");
+    if (!modal) return;
+
+    // Remove single service inside modal
+    modal.querySelectorAll("[data-modal-remove-service]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const sId = btn.getAttribute("data-remove-service");
+        const sId = btn.getAttribute("data-modal-remove-service");
         this.selectedServices.delete(sId);
 
         // Synchronize service card in catalog above
@@ -904,16 +994,16 @@ export class VCardController {
           if (cb) cb.checked = false;
         }
 
-        this.updateQuotePreview();
+        this.updateServicesCartState();
       });
     });
 
     // Submit Quote Request to WhatsApp
-    const submitBtn = this.container.querySelector("#btn-submit-inline-quote");
+    const submitBtn = modal.querySelector("#btn-submit-modal-quote");
     if (submitBtn) {
       submitBtn.addEventListener("click", () => {
-        const eventDate = this.container.querySelector("#quote-inline-date")?.value;
-        const notes = this.container.querySelector("#quote-inline-notes")?.value.trim();
+        const eventDate = modal.querySelector("#quote-modal-date")?.value;
+        const notes = modal.querySelector("#quote-modal-notes")?.value.trim();
 
         const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
         if (selectedList.length === 0) {
@@ -924,15 +1014,31 @@ export class VCardController {
         const msg = WhatsAppEngine.buildQuoteMessage(v, selectedList, { eventDate, notes });
         WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
         window.OmniApp.showToast("Quote inquiry opened in WhatsApp!");
+        modal.classList.remove("active");
       });
     }
   }
 
   bindCartEvents() {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
-    const v = this.vendor;
 
-    // Quantity increment / decrement buttons (both on catalog items and in preview card)
+    // Topbar kart icon button
+    const shopCartBtn = this.container.querySelector("#btn-open-products-cart");
+    if (shopCartBtn) {
+      shopCartBtn.addEventListener("click", () => {
+        this.openProductsCartModal(currency);
+      });
+    }
+
+    // Floating bar button
+    const floatShopBtn = this.container.querySelector("#btn-floating-shop-cart");
+    if (floatShopBtn) {
+      floatShopBtn.addEventListener("click", () => {
+        this.openProductsCartModal(currency);
+      });
+    }
+
+    // Quantity increment / decrement buttons on catalog items
     this.container.querySelectorAll("[data-cart-action]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -955,44 +1061,12 @@ export class VCardController {
         this.updateCartState(currency);
       });
     });
-
-    // Remove single item completely from cart
-    this.container.querySelectorAll("[data-cart-remove]").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const prodId = btn.getAttribute("data-cart-remove");
-        delete this.cart[prodId];
-        this.updateCartState(currency);
-      });
-    });
-
-    // Submit Order to WhatsApp
-    const submitCartBtn = this.container.querySelector("#btn-submit-inline-cart");
-    if (submitCartBtn) {
-      submitCartBtn.addEventListener("click", () => {
-        const address = this.container.querySelector("#cart-inline-address")?.value.trim();
-
-        const cartItems = Object.entries(this.cart).map(([id, qty]) => {
-          const prod = (v.products || []).find(p => p.id === id);
-          return { ...prod, quantity: qty };
-        }).filter(item => item && item.quantity > 0);
-
-        if (cartItems.length === 0) {
-          window.OmniApp.showToast("Your cart is empty. Add products before submitting.");
-          return;
-        }
-
-        const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { address });
-        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
-        window.OmniApp.showToast("Order prepared for WhatsApp!");
-      });
-    }
   }
 
   updateCartState(currency) {
     const totalItems = this.getCartTotalItems();
 
-    // 1. Synchronize all product list item counters in catalog above
+    // 1. Synchronize all product list item counters in catalog
     this.container.querySelectorAll(".product-list-item").forEach(item => {
       const incBtn = item.querySelector("[data-cart-action='inc']");
       if (incBtn) {
@@ -1002,7 +1076,11 @@ export class VCardController {
       }
     });
 
-    // 2. Update Dock Cart Badge
+    // 2. Update Topbar Cart Badge
+    const shopBadge = this.container.querySelector("#shop-cart-badge");
+    if (shopBadge) shopBadge.textContent = totalItems;
+
+    // 3. Update Dock Cart Badge
     const dockRoot = document.getElementById("app-dock-root");
     const dockShop = dockRoot?.querySelector(".dock-item[data-tab='shop']");
     if (dockShop) {
@@ -1019,20 +1097,98 @@ export class VCardController {
       }
     }
 
-    // 3. Re-render Cart Preview Card
-    const cartContainer = this.container.querySelector("#cart-preview-container");
-    if (cartContainer) {
-      // Preserve customer address if already typed
-      const prevAddr = this.container.querySelector("#cart-inline-address")?.value;
-
-      cartContainer.innerHTML = this.renderCartPreviewCard(currency);
-
-      if (prevAddr) {
-        const addrInput = this.container.querySelector("#cart-inline-address");
-        if (addrInput) addrInput.value = prevAddr;
+    // 4. Update Floating Bar
+    const floatContainer = this.container.querySelector("#shop-floating-bar-container");
+    if (floatContainer) {
+      floatContainer.innerHTML = this.renderShopFloatingBar(currency);
+      const floatBtn = floatContainer.querySelector("#btn-floating-shop-cart");
+      if (floatBtn) {
+        floatBtn.addEventListener("click", () => {
+          this.openProductsCartModal(currency);
+        });
       }
+    }
 
-      this.bindCartEvents();
+    // 5. If modal is currently active, re-render content
+    const modal = this.container.querySelector("#modal-products-cart");
+    if (modal && modal.classList.contains("active")) {
+      const countEl = modal.querySelector("#modal-prod-count");
+      if (countEl) countEl.textContent = totalItems;
+      const contentEl = modal.querySelector("#modal-products-content");
+      if (contentEl) {
+        contentEl.innerHTML = this.renderProductsModalContent(currency);
+        this.bindProductsModalEvents(currency);
+      }
+    }
+  }
+
+  openProductsCartModal(currency) {
+    const modal = this.container.querySelector("#modal-products-cart");
+    if (!modal) return;
+    const countEl = modal.querySelector("#modal-prod-count");
+    if (countEl) countEl.textContent = this.getCartTotalItems();
+    const contentEl = modal.querySelector("#modal-products-content");
+    if (contentEl) {
+      contentEl.innerHTML = this.renderProductsModalContent(currency);
+      this.bindProductsModalEvents(currency);
+    }
+    modal.classList.add("active");
+  }
+
+  bindProductsModalEvents(currency) {
+    const v = this.vendor;
+    const modal = this.container.querySelector("#modal-products-cart");
+    if (!modal) return;
+
+    // Inc / Dec in modal
+    modal.querySelectorAll("[data-modal-cart-action]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const action = btn.getAttribute("data-modal-cart-action");
+        const prodId = btn.getAttribute("data-prod-id");
+
+        let cur = this.cart[prodId] || 0;
+        if (action === "inc") cur += 1;
+        else if (action === "dec") cur = Math.max(0, cur - 1);
+
+        if (cur === 0) delete this.cart[prodId];
+        else this.cart[prodId] = cur;
+
+        this.updateCartState(currency);
+      });
+    });
+
+    // Remove in modal
+    modal.querySelectorAll("[data-modal-cart-remove]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const prodId = btn.getAttribute("data-modal-cart-remove");
+        delete this.cart[prodId];
+        this.updateCartState(currency);
+      });
+    });
+
+    // Submit Order in modal
+    const submitBtn = modal.querySelector("#btn-submit-modal-cart");
+    if (submitBtn) {
+      submitBtn.addEventListener("click", () => {
+        const address = modal.querySelector("#cart-modal-address")?.value.trim();
+
+        const cartItems = Object.entries(this.cart).map(([id, qty]) => {
+          const prod = (v.products || []).find(p => p.id === id);
+          return { ...prod, quantity: qty };
+        }).filter(item => item && item.quantity > 0);
+
+        if (cartItems.length === 0) {
+          window.OmniApp.showToast("Your cart is empty. Add products before submitting.");
+          return;
+        }
+
+        const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { address });
+        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
+        window.OmniApp.showToast("Order prepared for WhatsApp!");
+        modal.classList.remove("active");
+      });
     }
   }
 
