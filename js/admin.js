@@ -67,6 +67,7 @@ export class AdminConsoleController {
     const plans = db.getSubscriptionPlans();
     const totalCards = vendors.length;
     const activeCards = vendors.filter(v => v.status === "active").length;
+    const expiredCards = vendors.filter(v => new Date(v.expiresAt) < new Date()).length;
 
     // Calculate revenue from vendors based on their plan
     let totalRevenue = 0;
@@ -77,7 +78,51 @@ export class AdminConsoleController {
 
     const activeSubs = vendors.filter(v => v.status === "active" && new Date(v.expiresAt) > new Date()).length;
 
-    return { totalCards, activeCards, totalRevenue, activeSubs };
+    return { totalCards, activeCards, totalRevenue, activeSubs, expiredCards };
+  }
+
+  renderRecentBookingsPreview() {
+    const vendors = db.getVendors();
+    const allBookings = [];
+    vendors.forEach(v => {
+      (v.bookings || []).forEach(b => {
+        allBookings.push({ ...b, vendorName: v.branding.businessName });
+      });
+    });
+    if (allBookings.length === 0) {
+      return `<div style="color: var(--theme-text-muted); font-size: 0.8rem; text-align: center; padding: 14px;">No recent booking requests.</div>`;
+    }
+    return allBookings.slice(0, 3).map(b => `
+      <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; border: 1px solid var(--theme-border); font-size: 0.78rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <b>👤 ${b.clientName}</b>
+          <span style="color: #00E5FF;">@ ${b.vendorName}</span>
+        </div>
+        <div style="color: var(--theme-text-muted);">📅 ${b.date} at ${b.timeSlot || '11:00 AM'} · 📱 ${b.clientPhone}</div>
+      </div>
+    `).join("");
+  }
+
+  renderRecentReviewsPreview() {
+    const vendors = db.getVendors();
+    const allReviews = [];
+    vendors.forEach(v => {
+      (v.reviews || []).forEach(r => {
+        allReviews.push({ ...r, vendorName: v.branding.businessName });
+      });
+    });
+    if (allReviews.length === 0) {
+      return `<div style="color: var(--theme-text-muted); font-size: 0.8rem; text-align: center; padding: 14px;">No recent reviews.</div>`;
+    }
+    return allReviews.slice(0, 3).map(r => `
+      <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; border: 1px solid var(--theme-border); font-size: 0.78rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <b>★ ${r.rating || 5} · ${r.reviewerName || 'Client'}</b>
+          <span style="color: #00E5FF;">@ ${r.vendorName}</span>
+        </div>
+        <div style="color: var(--theme-text-muted); line-height: 1.4;">"${(r.text || '').substring(0, 70)}..."</div>
+      </div>
+    `).join("");
   }
 
   renderDashboard() {
@@ -87,117 +132,92 @@ export class AdminConsoleController {
 
     this.container.innerHTML = `
       <div class="portal-container">
-        <!-- Admin Header -->
-        <div class="portal-header">
-          <div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.6rem;">🛡️</span>
-              <div>
-                <h2 style="font-size: 1.2rem; margin: 0;">${settings.platformName} Admin</h2>
-              </div>
+        <!-- Admin Header matching Screenshot 2 & 4 -->
+        <div class="portal-header" style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--theme-border);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <a href="?view=home" class="btn-pill" style="font-size: 0.76rem; padding: 4px 10px; text-decoration: none;">
+              <span>← Home</span>
+            </a>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 1.2rem; color: #D4FF00;">⚡</span>
+              <span style="font-weight: 800; font-size: 1.15rem; color: #FFFFFF;">${settings.platformName || 'OmniCard'} Console</span>
+              <span class="pill-status-active" style="font-size: 0.65rem; padding: 2px 7px;">LIVE</span>
+              <span style="font-size: 0.75rem; color: var(--theme-text-muted);">${metrics.totalCards} vendors</span>
             </div>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-pill" id="btn-admin-logout">Sign Out</button>
+          <div>
+            <button class="btn-pill" id="btn-admin-logout" style="font-size: 0.76rem;">Sign Out</button>
           </div>
         </div>
 
         <!-- Navigation Tabs -->
         <div class="portal-nav-tabs">
           <button class="portal-tab-btn ${this.activeTab === 'overview' ? 'active' : ''}" data-atab="overview">
-            📊 Stats
+            📊 Dashboard
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'vendors' ? 'active' : ''}" data-atab="vendors">
             👥 Vendors
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'create' ? 'active' : ''}" data-atab="create">
-            ＋ New Card
+            ＋ Register New
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'plans' ? 'active' : ''}" data-atab="plans">
-            💎 Plans
+            💳 Plans
           </button>
           <button class="portal-tab-btn ${this.activeTab === 'settings' ? 'active' : ''}" data-atab="settings">
             ⚙️ Settings
           </button>
         </div>
 
-        <!-- 1. Overview Pane -->
+        <!-- 1. Overview Pane matching Screenshot 4 -->
         <div class="portal-pane ${this.activeTab === 'overview' ? 'active' : ''}" id="apane-overview">
-          <div class="kpi-grid">
-            <div class="kpi-card">
-              <div class="kpi-title">Total Digital Cards</div>
-              <div class="kpi-number" style="color: var(--theme-secondary);">${metrics.totalCards}</div>
-              <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-top: 4px;">Registered on platform</div>
+          <div class="kpi-neon-grid">
+            <div class="kpi-card-neon neon-purple">
+              <div class="kpi-neon-val">${metrics.totalCards}</div>
+              <div class="kpi-neon-lbl">👤 TOTAL VENDORS</div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-title">Active Live Cards</div>
-              <div class="kpi-number" style="color: #10B981;">${metrics.activeCards}</div>
-              <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-top: 4px;">Publicly accessible</div>
+            <div class="kpi-card-neon neon-green">
+              <div class="kpi-neon-val">${metrics.activeCards}</div>
+              <div class="kpi-neon-lbl">✓ ACTIVE CARDS</div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-title">Gross SaaS Revenue</div>
-              <div class="kpi-number" style="color: var(--theme-primary);">${currency}${metrics.totalRevenue.toLocaleString()}</div>
-              <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-top: 4px;">From subscription plans</div>
+            <div class="kpi-card-neon neon-red">
+              <div class="kpi-neon-val">${metrics.expiredCards || 0}</div>
+              <div class="kpi-neon-lbl">🕒 EXPIRED PAGES</div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-title">Active Subscriptions</div>
-              <div class="kpi-number" style="color: #F59E0B;">${metrics.activeSubs}</div>
-              <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-top: 4px;">Unexpired accounts</div>
+            <div class="kpi-card-neon neon-gold">
+              <div class="kpi-neon-val">${currency}${metrics.totalRevenue.toLocaleString()}</div>
+              <div class="kpi-neon-lbl">💳 REVENUE</div>
             </div>
           </div>
 
           <div class="bento-grid bento-grid-2">
             <div class="bento-card">
-              <h3 style="font-size: 1rem; margin-bottom: 12px;">Recent Vendor Activity</h3>
+              <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #FFFFFF;">📅 Recent Booking Requests</h3>
               <div style="display: flex; flex-direction: column; gap: 10px;">
-                ${db.getVendors().slice(0, 4).map(v => `
-                  <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--theme-border);">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span>${v.branding.avatarEmoji || '🏢'}</span>
-                      <div>
-                        <div style="font-weight: 700; font-size: 0.85rem;">${v.branding.businessName}</div>
-                        <div style="font-size: 0.72rem; color: var(--theme-text-muted);">${v.branding.category}</div>
-                      </div>
-                    </div>
-                    <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="font-size: 0.72rem; padding: 2px 8px;">Open ↗</a>
-                  </div>
-                `).join("")}
+                ${this.renderRecentBookingsPreview()}
               </div>
             </div>
 
             <div class="bento-card">
-              <h3 style="font-size: 1rem; margin-bottom: 12px;">Platform Health & Sync</h3>
-              <div style="font-size: 0.85rem; line-height: 1.6; color: var(--theme-text-muted);">
-                <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                  <span>LocalStorage Engine:</span>
-                  <span style="color: #10B981; font-weight: 700;">Operational</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                  <span>Cloud Database:</span>
-                  <span style="color: ${db.isFirebaseReady ? '#10B981' : 'var(--theme-text-muted)'}; font-weight: 700;">
-                    ${db.isFirebaseReady ? 'Firebase Connected' : 'Local Fallback Mode'}
-                  </span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                  <span>PWA Service Worker:</span>
-                  <span style="color: #10B981; font-weight: 700;">Active & Caching</span>
-                </div>
+              <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #FFFFFF;">⭐ Recent Customer Reviews</h3>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                ${this.renderRecentReviewsPreview()}
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 2. Vendors Management Pane -->
+        <!-- 2. Vendors Management Pane matching Screenshot 2 & 3 -->
         <div class="portal-pane ${this.activeTab === 'vendors' ? 'active' : ''}" id="apane-vendors">
           <div class="bento-card" style="margin-bottom: 16px;">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
-              <div style="display: flex; gap: 8px; flex: 1; min-width: 260px;">
+              <div style="display: flex; gap: 8px; flex: 1; min-width: 240px;">
                 <input type="text" class="form-input" id="admin-vendor-search" placeholder="Search by name, owner, or category..." value="${this.vendorFilterQuery}" />
               </div>
-              <div style="display: flex; gap: 6px;">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 ${["all", "active", "suspended", "expired"].map(st => `
                   <button class="filter-chip ${this.vendorFilterStatus === st ? 'active' : ''}" data-admin-status-filter="${st}">
                     ${st.toUpperCase()}
@@ -207,22 +227,9 @@ export class AdminConsoleController {
             </div>
           </div>
 
-          <div class="data-table-card">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Business / Owner</th>
-                    <th>Plan & Expiry</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-vendors-tbody">
-                  ${this.renderVendorTableRows()}
-                </tbody>
-              </table>
-            </div>
+          <!-- Vertical Vendor Cards Stack matching Screenshot 2 & 3 -->
+          <div id="admin-vendors-card-list">
+            ${this.renderVendorCards()}
           </div>
         </div>
 
@@ -381,8 +388,11 @@ export class AdminConsoleController {
           </div>
 
           <div class="bento-grid bento-grid-3">
-            ${db.getSubscriptionPlans().map(plan => `
-              <div class="bento-card" style="${plan.id === 'plan-demo' ? 'border-color: rgba(212,255,0,0.4); background: rgba(212,255,0,0.02);' : ''}">
+            ${db.getSubscriptionPlans().map((plan, idx) => {
+              const isPopular = idx === 1 || plan.id === "growth" || plan.id === "pro-30";
+              return `
+              <div class="bento-card ${isPopular ? 'plan-neon-card' : ''}" style="${plan.id === 'plan-demo' ? 'border-color: rgba(212,255,0,0.4); background: rgba(212,255,0,0.02);' : ''}">
+                ${isPopular ? '<div class="plan-ribbon">POPULAR</div>' : ''}
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                   <div>
                     <h4 style="font-size: 1.05rem; color: #FFF;">${plan.name}</h4>
@@ -411,7 +421,7 @@ export class AdminConsoleController {
                   ${plan.id !== 'plan-demo' ? `<button class="btn-pill" style="padding: 4px 8px; font-size: 0.72rem; color: #EF4444;" data-del-plan="${plan.id}">Delete</button>` : ''}
                 </div>
               </div>
-            `).join("")}
+            `;}).join("")}
           </div>
         </div>
 
@@ -990,6 +1000,98 @@ export class AdminConsoleController {
     this.bindDashboardEvents();
   }
 
+  renderVendorCards() {
+    let vendors = db.getVendors();
+
+    if (this.vendorFilterStatus !== "all") {
+      vendors = vendors.filter(v => v.status === this.vendorFilterStatus);
+    }
+
+    if (this.vendorFilterQuery) {
+      const q = this.vendorFilterQuery.toLowerCase();
+      vendors = vendors.filter(v => 
+        v.branding.businessName.toLowerCase().includes(q) ||
+        v.branding.ownerName.toLowerCase().includes(q) ||
+        v.branding.category.toLowerCase().includes(q)
+      );
+    }
+
+    if (vendors.length === 0) {
+      return `<div style="text-align: center; color: var(--theme-text-muted); padding: 32px 16px; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px dashed var(--theme-border);">No matching vendors found.</div>`;
+    }
+
+    return vendors.map((v, idx) => {
+      const expiryDate = new Date(v.expiresAt);
+      const isExpired = expiryDate < new Date();
+      const diffMs = expiryDate - new Date();
+      const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+      const modules = [];
+      if (v.features?.quoteBuilder !== false) modules.push("📋 Quote");
+      if (v.features?.ecommerceShop !== false) modules.push("🛍️ Shop");
+      if (v.features?.calendarBooking !== false) modules.push("📅 Booking");
+      if (v.features?.customerReviews !== false) modules.push("⭐ Reviews");
+      if (v.features?.promoBanner !== false) modules.push("🏷️ Promo");
+      if (v.features?.pwaInstall !== false) modules.push("📱 PWA");
+
+      return `
+        <div class="admin-vendor-card" data-vendor-id="${v.id}">
+          <div class="vendor-card-header">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+              <div class="vendor-card-avatar ${idx % 2 === 1 ? 'accent-orange' : ''}">
+                ${v.branding.avatarEmoji || '🏢'}
+              </div>
+              <div class="vendor-card-identity" style="min-width: 0;">
+                <div class="vendor-card-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.branding.businessName}</div>
+                <div class="vendor-card-subtitle">${v.branding.ownerName} • ${v.branding.category}</div>
+                <div class="vendor-card-phone">📱 ${v.contacts?.whatsapp || v.contacts?.phone || 'No Phone'} • 🔑 ${v.password || v.pin || '2026'}</div>
+              </div>
+            </div>
+            <span class="${v.status === 'active' ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem; flex-shrink: 0;">
+              ${v.status.toUpperCase()}
+            </span>
+          </div>
+
+          <div class="vendor-plan-line">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+              <span style="color: #A78BFA; font-weight: 700;">Plan: ${v.planId}</span>
+              <span style="color: ${isExpired ? '#EF4444' : '#94A3B8'}; font-size: 0.72rem;">
+                ${isExpired ? '⚠️ EXPIRED' : `⏳ Expires: ${expiryDate.toLocaleDateString()} (${daysLeft}d left)`}
+              </span>
+            </div>
+          </div>
+
+          <div class="vendor-modules-line">
+            <span style="color: #64748B; font-weight: 600;">Active Modules: </span>
+            <span style="color: #CBD5E1;">${modules.length > 0 ? modules.join(" · ") : "None"}</span>
+          </div>
+
+          <div class="vendor-actions-grid">
+            <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="text-decoration: none;">Preview ↗</a>
+            <button class="btn-pill" style="color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
+            <button class="btn-pill" style="color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>
+            <button class="btn-pill" style="color: #10B981;" data-manage-products="${v.id}">🛍️ Products (${v.products?.length || 0})</button>
+            <button class="btn-pill" style="color: #00E5FF;" data-manage-bookings="${v.id}">📅 Bookings (${v.bookings?.length || 0})</button>
+            <button class="btn-pill" style="color: #F59E0B;" data-manage-reviews="${v.id}">★ Reviews (${v.reviews?.length || 0})</button>
+            <button class="btn-pill active" data-manage-vendor="${v.id}">🔐 Console</button>
+            <button class="btn-pill" style="color: var(--theme-primary); border-color: rgba(212,255,0,0.3);" data-assign-demo="${v.id}" title="Assign 3-Day Free Demo">🎁 3d Demo</button>
+            <button class="btn-pill" data-toggle-suspend="${v.id}">${v.status === 'active' ? 'Suspend' : 'Activate'}</button>
+            <button class="btn-pill" data-extend-expiry="${v.id}">+30d</button>
+            <button class="btn-pill" style="color: #EF4444; border-color: rgba(239,68,68,0.3);" data-del-vendor="${v.id}">🗑️ Delete</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  refreshVendorsList() {
+    const cardList = this.container.querySelector("#admin-vendors-card-list");
+    if (cardList) cardList.innerHTML = this.renderVendorCards();
+    const tbody = this.container.querySelector("#admin-vendors-tbody");
+    if (tbody) tbody.innerHTML = this.renderVendorTableRows();
+    this.bindVendorActionButtons();
+  }
+
   renderVendorTableRows() {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
     let vendors = db.getVendors();
@@ -1094,9 +1196,7 @@ export class AdminConsoleController {
     if (searchInput) {
       searchInput.addEventListener("input", (e) => {
         this.vendorFilterQuery = e.target.value.trim();
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     }
 
@@ -1478,9 +1578,7 @@ export class AdminConsoleController {
         this.container.querySelector("#admin-new-srv-desc").value = "";
         this.container.querySelector("#admin-add-srv-panel").style.display = "none";
         this.renderAdminServicesList(vId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     }
 
@@ -1519,9 +1617,7 @@ export class AdminConsoleController {
         this.container.querySelector("#admin-new-prod-desc").value = "";
         this.container.querySelector("#admin-add-prod-panel").style.display = "none";
         this.renderAdminProductsList(vId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     }
 
@@ -1556,9 +1652,7 @@ export class AdminConsoleController {
         this.container.querySelector("#admin-new-rev-content").value = "";
         this.container.querySelector("#admin-add-rev-panel").style.display = "none";
         this.renderAdminReviewsList(vId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     }
 
@@ -1942,9 +2036,7 @@ export class AdminConsoleController {
         const sId = btn.getAttribute("data-admin-toggle-srv");
         await db.toggleService(vendorId, sId);
         this.renderAdminServicesList(vendorId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     });
 
@@ -1955,9 +2047,7 @@ export class AdminConsoleController {
           await db.deleteService(vendorId, sId);
           window.OmniApp.showToast("Service deleted.");
           this.renderAdminServicesList(vendorId);
-          const tbody = this.container.querySelector("#admin-vendors-tbody");
-          if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-          this.bindVendorActionButtons();
+          this.refreshVendorsList();
         }
       });
     });
@@ -1981,9 +2071,7 @@ export class AdminConsoleController {
         });
         window.OmniApp.showToast("Service updated!");
         this.renderAdminServicesList(vendorId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     });
   }
@@ -2039,9 +2127,7 @@ export class AdminConsoleController {
         const pId = btn.getAttribute("data-admin-toggle-prod");
         await db.toggleProduct(vendorId, pId);
         this.renderAdminProductsList(vendorId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     });
 
@@ -2052,9 +2138,7 @@ export class AdminConsoleController {
           await db.deleteProduct(vendorId, pId);
           window.OmniApp.showToast("Product deleted.");
           this.renderAdminProductsList(vendorId);
-          const tbody = this.container.querySelector("#admin-vendors-tbody");
-          if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-          this.bindVendorActionButtons();
+          this.refreshVendorsList();
         }
       });
     });
@@ -2084,9 +2168,7 @@ export class AdminConsoleController {
         });
         window.OmniApp.showToast("Product updated!");
         this.renderAdminProductsList(vendorId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     });
   }
@@ -2152,9 +2234,7 @@ export class AdminConsoleController {
           await db.deleteBooking(vendorId, bId);
           window.OmniApp.showToast("Booking deleted.");
           this.renderAdminBookingsList(vendorId);
-          const tbody = this.container.querySelector("#admin-vendors-tbody");
-          if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-          this.bindVendorActionButtons();
+          this.refreshVendorsList();
         }
       });
     });
@@ -2187,9 +2267,7 @@ export class AdminConsoleController {
         });
         window.OmniApp.showToast("Booking updated!");
         this.renderAdminBookingsList(vendorId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     });
   }
@@ -2237,9 +2315,7 @@ export class AdminConsoleController {
           await db.deleteReview(vendorId, rId);
           window.OmniApp.showToast("Review deleted.");
           this.renderAdminReviewsList(vendorId);
-          const tbody = this.container.querySelector("#admin-vendors-tbody");
-          if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-          this.bindVendorActionButtons();
+          this.refreshVendorsList();
         }
       });
     });
@@ -2263,9 +2339,7 @@ export class AdminConsoleController {
         });
         window.OmniApp.showToast("Review updated!");
         this.renderAdminReviewsList(vendorId);
-        const tbody = this.container.querySelector("#admin-vendors-tbody");
-        if (tbody) tbody.innerHTML = this.renderVendorTableRows();
-        this.bindVendorActionButtons();
+        this.refreshVendorsList();
       });
     });
   }

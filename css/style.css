@@ -506,6 +506,479 @@ button, input, select, textarea {
   background: rgba(37, 211, 102, 0.1);
 }
 
+/* ==========================================================================
+   vCard Header & Mobile Components (Ali's Kitchen Reference Style)
+   ========================================================================== */
+.vcard-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vcard-circle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.vcard-circle-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(1.05);
+}
+
+.avatar-glowing-ring {
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  border: 3.5px solid #FFA500;
+  box-shadow: 0 0 28px rgba(255, 165, 0, 0.45), inset 0 0 16px rgba(255, 165, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  background: #000000;
+  margin: 6px auto 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-glowing-ring:hover {
+  transform: scale(1.04);
+}
+
+.avatar-ring-wrapper.avatar-holding .avatar-glowing-ring {
+  transform: scale(0.92);
+  border-color: #00E5FF;
+  box-shadow: 0 0 35px #00E5FF, inset 0 0 20px #00E5FF;
+}
+
+.vcard-badges-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.vcard-tier-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 165, 0, 0.12);
+  color: #FFA500;
+  border: 1px solid rgba(255, 165, 0, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vcard-verified-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vcard-hero-name {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.2;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.vcard-hero-subtitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #E2E8F0;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.vcard-hero-location {
+  font-size: 0.8rem;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+/* About Our Business Card */
+.about-business-card {
+  margin: 0 16px 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #0F131C;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.about-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: radial-gradient(circle, rgba(255, 165, 0, 0.22), rgba(0, 0, 0, 0.85));
+  border: 1.5px solid rgba(255, 165, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.about-text-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.about-text-desc {
+  font-size: 0.82rem;
+  color: #94A3B8;
+  line-height: 1.45;
+}
+
+/* 4 Circular Action Buttons Row */
+.contact-circles-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 16px 18px;
+}
+
+.contact-circle-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #0F131C;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #FFFFFF;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.contact-circle-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.contact-circle-btn.btn-wa {
+  border-color: rgba(37, 211, 102, 0.4);
+  color: #25D366;
+}
+
+.contact-circle-btn.btn-wa:hover {
+  background: rgba(37, 211, 102, 0.15);
+  box-shadow: 0 0 15px rgba(37, 211, 102, 0.4);
+}
+
+/* Business Information Section Card */
+.biz-info-card {
+  margin: 0 16px 18px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #0F131C;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.biz-info-header {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94A3B8;
+  margin-bottom: 14px;
+}
+
+.biz-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.biz-info-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.biz-info-icon {
+  font-size: 1.15rem;
+  color: #94A3B8;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.biz-info-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  word-break: break-all;
+}
+
+.biz-info-lbl {
+  font-size: 0.72rem;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Admin Vendor Cards (Vertical Stacked Layout - Screenshot 2 & 3)
+   ========================================================================== */
+.admin-vendor-card {
+  background: #0B0E17;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.admin-vendor-card:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.15);
+}
+
+.vendor-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.vendor-card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.vendor-card-avatar.accent-orange {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+.vendor-card-identity {
+  flex: 1;
+}
+
+.vendor-card-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.25;
+}
+
+.vendor-card-subtitle {
+  font-size: 0.76rem;
+  color: #00E5FF;
+  margin-top: 2px;
+}
+
+.vendor-card-phone {
+  font-size: 0.74rem;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+.vendor-plan-line {
+  font-size: 0.76rem;
+  color: #CBD5E1;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  line-height: 1.45;
+}
+
+.vendor-modules-line {
+  font-size: 0.74rem;
+  color: #94A3B8;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.vendor-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.vendor-actions-grid .btn-pill {
+  padding: 7px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Admin Glowing KPI Cards (Screenshot 4)
+   ========================================================================== */
+.kpi-neon-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .kpi-neon-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+.kpi-card-neon {
+  background: #0B0E17;
+  border-radius: 16px;
+  padding: 16px 14px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.kpi-card-neon:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-card-neon.neon-purple {
+  border: 1.5px solid #8B5CF6;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+.kpi-card-neon.neon-purple .kpi-neon-val {
+  color: #A78BFA;
+}
+
+.kpi-card-neon.neon-green {
+  border: 1.5px solid #10B981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+.kpi-card-neon.neon-green .kpi-neon-val {
+  color: #34D399;
+}
+
+.kpi-card-neon.neon-red {
+  border: 1.5px solid #EF4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+.kpi-card-neon.neon-red .kpi-neon-val {
+  color: #F87171;
+}
+
+.kpi-card-neon.neon-gold {
+  border: 1.5px solid #F59E0B;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+.kpi-card-neon.neon-gold .kpi-neon-val {
+  color: #FBBF24;
+}
+
+.kpi-neon-val {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.kpi-neon-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Plan Card Neon Border & Popular Ribbon (Screenshot 5) */
+.plan-neon-card {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #8B5CF6 !important;
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.25) !important;
+  background: #0B0E17 !important;
+}
+
+.plan-ribbon {
+  position: absolute;
+  top: 16px;
+  right: -32px;
+  transform: rotate(45deg);
+  background: #00E5FF;
+  color: #000000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 34px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 /* Promotional Offer Card */
 .promo-card {
   margin: 0 16px 14px;
@@ -617,17 +1090,18 @@ button, input, select, textarea {
 }
 
 .dock-item.active {
-  color: var(--theme-primary);
+  color: var(--theme-primary, #FFA500);
 }
 
-.dock-item.active::before {
+.dock-item.active::after {
   content: '';
   position: absolute;
-  top: 0;
-  width: 24px;
-  height: 2.5px;
-  border-radius: 2px;
-  background: var(--theme-primary);
+  bottom: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--theme-primary, #FFA500);
+  box-shadow: 0 0 6px var(--theme-primary, #FFA500);
 }
 
 .dock-icon {

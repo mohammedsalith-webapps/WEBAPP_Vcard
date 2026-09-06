@@ -259,9 +259,10 @@ export class HomeController {
           </div>
 
           <div class="bento-grid bento-grid-3">
-            ${plans.map(plan => {
+            ${plans.map((plan, idx) => {
               const isDemo = plan.id === "plan-demo";
               const isFree = Number(plan.price) === 0;
+              const isPopular = idx === 1 || plan.id === "growth" || plan.id === "pro-30";
               const priceDisplay = isFree ? "FREE" : `${currency}${Number(plan.price).toLocaleString()}`;
               
               // Direct WhatsApp ordering URL for this specific plan
@@ -271,7 +272,8 @@ export class HomeController {
               const planWaUrl = `https://wa.me/${cleanWa}?text=${planMsg}`;
 
               return `
-                <div class="bento-card" style="display: flex; flex-direction: column; justify-content: space-between; ${isDemo ? 'border-color: rgba(212,255,0,0.45); background: rgba(212,255,0,0.025);' : ''}">
+                <div class="bento-card ${isPopular ? 'plan-neon-card' : ''}" style="display: flex; flex-direction: column; justify-content: space-between; ${isDemo ? 'border-color: rgba(212,255,0,0.45); background: rgba(212,255,0,0.025);' : ''}">
+                  ${isPopular ? '<div class="plan-ribbon">POPULAR</div>' : ''}
                   <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                       <div>

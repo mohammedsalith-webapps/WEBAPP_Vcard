@@ -87,64 +87,92 @@ export class VCardController {
           </div>
         ` : ""}
 
-        <!-- Tab 1: Profile & About Pane (Exclusively includes contacts & offers) -->
+        <!-- Tab 1: Profile & About Pane -->
         <div class="tab-pane ${this.activeTab === 'home' ? 'active' : ''}" id="pane-home">
-          <!-- Profile Header & Branding -->
-          <div class="profile-header-card" style="margin: -0px -16px 14px -16px; border-radius: 0;">
-            <div class="avatar-ring-wrapper" id="vcard-avatar-wrapper" title="Business Logo">
-              <div class="avatar-ring" id="vcard-avatar-ring">
-                ${v.branding.avatarEmoji || "💼"}
-              </div>
-              ${v.verified ? `<div class="avatar-crown-pill" title="Verified Partner">👑</div>` : ""}
+          
+          <!-- Top Navigation Header inside vCard -->
+          <div class="vcard-top-nav">
+            <a href="?view=home" class="vcard-circle-btn" title="Back to Packages">
+              <span>←</span>
+            </a>
+            <div style="display: flex; gap: 8px;">
+              <button class="vcard-circle-btn" id="btn-vcard-settings" title="Vendor Management Console">
+                <span>⚙️</span>
+              </button>
+              <button class="vcard-circle-btn" id="btn-vcard-share" title="Share Business Card">
+                <span>📤</span>
+              </button>
             </div>
+          </div>
 
-            <div class="category-pill">
-              <span>${v.branding.category}</span>
+          <!-- Centered Glowing Avatar Ring -->
+          <div class="avatar-ring-wrapper" id="vcard-avatar-wrapper" title="Hold 1.5s for Vendor Console">
+            <div class="avatar-glowing-ring" id="vcard-avatar-ring">
+              ${v.branding.avatarEmoji || (v.branding.businessName ? v.branding.businessName.substring(0, 2).toUpperCase() : "💼")}
             </div>
+          </div>
 
-            <h1 class="business-title">${v.branding.businessName}</h1>
-            <div class="owner-title">${v.branding.ownerName}</div>
+          <!-- Dual Badges: Category + Verified Partner -->
+          <div class="vcard-badges-row">
+            <span class="vcard-tier-pill">👑 ${v.branding.category.toUpperCase()}</span>
+            <span class="vcard-verified-pill">🛡️ VERIFIED</span>
+          </div>
 
-            <div class="badge-cluster">
-              <div class="status-pill ${v.isOpen ? 'open' : 'closed'}">
-                <span class="status-dot"></span>
-                <span>${v.isOpen ? 'Open Now' : 'Closed'}</span>
+          <!-- Business Titles -->
+          <h1 class="vcard-hero-name">${v.branding.businessName}</h1>
+          <div class="vcard-hero-subtitle">${v.branding.ownerName} · ${v.branding.category}</div>
+          <div class="vcard-hero-location">
+            <span style="color: #FFA500;">📍</span>
+            <span>${v.contacts.location}</span>
+          </div>
+
+          <!-- Status Pills (Open Now + Reviews) -->
+          <div class="vcard-badges-row" style="margin-bottom: 20px;">
+            <div class="status-pill ${v.isOpen ? 'open' : 'closed'}">
+              <span class="status-dot"></span>
+              <span>${v.isOpen ? 'OPEN NOW' : 'CLOSED'}</span>
+            </div>
+            <div class="rating-pill">
+              <span>★</span>
+              <span>${stats.avg} (${stats.count} REVIEWS)</span>
+            </div>
+          </div>
+
+          <!-- About Our Business Card -->
+          <div class="about-business-card">
+            <div class="about-icon-box">
+              <span>${v.branding.avatarEmoji || "🍽️"}</span>
+            </div>
+            <div style="flex: 1;">
+              <div class="about-text-title">
+                <span>👤</span>
+                <span>About Our Business</span>
               </div>
-
-              <div class="rating-pill">
-                <span>★</span>
-                <span>${stats.avg} (${stats.count} reviews)</span>
+              <div class="about-text-desc">
+                ${v.about?.description || v.branding.tagline || 'Excellence in service and customer satisfaction.'}
               </div>
             </div>
           </div>
 
-          <!-- Quick Contact Launcher Bar (Exclusive to Home) -->
-          <div class="quick-launcher-bar" style="padding: 0 0 16px 0;">
-            <a href="tel:${v.contacts.phone}" class="launcher-btn" title="Call Us">
-              <span class="btn-icon">📞</span>
-              <span class="btn-label">Call</span>
-            </a>
-            <button class="launcher-btn whatsapp-accent" id="btn-quick-whatsapp" title="WhatsApp Chat">
-              <span class="btn-icon">💬</span>
-              <span class="btn-label">WhatsApp</span>
+          <!-- 4 Circular Floating Contact Buttons in a Row -->
+          <div class="contact-circles-row">
+            <button class="contact-circle-btn btn-wa" id="btn-quick-whatsapp" title="WhatsApp Chat">
+              <span>💬</span>
             </button>
-            <a href="mailto:${v.contacts.email}" class="launcher-btn" title="Send Email">
-              <span class="btn-icon">✉️</span>
-              <span class="btn-label">Email</span>
+            <a href="tel:${v.contacts.phone}" class="contact-circle-btn" title="Phone Call">
+              <span>📞</span>
             </a>
-            <a href="${v.contacts.mapUrl || '#'}" target="_blank" rel="noopener" class="launcher-btn" title="Get Directions">
-              <span class="btn-icon">📍</span>
-              <span class="btn-label">Location</span>
+            <a href="mailto:${v.contacts.email}" class="contact-circle-btn" title="Send Email">
+              <span>✉️</span>
             </a>
-            <a href="${v.contacts.website || '#'}" target="_blank" rel="noopener" class="launcher-btn" title="Visit Website">
-              <span class="btn-icon">🌐</span>
-              <span class="btn-label">Website</span>
+            <a href="${v.contacts.mapUrl || '#'}" target="_blank" rel="noopener" class="contact-circle-btn" title="Get Directions">
+              <span>📍</span>
             </a>
           </div>
 
-          <!-- Promotional Offer Banner (Exclusive to Home) -->
+          <!-- Promotional Offer Banner (if enabled) -->
           ${v.features.promoBanner && v.promo?.enabled ? `
-            <div class="promo-card" style="margin: 0 0 16px 0;">
+            <div class="promo-card" style="margin: 0 16px 18px;">
               <span class="promo-badge">${v.promo.badge || "SPECIAL OFFER"}</span>
               <h3 class="promo-title">${v.promo.title}</h3>
               <p class="promo-desc">${v.promo.discount}</p>
@@ -155,45 +183,52 @@ export class VCardController {
             </div>
           ` : ""}
 
-          <!-- About Business Section -->
-          <div class="bento-card" style="margin-bottom: 12px;">
-            <div class="section-header" style="margin-top: 0;">
-              <h3 class="section-title">About Business</h3>
-              <span class="section-subtitle">Est. ${v.about.establishedYear || 2020}</span>
+          <!-- BUSINESS INFORMATION Section Card -->
+          <div class="biz-info-card">
+            <div class="biz-info-header">BUSINESS INFORMATION</div>
+            
+            <div class="biz-info-item">
+              <span class="biz-info-icon">📞</span>
+              <div>
+                <div class="biz-info-val">${v.contacts.phone}</div>
+                <div class="biz-info-lbl">Phone</div>
+              </div>
             </div>
-            <p style="font-size: 0.88rem; font-weight: 600; color: var(--theme-secondary); margin-bottom: 6px;">
-              "${v.about.tagline || v.branding.tagline}"
-            </p>
-            <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 14px;">
-              ${v.about.description}
-            </p>
 
-            ${v.about.highlightStats?.length ? `
-              <div class="stats-bento">
-                ${v.about.highlightStats.map(s => `
-                  <div class="stat-box">
-                    <div class="stat-value">${s.value}</div>
-                    <div class="stat-label">${s.label}</div>
-                  </div>
-                `).join("")}
+            <div class="biz-info-item">
+              <span class="biz-info-icon">✉️</span>
+              <div>
+                <div class="biz-info-val">${v.contacts.email}</div>
+                <div class="biz-info-lbl">Email Address</div>
+              </div>
+            </div>
+
+            <div class="biz-info-item">
+              <span class="biz-info-icon">📍</span>
+              <div>
+                <div class="biz-info-val">${v.contacts.location}</div>
+                <div class="biz-info-lbl">Address</div>
+              </div>
+            </div>
+
+            ${v.openHours ? `
+              <div class="biz-info-item">
+                <span class="biz-info-icon">⏰</span>
+                <div>
+                  <div class="biz-info-val">${v.openHours}</div>
+                  <div class="biz-info-lbl">Working Hours</div>
+                </div>
               </div>
             ` : ""}
 
-            <div class="location-card">
-              <div class="location-header">
-                <span>📍</span>
-                <div>
-                  <div style="font-weight: 600; color: #FFF; font-size: 0.88rem;">${v.contacts.location}</div>
-                  <div style="font-size: 0.76rem; color: var(--theme-primary); margin-top: 2px;">⏰ ${v.openHours}</div>
-                </div>
-              </div>
-              ${v.contacts.mapUrl ? `
-                <a href="${v.contacts.mapUrl}" target="_blank" rel="noopener" class="btn-pill" style="width: 100%; justify-content: center; margin-top: 6px;">
-                  Open Directions ↗
-                </a>
-              ` : ""}
-            </div>
+            ${v.contacts.mapUrl ? `
+              <a href="${v.contacts.mapUrl}" target="_blank" rel="noopener" class="btn-pill" style="width: 100%; justify-content: center; margin-top: 14px; text-decoration: none; padding: 10px; font-weight: 700; font-size: 0.82rem;">
+                <span>Open in Google Maps</span>
+                <span>↗</span>
+              </a>
+            ` : ""}
           </div>
+
         </div>
 
         <!-- Tab 2: Services Catalog & Quote Request Builder (Clean Dedicated Page) -->
@@ -678,6 +713,41 @@ export class VCardController {
         this.switchTab(tab);
       });
     });
+
+    // Settings Gear -> Open Owner Login
+    const settingsBtn = this.container.querySelector("#btn-vcard-settings");
+    if (settingsBtn) {
+      settingsBtn.addEventListener("click", () => {
+        const modal = this.container.querySelector("#modal-owner-pin");
+        if (modal) modal.classList.add("active");
+      });
+    }
+
+    // Share Card -> Native share or copy link
+    const shareBtn = this.container.querySelector("#btn-vcard-share");
+    if (shareBtn) {
+      shareBtn.addEventListener("click", async () => {
+        const shareData = {
+          title: v.branding.businessName,
+          text: `Check out ${v.branding.businessName} smart digital vCard!`,
+          url: window.location.href
+        };
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch (err) {
+            // share cancelled or unsupported
+          }
+        } else {
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            window.OmniApp.showToast("vCard link copied to clipboard!");
+          } catch (e) {
+            window.OmniApp.showToast("Link: " + window.location.href);
+          }
+        }
+      });
+    }
 
     // Quick WhatsApp contact
     const quickWa = this.container.querySelector("#btn-quick-whatsapp");
