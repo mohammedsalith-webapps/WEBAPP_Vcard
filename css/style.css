@@ -1999,6 +1999,8 @@ input[type="date"] {
   color: #FFFFFF !important;
   font-weight: 600 !important;
   border: 1.5px solid var(--theme-border-highlight) !important;
+  cursor: pointer;
+  position: relative;
 }
 
 input[type="date"]:hover,
@@ -2012,10 +2014,38 @@ input[type="date"]:valid {
   border-color: var(--theme-primary, #D4FF00) !important;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.5) sepia(1) saturate(5) hue-rotate(25deg);
+/* Date input wrapper & full-click calendar trigger */
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
   cursor: pointer;
-  opacity: 0.95;
+}
+
+.date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.date-input-icon {
+  position: absolute;
+  right: 9px;
+  pointer-events: none;
+  color: var(--theme-primary, #D4FF00);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 5px var(--theme-primary, #D4FF00));
+  z-index: 1;
 }
 
 .btn-submit-primary {

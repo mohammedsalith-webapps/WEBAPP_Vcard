@@ -610,8 +610,18 @@ export class VCardController {
       <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 10px 12px; margin-bottom: 14px;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="font-size: 0.68rem;">Timeline / Event Date (Optional)</label>
-            <input type="date" class="form-input" id="quote-modal-date" style="padding: 6px 10px; font-size: 0.8rem;" />
+            <label class="form-label" style="font-size: 0.68rem; cursor: pointer;" for="quote-modal-date">Timeline / Event Date (Optional)</label>
+            <div class="date-input-wrapper" id="quote-modal-date-wrapper" title="Click to pick date">
+              <input type="date" class="form-input" id="quote-modal-date" style="padding: 7px 32px 7px 10px; font-size: 0.8rem; width: 100%; cursor: pointer;" />
+              <span class="date-input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                  <line x1="16" x2="16" y1="2" y2="6"></line>
+                  <line x1="8" x2="8" y1="2" y2="6"></line>
+                  <line x1="3" x2="21" y1="10" y2="10"></line>
+                </svg>
+              </span>
+            </div>
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.68rem;">Special Requirements (Optional)</label>
@@ -1028,6 +1038,28 @@ export class VCardController {
         window.OmniApp.showToast("Quote inquiry opened in WhatsApp!");
         modal.classList.remove("active");
       });
+    }
+
+    // Trigger calendar picker anywhere user clicks on date input or wrapper
+    const dateInput = modal.querySelector("#quote-modal-date");
+    const dateWrapper = modal.querySelector("#quote-modal-date-wrapper");
+    if (dateInput) {
+      const openCalendar = () => {
+        if (typeof dateInput.showPicker === "function") {
+          try {
+            dateInput.showPicker();
+          } catch (err) {
+            dateInput.focus();
+          }
+        } else {
+          dateInput.focus();
+        }
+      };
+
+      dateInput.addEventListener("click", openCalendar);
+      if (dateWrapper) {
+        dateWrapper.addEventListener("click", openCalendar);
+      }
     }
   }
 
