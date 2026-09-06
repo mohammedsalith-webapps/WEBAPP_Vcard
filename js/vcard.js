@@ -253,16 +253,9 @@ export class VCardController {
             ${this.renderServicesList()}
           </div>
 
-          <!-- Sticky Quote Bar -->
-          <div class="sticky-quote-bar" id="sticky-quote-bar" style="${this.selectedServices.size === 0 ? 'display: none;' : ''}">
-            <div class="sticky-bar-info">
-              <span class="sticky-bar-count">${this.selectedServices.size} Service(s) Selected</span>
-              <span class="sticky-bar-total" style="font-size: 0.92rem; color: var(--theme-primary); font-weight: 700;">Custom Quote Request</span>
-            </div>
-            <button class="btn-sticky-action" id="btn-open-quote-modal">
-              <span>Request Quote</span>
-              <span>📋</span>
-            </button>
+          <!-- Inline Quote Request Preview (Replaces overlapping popup) -->
+          <div id="quote-preview-container">
+            ${this.renderQuotePreviewCard()}
           </div>
         </div>
 
@@ -283,16 +276,9 @@ export class VCardController {
             ${this.renderProductsList(currency)}
           </div>
 
-          <!-- Sticky Cart Bar -->
-          <div class="sticky-cart-bar" id="sticky-cart-bar" style="${this.getCartTotalItems() === 0 ? 'display: none;' : ''}">
-            <div class="sticky-bar-info">
-              <span class="sticky-bar-count">${this.getCartTotalItems()} Item(s) in Cart</span>
-              <span class="sticky-bar-total">${currency}${this.getCartSubtotal().toLocaleString()}</span>
-            </div>
-            <button class="btn-sticky-action" id="btn-open-cart-modal">
-              <span>Review Cart</span>
-              <span>🛒</span>
-            </button>
+          <!-- Inline Cart Preview & Order (Replaces overlapping popup) -->
+          <div id="cart-preview-container">
+            ${this.renderCartPreviewCard(currency)}
           </div>
         </div>
 
@@ -550,89 +536,183 @@ export class VCardController {
     `).join("");
   }
 
+  renderQuotePreviewCard() {
+    const v = this.vendor;
+    const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
+    const count = selectedList.length;
+
+    return `
+      <div class="quote-preview-card" id="quote-preview-card">
+        <div class="quote-preview-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(212,255,0,0.15); color: var(--theme-primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">📋</div>
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF;">Selected Services Preview</div>
+              <div style="font-size: 0.74rem; color: var(--theme-text-muted);">
+                ${count > 0 ? `${count} service(s) selected for inquiry` : "Select services from the catalog above"}
+              </div>
+            </div>
+          </div>
+          ${count > 0 ? `<span class="pill-status-active" style="font-size: 0.68rem; padding: 2px 8px;">${count} Selected</span>` : ''}
+        </div>
+
+        ${count === 0 ? `
+          <div class="preview-empty-notice">
+            No services selected yet. Tap any service card above to add it to your custom quote inquiry.
+          </div>
+        ` : `
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;">
+            ${selectedList.map(s => `
+              <div class="quote-preview-item">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                  <span style="color: var(--theme-primary); font-size: 0.9rem;">✓</span>
+                  <div style="min-width: 0;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</div>
+                    <div style="font-size: 0.68rem; color: var(--theme-text-muted);">${s.category || 'Service'} · Quote on Request</div>
+                  </div>
+                </div>
+                <button type="button" class="cart-preview-remove-btn" data-remove-service="${s.id}" title="Remove Service">✕</button>
+              </div>
+            `).join("")}
+          </div>
+
+          <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 12px; margin-bottom: 12px;">
+            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--theme-text-muted); margin-bottom: 8px;">
+              Customer Inquiry Details for WhatsApp:
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.68rem;">Your Name *</label>
+                <input type="text" class="form-input" id="quote-inline-name" placeholder="e.g. Priya Sharma" style="padding: 7px 10px; font-size: 0.8rem;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.68rem;">WhatsApp Number *</label>
+                <input type="tel" class="form-input" id="quote-inline-phone" placeholder="e.g. 9811223344" style="padding: 7px 10px; font-size: 0.8rem;" />
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.68rem;">Timeline / Event Date</label>
+                <input type="date" class="form-input" id="quote-inline-date" style="padding: 6px 10px; font-size: 0.8rem;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.68rem;">Special Requirements</label>
+                <input type="text" class="form-input" id="quote-inline-notes" placeholder="e.g. Budget, location" style="padding: 7px 10px; font-size: 0.8rem;" />
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-submit-primary" id="btn-submit-inline-quote" style="width: 100%; justify-content: center; padding: 11px;">
+            <span>Submit Quote Request to ${v.branding.businessName}</span>
+            <span>💬 ↗</span>
+          </button>
+        `}
+      </div>
+    `;
+  }
+
+  renderCartPreviewCard(currency) {
+    const v = this.vendor;
+    const totalItems = this.getCartTotalItems();
+    const subtotal = this.getCartSubtotal();
+    const cartEntries = Object.entries(this.cart).filter(([_, qty]) => qty > 0);
+
+    return `
+      <div class="cart-preview-card" id="cart-preview-card">
+        <div class="cart-preview-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16,185,129,0.15); color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">🛒</div>
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF;">Cart Preview & Order</div>
+              <div style="font-size: 0.74rem; color: var(--theme-text-muted);">
+                ${totalItems > 0 ? `${totalItems} item(s) selected in your order` : "Add items above to preview order"}
+              </div>
+            </div>
+          </div>
+          ${totalItems > 0 ? `
+            <div style="text-align: right;">
+              <div style="font-size: 1.15rem; font-weight: 800; color: var(--theme-primary);">
+                ${currency}${subtotal.toLocaleString()}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        ${totalItems === 0 ? `
+          <div class="preview-empty-notice">
+            Your cart is currently empty. Tap <b>+</b> on any product above to preview your order and submit to ${v.branding.businessName}.
+          </div>
+        ` : `
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+            ${cartEntries.map(([id, qty]) => {
+              const p = (v.products || []).find(prod => prod.id === id);
+              if (!p) return "";
+              const lineTotal = p.price * qty;
+              return `
+                <div class="cart-preview-item">
+                  <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                    <span style="font-size: 1.3rem;">${p.emoji || '🛍️'}</span>
+                    <div style="min-width: 0; flex: 1;">
+                      <div style="font-size: 0.85rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                      <div style="font-size: 0.72rem; color: var(--theme-text-muted);">
+                        ${currency}${p.price.toLocaleString()} / ${p.unit || 'unit'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <div class="qty-counter">
+                      <button class="qty-btn" data-cart-action="dec" data-prod-id="${p.id}">−</button>
+                      <span class="qty-val">${qty}</span>
+                      <button class="qty-btn" data-cart-action="inc" data-prod-id="${p.id}">+</button>
+                    </div>
+                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--theme-primary); min-width: 54px; text-align: right;">
+                      ${currency}${lineTotal.toLocaleString()}
+                    </div>
+                    <button type="button" class="cart-preview-remove-btn" data-cart-remove="${p.id}" title="Remove item">🗑️</button>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <div style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); padding: 12px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 800; color: #FFF; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <span>Total Payable:</span>
+              <span style="color: var(--theme-primary); font-size: 1.2rem;">${currency}${subtotal.toLocaleString()}</span>
+            </div>
+
+            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--theme-text-muted); margin-bottom: 8px;">
+              Customer Order Details for WhatsApp:
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.68rem;">Your Name *</label>
+                <input type="text" class="form-input" id="cart-inline-name" placeholder="e.g. Anish Gupta" style="padding: 7px 10px; font-size: 0.8rem;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.68rem;">WhatsApp Number *</label>
+                <input type="tel" class="form-input" id="cart-inline-phone" placeholder="e.g. 9822334455" style="padding: 7px 10px; font-size: 0.8rem;" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.68rem;">Delivery Address or Table Number *</label>
+              <textarea class="form-textarea" id="cart-inline-address" rows="2" placeholder="e.g. Flat 302, Green Valley Apartments or Table 4" style="padding: 7px 10px; font-size: 0.8rem;"></textarea>
+            </div>
+          </div>
+
+          <button type="button" class="btn-submit-primary" id="btn-submit-inline-cart" style="width: 100%; justify-content: center; padding: 11px;">
+            <span>Submit Order to ${v.branding.businessName}</span>
+            <span>🛍️ ↗</span>
+          </button>
+        `}
+      </div>
+    `;
+  }
+
   renderModals(currency) {
     const v = this.vendor;
     return `
-      <!-- Modal: Quote Request -->
-      <div class="modal-overlay" id="modal-quote">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3 class="modal-title"><span>📋</span> Request Custom Service Quote</h3>
-            <button class="btn-modal-close" data-close-modal="modal-quote">×</button>
-          </div>
-          <p id="quote-modal-desc" style="font-size: 0.8rem; color: var(--theme-text-muted); margin-bottom: 12px;">
-            Your selected service(s) will be formatted into a custom inquiry sent directly to ${v.branding.businessName} on WhatsApp.
-          </p>
-
-          <div id="quote-selected-services-preview" style="max-height: 140px; overflow-y: auto; margin-bottom: 14px;">
-            <!-- Selected services preview rendered dynamically -->
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Your Name</label>
-            <input type="text" class="form-input" id="quote-client-name" placeholder="e.g. Priya Sharma" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Your Phone / WhatsApp</label>
-            <input type="tel" class="form-input" id="quote-client-phone" placeholder="e.g. 9811223344" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Event Date / Expected Timeline</label>
-            <input type="date" class="form-input" id="quote-client-date" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Additional Requirements or Questions</label>
-            <textarea class="form-textarea" id="quote-client-notes" rows="2" placeholder="Guest count, venue location, budget preferences..."></textarea>
-          </div>
-
-          <button class="btn-submit-primary" id="btn-submit-quote-whatsapp">
-            <span>Send Quote to WhatsApp</span>
-            <span>💬</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Modal: Cart Review & Checkout -->
-      <div class="modal-overlay" id="modal-cart">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3 class="modal-title"><span>🛒</span> Order Review & Checkout</h3>
-            <button class="btn-modal-close" data-close-modal="modal-cart">×</button>
-          </div>
-
-          <div id="cart-modal-items-list" style="margin-bottom: 14px; max-height: 180px; overflow-y: auto;">
-            <!-- Rendered dynamically -->
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--theme-border); border-bottom: 1px solid var(--theme-border); margin-bottom: 14px;">
-            <span style="font-weight: 700;">Total Payable:</span>
-            <span style="font-weight: 800; font-size: 1.15rem; color: var(--theme-primary);" id="cart-modal-total-amount">₹0</span>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Your Name</label>
-            <input type="text" class="form-input" id="cart-client-name" placeholder="e.g. Anish Gupta" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">WhatsApp Phone Number</label>
-            <input type="tel" class="form-input" id="cart-client-phone" placeholder="e.g. 9822334455" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Delivery Address or Table Number</label>
-            <textarea class="form-textarea" id="cart-client-address" rows="2" placeholder="Apartment / Flat, Street, Landmark or Table 4" required></textarea>
-          </div>
-
-          <button class="btn-submit-primary" id="btn-submit-cart-whatsapp">
-            <span>Route Order to WhatsApp</span>
-            <span>🛍️</span>
-          </button>
-        </div>
-      </div>
 
       <!-- Modal: Write a Review -->
       <div class="modal-overlay" id="modal-review">
@@ -800,37 +880,114 @@ export class VCardController {
   }
 
   bindServiceCheckboxEvents() {
-    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
     this.container.querySelectorAll(".service-card").forEach(card => {
       card.addEventListener("click", (e) => {
         const serviceId = card.getAttribute("data-service-id");
         if (this.selectedServices.has(serviceId)) {
           this.selectedServices.delete(serviceId);
           card.classList.remove("selected");
-          card.querySelector(".service-checkbox").checked = false;
+          const cb = card.querySelector(".service-checkbox");
+          if (cb) cb.checked = false;
         } else {
           this.selectedServices.add(serviceId);
           card.classList.add("selected");
-          card.querySelector(".service-checkbox").checked = true;
+          const cb = card.querySelector(".service-checkbox");
+          if (cb) cb.checked = true;
         }
 
-        // Update Sticky Quote Bar
-        const bar = this.container.querySelector("#sticky-quote-bar");
-        if (this.selectedServices.size > 0) {
-          bar.style.display = "flex";
-          bar.querySelector(".sticky-bar-count").textContent = `${this.selectedServices.size} Service(s) Selected`;
-          const totalLabel = bar.querySelector(".sticky-bar-total");
-          if (totalLabel) totalLabel.textContent = "Custom Quote Request";
-        } else {
-          bar.style.display = "none";
-        }
+        this.updateQuotePreview();
       });
     });
+
+    this.bindInlineQuoteEvents();
+  }
+
+  updateQuotePreview() {
+    const container = this.container.querySelector("#quote-preview-container");
+    if (container) {
+      // Preserve customer inputs if already typed
+      const prevName = this.container.querySelector("#quote-inline-name")?.value;
+      const prevPhone = this.container.querySelector("#quote-inline-phone")?.value;
+      const prevDate = this.container.querySelector("#quote-inline-date")?.value;
+      const prevNotes = this.container.querySelector("#quote-inline-notes")?.value;
+
+      container.innerHTML = this.renderQuotePreviewCard();
+
+      if (prevName) {
+        const nameInput = this.container.querySelector("#quote-inline-name");
+        if (nameInput) nameInput.value = prevName;
+      }
+      if (prevPhone) {
+        const phoneInput = this.container.querySelector("#quote-inline-phone");
+        if (phoneInput) phoneInput.value = prevPhone;
+      }
+      if (prevDate) {
+        const dateInput = this.container.querySelector("#quote-inline-date");
+        if (dateInput) dateInput.value = prevDate;
+      }
+      if (prevNotes) {
+        const notesInput = this.container.querySelector("#quote-inline-notes");
+        if (notesInput) notesInput.value = prevNotes;
+      }
+
+      this.bindInlineQuoteEvents();
+    }
+  }
+
+  bindInlineQuoteEvents() {
+    const v = this.vendor;
+
+    // Remove service button inside quote preview
+    this.container.querySelectorAll("[data-remove-service]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const sId = btn.getAttribute("data-remove-service");
+        this.selectedServices.delete(sId);
+
+        // Synchronize service card in catalog above
+        const sCard = this.container.querySelector(`.service-card[data-service-id="${sId}"]`);
+        if (sCard) {
+          sCard.classList.remove("selected");
+          const cb = sCard.querySelector(".service-checkbox");
+          if (cb) cb.checked = false;
+        }
+
+        this.updateQuotePreview();
+      });
+    });
+
+    // Submit Quote Request to WhatsApp
+    const submitBtn = this.container.querySelector("#btn-submit-inline-quote");
+    if (submitBtn) {
+      submitBtn.addEventListener("click", () => {
+        const name = this.container.querySelector("#quote-inline-name")?.value.trim();
+        const phone = this.container.querySelector("#quote-inline-phone")?.value.trim();
+        const eventDate = this.container.querySelector("#quote-inline-date")?.value;
+        const notes = this.container.querySelector("#quote-inline-notes")?.value.trim();
+
+        if (!name || !phone) {
+          window.OmniApp.showToast("Please enter your name and WhatsApp number.");
+          return;
+        }
+
+        const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
+        if (selectedList.length === 0) {
+          window.OmniApp.showToast("Please select at least one service.");
+          return;
+        }
+
+        const msg = WhatsAppEngine.buildQuoteMessage(v, selectedList, { name, phone, eventDate, notes });
+        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
+        window.OmniApp.showToast("Quote inquiry prepared for WhatsApp!");
+      });
+    }
   }
 
   bindCartEvents() {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+    const v = this.vendor;
 
+    // Quantity increment / decrement buttons (both on catalog items and in preview card)
     this.container.querySelectorAll("[data-cart-action]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -850,39 +1007,105 @@ export class VCardController {
           this.cart[prodId] = cur;
         }
 
-        // Update UI
-        const counter = btn.parentElement.querySelector(".qty-val");
-        if (counter) counter.textContent = cur;
-
-        // Update Sticky Cart Bar
-        const cartBar = this.container.querySelector("#sticky-cart-bar");
-        const totalItems = this.getCartTotalItems();
-        if (totalItems > 0) {
-          cartBar.style.display = "flex";
-          cartBar.querySelector(".sticky-bar-count").textContent = `${totalItems} Item(s) in Cart`;
-          cartBar.querySelector(".sticky-bar-total").textContent = `${currency}${this.getCartSubtotal().toLocaleString()}`;
-        } else {
-          cartBar.style.display = "none";
-        }
-
-        // Update Dock Cart Badge
-        const dockRoot = document.getElementById("app-dock-root");
-        const dockShop = dockRoot?.querySelector(".dock-item[data-tab='shop']");
-        if (dockShop) {
-          let badge = dockShop.querySelector(".badge-cart-count");
-          if (totalItems > 0) {
-            if (!badge) {
-              badge = document.createElement("span");
-              badge.className = "badge-cart-count";
-              dockShop.appendChild(badge);
-            }
-            badge.textContent = totalItems;
-          } else if (badge) {
-            badge.remove();
-          }
-        }
+        this.updateCartState(currency);
       });
     });
+
+    // Remove single item completely from cart
+    this.container.querySelectorAll("[data-cart-remove]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const prodId = btn.getAttribute("data-cart-remove");
+        delete this.cart[prodId];
+        this.updateCartState(currency);
+      });
+    });
+
+    // Submit Order to WhatsApp
+    const submitCartBtn = this.container.querySelector("#btn-submit-inline-cart");
+    if (submitCartBtn) {
+      submitCartBtn.addEventListener("click", () => {
+        const name = this.container.querySelector("#cart-inline-name")?.value.trim();
+        const phone = this.container.querySelector("#cart-inline-phone")?.value.trim();
+        const address = this.container.querySelector("#cart-inline-address")?.value.trim();
+
+        if (!name || !phone || !address) {
+          window.OmniApp.showToast("Please provide your name, WhatsApp phone, and delivery/table address.");
+          return;
+        }
+
+        const cartItems = Object.entries(this.cart).map(([id, qty]) => {
+          const prod = (v.products || []).find(p => p.id === id);
+          return { ...prod, quantity: qty };
+        }).filter(item => item && item.quantity > 0);
+
+        if (cartItems.length === 0) {
+          window.OmniApp.showToast("Your cart is empty. Add products before submitting.");
+          return;
+        }
+
+        const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { name, phone, address });
+        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
+        window.OmniApp.showToast("Order prepared for WhatsApp!");
+      });
+    }
+  }
+
+  updateCartState(currency) {
+    const totalItems = this.getCartTotalItems();
+
+    // 1. Synchronize all product list item counters in catalog above
+    this.container.querySelectorAll(".product-list-item").forEach(item => {
+      const incBtn = item.querySelector("[data-cart-action='inc']");
+      if (incBtn) {
+        const pId = incBtn.getAttribute("data-prod-id");
+        const qtyVal = item.querySelector(".qty-val");
+        if (qtyVal) qtyVal.textContent = this.cart[pId] || 0;
+      }
+    });
+
+    // 2. Update Dock Cart Badge
+    const dockRoot = document.getElementById("app-dock-root");
+    const dockShop = dockRoot?.querySelector(".dock-item[data-tab='shop']");
+    if (dockShop) {
+      let badge = dockShop.querySelector(".badge-cart-count");
+      if (totalItems > 0) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "badge-cart-count";
+          dockShop.appendChild(badge);
+        }
+        badge.textContent = totalItems;
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    // 3. Re-render Cart Preview Card
+    const cartContainer = this.container.querySelector("#cart-preview-container");
+    if (cartContainer) {
+      // Preserve customer inputs if already typed
+      const prevName = this.container.querySelector("#cart-inline-name")?.value;
+      const prevPhone = this.container.querySelector("#cart-inline-phone")?.value;
+      const prevAddr = this.container.querySelector("#cart-inline-address")?.value;
+
+      cartContainer.innerHTML = this.renderCartPreviewCard(currency);
+
+      if (prevName) {
+        const nameInput = this.container.querySelector("#cart-inline-name");
+        if (nameInput) nameInput.value = prevName;
+      }
+      if (prevPhone) {
+        const phoneInput = this.container.querySelector("#cart-inline-phone");
+        if (phoneInput) phoneInput.value = prevPhone;
+      }
+      if (prevAddr) {
+        const addrInput = this.container.querySelector("#cart-inline-address");
+        if (addrInput) addrInput.value = prevAddr;
+      }
+
+      this.bindCartEvents();
+    }
   }
 
   bindCalendarEvents() {
@@ -1012,89 +1235,6 @@ export class VCardController {
         if (e.target === overlay) overlay.classList.remove("active");
       });
     });
-
-    // Open Quote Modal
-    const quoteBtn = this.container.querySelector("#btn-open-quote-modal");
-    if (quoteBtn) {
-      quoteBtn.addEventListener("click", () => {
-        const modal = this.container.querySelector("#modal-quote");
-        if (modal) {
-          const countDesc = modal.querySelector("#quote-modal-desc");
-          if (countDesc) {
-            countDesc.textContent = `Your ${this.selectedServices.size} selected service(s) will be formatted into a custom inquiry sent directly to ${v.branding.businessName} on WhatsApp.`;
-          }
-          const itemsBox = modal.querySelector("#quote-selected-services-preview");
-          if (itemsBox) {
-            const selectedList = (v.services || []).filter(s => this.selectedServices.has(s.id));
-            itemsBox.innerHTML = selectedList.map(s => `
-              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid var(--theme-border); border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; font-size: 0.78rem;">
-                <span style="font-weight: 600; color: #FFF;">${s.name}</span>
-                <span style="font-size: 0.68rem; color: var(--theme-primary);">${s.category || 'Service'}</span>
-              </div>
-            `).join("");
-          }
-          modal.classList.add("active");
-        }
-      });
-    }
-
-    // Submit Quote to WhatsApp
-    const submitQuote = this.container.querySelector("#btn-submit-quote-whatsapp");
-    if (submitQuote) {
-      submitQuote.addEventListener("click", () => {
-        const name = this.container.querySelector("#quote-client-name")?.value.trim();
-        const phone = this.container.querySelector("#quote-client-phone")?.value.trim();
-        const eventDate = this.container.querySelector("#quote-client-date")?.value;
-        const notes = this.container.querySelector("#quote-client-notes")?.value.trim();
-
-        if (!name || !phone) {
-          window.OmniApp.showToast("Please enter your name and phone number.");
-          return;
-        }
-
-        const selectedList = v.services.filter(s => this.selectedServices.has(s.id));
-        const msg = WhatsAppEngine.buildQuoteMessage(v, selectedList, { name, phone, eventDate, notes });
-        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
-
-        this.container.querySelector("#modal-quote")?.classList.remove("active");
-        window.OmniApp.showToast("Quote formatted for WhatsApp!");
-      });
-    }
-
-    // Open Cart Modal
-    const cartBtn = this.container.querySelector("#btn-open-cart-modal");
-    if (cartBtn) {
-      cartBtn.addEventListener("click", () => {
-        this.renderCartModalItems(currency);
-        this.container.querySelector("#modal-cart")?.classList.add("active");
-      });
-    }
-
-    // Submit Cart Order to WhatsApp
-    const submitCart = this.container.querySelector("#btn-submit-cart-whatsapp");
-    if (submitCart) {
-      submitCart.addEventListener("click", () => {
-        const name = this.container.querySelector("#cart-client-name")?.value.trim();
-        const phone = this.container.querySelector("#cart-client-phone")?.value.trim();
-        const address = this.container.querySelector("#cart-client-address")?.value.trim();
-
-        if (!name || !phone || !address) {
-          window.OmniApp.showToast("Please provide your name, phone, and delivery/table address.");
-          return;
-        }
-
-        const cartItems = Object.entries(this.cart).map(([id, qty]) => {
-          const prod = v.products.find(p => p.id === id);
-          return { ...prod, quantity: qty };
-        });
-
-        const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { name, phone, address });
-        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
-
-        this.container.querySelector("#modal-cart")?.classList.remove("active");
-        window.OmniApp.showToast("Order directed to WhatsApp!");
-      });
-    }
 
     // Open Review Modal
     const reviewBtn = this.container.querySelector("#btn-open-review-modal");
