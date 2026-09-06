@@ -1,0 +1,95 @@
+/* Theme definitions for OmniCard Smart Business vCards */
+
+:root {
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Default Sunset Dark Theme */
+  --theme-primary: #D4FF00;      /* Electric Lime */
+  --theme-secondary: #00E5FF;    /* Clean Cyan */
+  --theme-accent: #FF8C69;       /* Soft Peach */
+  --theme-bg: #07090E;           /* Deep Black Void */
+  --theme-card-bg: #0F131C;      /* Bento Card Surface */
+  --theme-card-hover: #161C2A;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(212, 255, 0, 0.3);
+  --theme-text: #F3F4F6;
+  --theme-text-muted: #9CA3AF;
+  --theme-text-dark: #07090E;
+  --theme-danger: #EF4444;
+  --theme-success: #10B981;
+  --theme-warning: #F59E0B;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(212, 255, 0, 0.15);
+}
+
+/* Theme Presets */
+body[data-theme="Sunset Dark"], .theme-sunset-dark {
+  --theme-primary: #D4FF00;
+  --theme-secondary: #00E5FF;
+  --theme-accent: #FF8C69;
+  --theme-bg: #07090E;
+  --theme-card-bg: #0F131C;
+  --theme-card-hover: #161C2A;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(212, 255, 0, 0.3);
+}
+
+body[data-theme="Peach Cream"], .theme-peach-cream {
+  --theme-primary: #FF8C69;
+  --theme-secondary: #D4FF00;
+  --theme-accent: #FFA07A;
+  --theme-bg: #090A10;
+  --theme-card-bg: #131522;
+  --theme-card-hover: #1B1E30;
+  --theme-border: rgba(255, 255, 255, 0.09);
+  --theme-border-highlight: rgba(255, 140, 105, 0.35);
+}
+
+body[data-theme="Glamour Red"], .theme-glamour-red {
+  --theme-primary: #FF3366;
+  --theme-secondary: #FFD166;
+  --theme-accent: #FF758F;
+  --theme-bg: #0A0608;
+  --theme-card-bg: #170F13;
+  --theme-card-hover: #22151B;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(255, 51, 102, 0.35);
+}
+
+body[data-theme="Emerald Green"], .theme-emerald-green {
+  --theme-primary: #10B981;
+  --theme-secondary: #00E5FF;
+  --theme-accent: #34D399;
+  --theme-bg: #060D0A;
+  --theme-card-bg: #0D1B16;
+  --theme-card-hover: #132720;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(16, 185, 129, 0.35);
+}
+
+body[data-theme="Ocean Blue"], .theme-ocean-blue {
+  --theme-primary: #00E5FF;
+  --theme-secondary: #3B82F6;
+  --theme-accent: #818CF8;
+  --theme-bg: #050B14;
+  --theme-card-bg: #0B1626;
+  --theme-card-hover: #10213B;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(0, 229, 255, 0.35);
+}
+
+body[data-theme="Flipkart Blue"], .theme-flipkart-blue {
+  --theme-primary: #2874F0;
+  --theme-secondary: #FFE500;
+  --theme-accent: #FF6161;
+  --theme-bg: #060912;
+  --theme-card-bg: #0E1424;
+  --theme-card-hover: #161E36;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(40, 116, 240, 0.35);
+}

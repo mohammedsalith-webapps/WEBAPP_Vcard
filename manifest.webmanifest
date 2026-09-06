@@ -1,0 +1,17 @@
+{
+  "name": "OmniCard OS - Smart Business vCard",
+  "short_name": "OmniCard",
+  "description": "Next-Gen Smart Business vCard & Vendor Operating System with E-Commerce, Quotes & Booking",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#07090E",
+  "theme_color": "#07090E",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

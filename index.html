@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>OmniCard OS - Smart Business vCard & Vendor Operating System</title>
+  <meta name="description" content="Next-Generation Smart Business vCards with Integrated E-Commerce, Service Quote Builders, Calendar Booking & Review Engine." />
+  <meta name="theme-color" content="#07090E" />
+
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="OmniCard" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
+  <link rel="apple-touch-icon" href="assets/icons/icon.svg" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Firebase Compat SDK (Optional cloud sync) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body data-theme="Sunset Dark">
+
+  <!-- Top System Utility Navigation Bar -->
+  <header class="omni-topbar">
+    <div class="brand-badge" id="brand-home-trigger" title="OmniCard OS">
+      <div class="badge-icon">⚡</div>
+      <span id="topbar-title">OmniCard OS</span>
+    </div>
+
+    <div class="topbar-actions">
+      <!-- Platform Home / Packages Link -->
+      <button class="btn-pill active" id="btn-portal-home" title="View Business Packages & Features">
+        <span>🏠 Packages & Features</span>
+      </button>
+
+      <!-- Demo Cards Selector -->
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <select class="form-select topbar-select" id="topbar-vendor-select" title="Switch Demo vCard" style="max-width: 175px; font-size: 0.75rem; padding: 5px 8px;">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Device Layout Toggle (Phone Shell vs Desktop Canvas) -->
+      <button class="btn-pill" id="btn-toggle-frame" title="Toggle Phone Mockup Shell">
+        <span id="frame-toggle-icon">📱</span>
+        <span id="frame-toggle-label">Phone View</span>
+      </button>
+
+      <!-- Super Admin Access Button -->
+      <button class="btn-pill" id="btn-portal-admin" title="Super Admin Portal">
+        <span>🛡️ Admin</span>
+      </button>
+
+      <!-- PWA Install Prompt Button -->
+      <button class="btn-pill active" id="btn-pwa-install" style="display: none;">
+        <span>⬇ Install App</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Stage Canvas -->
+  <main class="stage-container" id="main-stage">
+    <!-- Interactive Phone Container for vCard Mode -->
+    <div class="device-shell" id="app-shell">
+      <!-- iOS Dynamic Island & Status Bar -->
+      <div class="phone-notch-container">
+        <div class="phone-status-bar">
+          <span id="notch-clock">9:41</span>
+          <div style="display: flex; gap: 6px; align-items: center; font-size: 0.7rem;">
+            <span>5G</span>
+            <span>📶</span>
+            <span>🔋 100%</span>
+          </div>
+        </div>
+        <div class="phone-notch">
+          <div class="notch-sensor"></div>
+          <div class="notch-camera"></div>
+        </div>
+      </div>
+
+      <!-- App Content Screen (Scrollable Body) -->
+      <div class="device-screen" id="app-content-root">
+        <!-- Injected via JavaScript Controller -->
+      </div>
+
+      <!-- App Fixed Dock Root (Permanently pinned at bottom of shell) -->
+      <div id="app-dock-root"></div>
+    </div>
+  </main>
+
+  <!-- Toast Message Container -->
+  <div class="toast-container" id="toast-root"></div>
+
+  <!-- Local file:// protocol detection helper -->
+  <script>
+    if (window.location.protocol === 'file:') {
+      window.addEventListener('DOMContentLoaded', () => {
+        const root = document.getElementById('app-content-root');
+        if (root) {
+          root.innerHTML = `
+            <div style="padding: 24px; text-align: center; color: #FFF; background: #0F131C; border-radius: 16px; margin: 20px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 2.2rem; margin-bottom: 12px;">⚠️</div>
+              <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: #D4FF00;">Web Server Required for ES Modules</h3>
+              <p style="font-size: 0.82rem; color: #94A3B8; line-height: 1.5; margin-bottom: 16px;">
+                Browsers automatically block JavaScript ES Modules (<code style="color: #00E5FF;">import / export</code>) when double-clicking HTML files via <code style="color: #EF4444;">file:///</code> protocol due to CORS security.
+              </p>
+              <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px; text-align: left; font-size: 0.8rem; margin-bottom: 16px;">
+                <div style="font-weight: 700; margin-bottom: 4px; color: #FFF;">To view locally:</div>
+                <div style="color: #CBD5E1;">Open <a href="http://localhost:8080" style="color: #D4FF00; font-weight: 700; text-decoration: underline;">http://localhost:8080</a> in your browser (Python server is already running).</div>
+              </div>
+              <p style="font-size: 0.78rem; color: #64748B;">
+                Once you push your <code style="color: #FFF;">css/</code>, <code style="color: #FFF;">js/</code>, and <code style="color: #FFF;">assets/</code> folders to GitHub, your Vercel deployment (<code style="color: #FFF;">webapp-vcard.vercel.app</code>) will also work automatically.
+              </p>
+            </div>
+          `;
+        }
+      });
+    }
+  </script>
+
+  <!-- Main Application Bootstrap -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
