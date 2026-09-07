@@ -423,10 +423,15 @@ export class VCardController {
           </div>
         </div>
       </div>
-
-      <!-- Modals Container -->
-      ${this.renderModals(currency)}
     `;
+
+    // Render modals into dedicated high-z-index overlay container above dock
+    const modalsRoot = document.getElementById("app-modals-root");
+    if (modalsRoot) {
+      modalsRoot.innerHTML = this.renderModals(currency);
+    } else {
+      this.container.insertAdjacentHTML("beforeend", this.renderModals(currency));
+    }
 
     this.renderBottomDock();
     this.bindEvents();
@@ -769,9 +774,9 @@ export class VCardController {
         </div>
       </div>
 
-      <button type="button" class="btn-submit-primary" id="btn-submit-modal-quote" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.92rem;">
+      <button type="button" class="btn-whatsapp-submit" id="btn-submit-modal-quote">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         <span>Submit Quote Request via WhatsApp</span>
-        <span>💬 ↗</span>
       </button>
     `;
   }
@@ -856,9 +861,9 @@ export class VCardController {
         </div>
       </div>
 
-      <button type="button" class="btn-submit-primary" id="btn-submit-modal-cart" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.92rem;">
+      <button type="button" class="btn-whatsapp-submit" id="btn-submit-modal-cart">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         <span>Submit Order via WhatsApp</span>
-        <span>🛍️ ↗</span>
       </button>
     `;
   }
@@ -902,9 +907,9 @@ export class VCardController {
             <textarea class="form-textarea" id="review-client-text" rows="3" placeholder="Describe your experience with our team and services..." required></textarea>
           </div>
 
-          <button class="btn-submit-primary" id="btn-submit-review">
+          <button type="button" class="btn-whatsapp-submit" id="btn-submit-review">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             <span>Submit Review via WhatsApp</span>
-            <span>💬 ↗</span>
           </button>
         </div>
       </div>
@@ -1131,7 +1136,7 @@ export class VCardController {
     this.updateDockPreviewBar();
 
     // 3. If modal is currently active, re-render its content
-    const modal = this.container.querySelector("#modal-services-cart");
+    const modal = document.getElementById("modal-services-cart");
     if (modal && modal.classList.contains("active")) {
       const countEl = modal.querySelector("#modal-srv-count");
       if (countEl) countEl.textContent = count;
@@ -1144,7 +1149,7 @@ export class VCardController {
   }
 
   openServicesCartModal() {
-    const modal = this.container.querySelector("#modal-services-cart");
+    const modal = document.getElementById("modal-services-cart");
     if (!modal) return;
     const countEl = modal.querySelector("#modal-srv-count");
     if (countEl) countEl.textContent = this.selectedServices.size;
@@ -1154,11 +1159,12 @@ export class VCardController {
       this.bindServicesModalEvents();
     }
     modal.classList.add("active");
+    document.body.classList.add("has-modal-open");
   }
 
   bindServicesModalEvents() {
     const v = this.vendor;
-    const modal = this.container.querySelector("#modal-services-cart");
+    const modal = document.getElementById("modal-services-cart");
     if (!modal) return;
 
     // Remove single service inside modal
@@ -1197,6 +1203,9 @@ export class VCardController {
         WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
         window.OmniApp.showToast("Quote inquiry opened in WhatsApp!");
         modal.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
       });
     }
 
@@ -1285,7 +1294,7 @@ export class VCardController {
     this.updateDockPreviewBar();
 
     // 5. If modal is currently active, re-render content
-    const modal = this.container.querySelector("#modal-products-cart");
+    const modal = document.getElementById("modal-products-cart");
     if (modal && modal.classList.contains("active")) {
       const countEl = modal.querySelector("#modal-prod-count");
       if (countEl) countEl.textContent = totalItems;
@@ -1298,7 +1307,7 @@ export class VCardController {
   }
 
   openProductsCartModal(currency) {
-    const modal = this.container.querySelector("#modal-products-cart");
+    const modal = document.getElementById("modal-products-cart");
     if (!modal) return;
     const countEl = modal.querySelector("#modal-prod-count");
     if (countEl) countEl.textContent = this.getCartTotalItems();
@@ -1308,11 +1317,12 @@ export class VCardController {
       this.bindProductsModalEvents(currency);
     }
     modal.classList.add("active");
+    document.body.classList.add("has-modal-open");
   }
 
   bindProductsModalEvents(currency) {
     const v = this.vendor;
-    const modal = this.container.querySelector("#modal-products-cart");
+    const modal = document.getElementById("modal-products-cart");
     if (!modal) return;
 
     // Inc / Dec in modal
@@ -1363,6 +1373,9 @@ export class VCardController {
         WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
         window.OmniApp.showToast("Order prepared for WhatsApp!");
         modal.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
       });
     }
   }
@@ -1502,19 +1515,28 @@ export class VCardController {
   bindModalEvents() {
     const v = this.vendor;
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+    const modalsRoot = document.getElementById("app-modals-root") || this.container;
 
     // Close buttons
-    this.container.querySelectorAll("[data-close-modal]").forEach(btn => {
+    modalsRoot.querySelectorAll("[data-close-modal]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-close-modal");
-        this.container.querySelector(`#${id}`)?.classList.remove("active");
+        document.getElementById(id)?.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
       });
     });
 
     // Close on clicking backdrop
-    this.container.querySelectorAll(".modal-overlay").forEach(overlay => {
+    modalsRoot.querySelectorAll(".modal-overlay").forEach(overlay => {
       overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) overlay.classList.remove("active");
+        if (e.target === overlay) {
+          overlay.classList.remove("active");
+          if (!document.querySelector(".modal-overlay.active")) {
+            document.body.classList.remove("has-modal-open");
+          }
+        }
       });
     });
 
@@ -1522,12 +1544,13 @@ export class VCardController {
     const reviewBtn = this.container.querySelector("#btn-open-review-modal");
     if (reviewBtn) {
       reviewBtn.addEventListener("click", () => {
-        this.container.querySelector("#modal-review")?.classList.add("active");
+        document.getElementById("modal-review")?.classList.add("active");
+        document.body.classList.add("has-modal-open");
       });
     }
 
     // Star rating picker in modal
-    const starSpans = this.container.querySelectorAll("#review-stars-selector span");
+    const starSpans = modalsRoot.querySelectorAll("#review-stars-selector span");
     starSpans.forEach(span => {
       span.addEventListener("click", () => {
         const rating = Number(span.getAttribute("data-star"));
@@ -1540,7 +1563,7 @@ export class VCardController {
     });
 
     // Review tag chips picker
-    this.container.querySelectorAll("[data-review-tag]").forEach(chip => {
+    modalsRoot.querySelectorAll("[data-review-tag]").forEach(chip => {
       chip.addEventListener("click", () => {
         const tag = chip.getAttribute("data-review-tag");
         if (this.selectedReviewTags.has(tag)) {
@@ -1554,11 +1577,11 @@ export class VCardController {
     });
 
     // Submit Review
-    const submitReview = this.container.querySelector("#btn-submit-review");
+    const submitReview = modalsRoot.querySelector("#btn-submit-review");
     if (submitReview) {
       submitReview.addEventListener("click", async () => {
-        const author = this.container.querySelector("#review-client-name")?.value.trim();
-        const content = this.container.querySelector("#review-client-text")?.value.trim();
+        const author = modalsRoot.querySelector("#review-client-name")?.value.trim();
+        const content = modalsRoot.querySelector("#review-client-text")?.value.trim();
 
         if (!author || !content) {
           window.OmniApp.showToast("Please enter your name and review feedback.");
@@ -1574,7 +1597,10 @@ export class VCardController {
 
         await db.addReview(v.id, reviewData);
 
-        this.container.querySelector("#modal-review")?.classList.remove("active");
+        document.getElementById("modal-review")?.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
         window.OmniApp.showToast("Thank you! Review submitted via WhatsApp.");
 
         // Dispatch review to vendor via WhatsApp
@@ -1617,9 +1643,10 @@ export class VCardController {
         }
 
         // Open secret owner PIN modal
-        const modal = this.container.querySelector("#modal-owner-pin");
+        const modal = document.getElementById("modal-owner-pin");
         if (modal) {
           modal.classList.add("active");
+          document.body.classList.add("has-modal-open");
           const pinInput = modal.querySelector("#input-owner-secret-pin");
           if (pinInput) {
             pinInput.value = "";
@@ -1682,19 +1709,22 @@ export class VCardController {
     });
 
     // Form submission for secret owner Password / PIN
-    const pinForm = this.container.querySelector("#form-secret-owner-pin");
+    const pinForm = (document.getElementById("app-modals-root") || this.container).querySelector("#form-secret-owner-pin");
     if (pinForm) {
       pinForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const enteredPin = this.container.querySelector("#input-owner-secret-pin")?.value.trim();
+        const enteredPin = document.getElementById("input-owner-secret-pin")?.value.trim();
         const validPassword = this.vendor.password || this.vendor.pin || "2026";
         if (enteredPin === validPassword || enteredPin === this.vendor.pin) {
-          this.container.querySelector("#modal-owner-pin")?.classList.remove("active");
+          document.getElementById("modal-owner-pin")?.classList.remove("active");
+          if (!document.querySelector(".modal-overlay.active")) {
+            document.body.classList.remove("has-modal-open");
+          }
           window.OmniApp.showToast(`Owner Verified: Welcome ${this.vendor.branding.businessName}`);
           window.OmniApp.adminManageVendor(this.vendor.id);
         } else {
           window.OmniApp.showToast("Access Denied: Incorrect Password.");
-          const pinInput = this.container.querySelector("#input-owner-secret-pin");
+          const pinInput = document.getElementById("input-owner-secret-pin");
           if (pinInput) {
             pinInput.value = "";
             pinInput.focus();
@@ -1705,8 +1735,8 @@ export class VCardController {
   }
 
   renderCartModalItems(currency) {
-    const listEl = this.container.querySelector("#cart-modal-items-list");
-    const totalEl = this.container.querySelector("#cart-modal-total-amount");
+    const listEl = document.getElementById("cart-modal-items-list");
+    const totalEl = document.getElementById("cart-modal-total-amount");
     if (!listEl) return;
 
     const items = Object.entries(this.cart).map(([id, qty]) => {

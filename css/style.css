@@ -1920,12 +1920,24 @@ button, input, select, textarea {
 /* ==========================================================================
    Modals & Popups Framework
    ========================================================================== */
+#app-modals-root {
+  position: relative;
+  z-index: 100000;
+}
+
+/* Dock is completely hidden when any modal is open to eliminate clipping/overlapping */
+body.has-modal-open #app-dock-root,
+.has-modal-open #app-dock-root {
+  display: none !important;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(12px);
+  z-index: 100000 !important;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1941,19 +1953,63 @@ button, input, select, textarea {
 
 .modal-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
   background: #0F131C;
   border: 1px solid var(--theme-border-highlight);
+  border-bottom: none;
   border-radius: 24px 24px 0 0;
-  padding: 20px;
+  padding: 20px 18px calc(28px + env(safe-area-inset-bottom, 16px));
   max-height: 85vh;
   overflow-y: auto;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.9);
+  position: relative;
+  z-index: 100001 !important;
+  box-sizing: border-box;
 }
 
 .modal-overlay.active .modal-card {
   transform: translateY(0);
+}
+
+/* WhatsApp Submit Button (High-converting, vibrant official green, maximum contrast & clarity) */
+.btn-whatsapp-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: #25D366 !important;
+  color: #05230F !important;
+  font-family: inherit;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  letter-spacing: -0.01em;
+  padding: 14px 20px !important;
+  border-radius: 999px !important;
+  border: none !important;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  box-sizing: border-box;
+  margin-top: 6px;
+  user-select: none;
+}
+
+.btn-whatsapp-submit:hover {
+  background: #22bf5b !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 26px rgba(37, 211, 102, 0.65);
+}
+
+.btn-whatsapp-submit:active {
+  transform: translateY(0);
+}
+
+.btn-whatsapp-submit svg {
+  flex-shrink: 0;
 }
 
 .modal-header {
@@ -2984,7 +3040,7 @@ input[type="date"]:valid {
     max-width: 100% !important;
     width: 100% !important;
     border-radius: 20px 20px 0 0;
-    padding: 16px 14px 24px;
+    padding: 18px 16px calc(32px + env(safe-area-inset-bottom, 20px)) !important;
     box-sizing: border-box;
     max-height: 90vh;
   }
