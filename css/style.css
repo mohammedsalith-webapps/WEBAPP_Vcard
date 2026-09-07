@@ -2953,6 +2953,113 @@ input[type="date"]:valid {
   margin-top: 24px;
 }
 
+/* Featured Demo vCard Showcase Card */
+.demo-vcard-showcase-card {
+  background: linear-gradient(135deg, rgba(212, 255, 0, 0.06) 0%, rgba(15, 19, 28, 0.98) 100%);
+  border: 1.5px solid rgba(212, 255, 0, 0.35);
+  border-radius: 20px;
+  padding: 20px 22px;
+  margin-top: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 20px rgba(212, 255, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-showcase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 255, 0, 0.12);
+  border: 1px solid rgba(212, 255, 0, 0.3);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--theme-primary, #D4FF00);
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+
+.demo-showcase-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.demo-showcase-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(212, 255, 0, 0.1);
+  border: 1.5px solid rgba(212, 255, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  flex-shrink: 0;
+}
+
+.demo-showcase-info {
+  flex: 1;
+  min-width: 220px;
+}
+
+.demo-showcase-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+.demo-showcase-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.demo-showcase-sub {
+  font-size: 0.78rem;
+  color: var(--theme-text-muted, #94A3B8);
+  margin-bottom: 8px;
+}
+
+.demo-showcase-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.demo-showcase-action {
+  flex-shrink: 0;
+}
+
+.btn-demo-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--theme-primary, #D4FF00);
+  color: #000000;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(212, 255, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-demo-launch:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 255, 0, 0.5);
+}
+
+.btn-demo-launch:active {
+  transform: scale(0.97);
+}
+
 /* Admin Tab Toggle Badges on Vendor Cards */
 .admin-tab-toggles-row {
   display: flex;

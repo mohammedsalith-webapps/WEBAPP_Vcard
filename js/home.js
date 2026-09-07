@@ -18,6 +18,16 @@ export class HomeController {
     const cleanWa = rawWa.replace(/[^0-9]/g, "");
     const plans = db.getSubscriptionPlans() || [];
     const vendors = db.getVendors() || [];
+    // Select the primary flagship vendor as the live demo
+    const demoVendor = vendors.find(v => v.slug === "elite-catering" || v.id === "elite-catering") || vendors[0] || {
+      slug: "elite-catering",
+      id: "elite-catering",
+      branding: {
+        businessName: "Elite Banquet & Gourmet Catering",
+        category: "ELITE CATERING & EVENTS",
+        avatarEmoji: "🍛"
+      }
+    };
 
     // General WhatsApp support link
     const generalInquiryText = encodeURIComponent(
@@ -45,12 +55,16 @@ export class HomeController {
 
           <!-- Top Quick Actions -->
           <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-            <a href="?view=admin" class="btn-pill active" style="text-decoration: none; padding: 9px 18px; font-weight: 700; font-size: 0.84rem;">
+            <a href="?v=${demoVendor.slug || demoVendor.id}" class="btn-pill active" style="text-decoration: none; padding: 9px 18px; font-weight: 700; font-size: 0.84rem; background: var(--theme-primary, #D4FF00); color: #000;">
+              <span>👁️ Try Live Demo vCard</span>
+              <span>→</span>
+            </a>
+            <a href="?view=admin" class="btn-pill" style="text-decoration: none; padding: 9px 18px; font-weight: 700; font-size: 0.84rem;">
               <span>🛡️ Admin Login</span>
               <span>→</span>
             </a>
             <a href="${generalWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-pill" style="text-decoration: none; padding: 9px 18px; font-weight: 600; font-size: 0.84rem; color: #25D366; border-color: rgba(37,211,102,0.35);">
-              <span>💬 WhatsApp Support</span>
+              <span>💬 WhatsApp</span>
               <span>↗</span>
             </a>
           </div>
@@ -247,19 +261,42 @@ export class HomeController {
           </a>
         </div>
 
-        <!-- 5. Quick Demo vCards -->
-        <div style="margin-top: 24px; text-align: center;">
-          <div style="font-size: 0.76rem; color: var(--theme-text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-            Test Live Demo vCards:
+        <!-- 5. Featured Live Demo vCard Showcase -->
+        <div class="demo-vcard-showcase-card">
+          <div class="demo-showcase-badge">
+            <span>✨</span>
+            <span>EXPERIENCE LIVE VCARD</span>
           </div>
-          <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
-            ${vendors.map(v => `
-              <a href="?v=${v.slug || v.id}" class="btn-pill" style="text-decoration: none; font-size: 0.78rem; padding: 5px 12px;">
-                <span>${v.branding.avatarEmoji || '🏢'}</span>
-                <span>${v.branding.businessName}</span>
-                <span>↗</span>
+
+          <div class="demo-showcase-body">
+            <div class="demo-showcase-avatar">
+              <span>${demoVendor.branding?.avatarEmoji || '🍛'}</span>
+            </div>
+
+            <div class="demo-showcase-info">
+              <div class="demo-showcase-name-row">
+                <h3 class="demo-showcase-title">${demoVendor.branding?.businessName || 'Elite Banquet & Gourmet Catering'}</h3>
+                <span class="pill-status-active" style="font-size: 0.65rem; padding: 2px 7px;">★ VERIFIED</span>
+              </div>
+              <div class="demo-showcase-sub">
+                ${demoVendor.branding?.category || 'Elite Catering & Events'} • Full Interactive Demo
+              </div>
+              <div class="demo-showcase-tags">
+                <span class="package-tab-tag active">✓ 🏠 Profile</span>
+                <span class="package-tab-tag active">✓ 📋 Services Quote</span>
+                <span class="package-tab-tag active">✓ 🛍️ Shop Checkout</span>
+                <span class="package-tab-tag active">✓ 📅 Booking</span>
+                <span class="package-tab-tag active">✓ ★ Reviews</span>
+                <span class="package-tab-tag active">✓ 📱 1-Tap PWA</span>
+              </div>
+            </div>
+
+            <div class="demo-showcase-action">
+              <a href="?v=${demoVendor.slug || demoVendor.id}" class="btn-demo-launch">
+                <span>👁️ Launch Live Demo</span>
+                <span>→</span>
               </a>
-            `).join("")}
+            </div>
           </div>
         </div>
 
