@@ -405,11 +405,11 @@ export class VCardController {
           </div>
 
           <!-- Rating Overview -->
-          <div class="rating-overview-card">
+          <div class="rating-overview-card" id="rating-overview-container">
             <div>
               <div class="rating-big-score">${stats.avg}</div>
               <div class="rating-stars-row">★★★★★</div>
-              <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Based on ${stats.count} ratings</div>
+              <div class="rating-based-count" style="font-size: 0.75rem; color: var(--theme-text-muted);">Based on ${stats.count} ratings</div>
             </div>
             <div style="flex: 1; font-size: 0.8rem; color: var(--theme-text-muted); border-left: 1px solid var(--theme-border); padding-left: 16px;">
               <p style="color: #FFF; font-weight: 600; margin-bottom: 4px;">Top Client Compliments</p>
@@ -689,11 +689,15 @@ export class VCardController {
     return reviews.map(r => `
       <div class="review-item-card">
         <div class="review-author-row">
-          <div class="review-author-name">${r.author}</div>
-          <div class="review-date">${r.date}</div>
+          <div class="review-author-name" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+            <span style="font-size: 0.95rem;">👤</span>
+            <span>${r.author}</span>
+            <span style="font-size: 0.65rem; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Verified Customer</span>
+          </div>
+          <div class="review-date">${r.date || 'Recently'}</div>
         </div>
-        <div style="color: #F59E0B; font-size: 0.82rem; margin-bottom: 4px;">
-          ${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}
+        <div style="color: #F59E0B; font-size: 0.82rem; margin: 4px 0;">
+          ${"★".repeat(Math.max(1, Math.min(5, Number(r.rating) || 5)))}${"☆".repeat(Math.max(0, 5 - (Number(r.rating) || 5)))}
         </div>
         ${r.tags?.length ? `
           <div class="review-tags-cluster">
@@ -909,9 +913,9 @@ export class VCardController {
             <textarea class="form-textarea" id="review-client-text" rows="3" placeholder="Describe your experience with our team and services..." required></textarea>
           </div>
 
-          <button type="button" class="btn-whatsapp-submit" id="btn-submit-review">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            <span>Submit Review via WhatsApp</span>
+          <button type="button" class="btn-submit-primary" id="btn-submit-review" style="width: 100%; padding: 13px 18px; font-size: 0.92rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>Post Customer Review</span>
+            <span>★</span>
           </button>
         </div>
       </div>
@@ -1592,26 +1596,43 @@ export class VCardController {
 
         const reviewData = {
           author,
-          rating: this.selectedReviewRating,
-          tags: Array.from(this.selectedReviewTags),
+          rating: this.selectedReviewRating || 5,
+          tags: Array.from(this.selectedReviewTags || []),
           content
         };
 
         await db.addReview(v.id, reviewData);
 
+        // Update in-memory vendor so newly submitted review renders immediately
+        this.vendor = db.getVendor(v.id);
+
         document.getElementById("modal-review")?.classList.remove("active");
         if (!document.querySelector(".modal-overlay.active")) {
           document.body.classList.remove("has-modal-open");
         }
-        window.OmniApp.showToast("Thank you! Review submitted via WhatsApp.");
 
-        // Dispatch review to vendor via WhatsApp
-        const waMsg = WhatsAppEngine.buildReviewMessage(v, reviewData);
-        WhatsAppEngine.openChat(v.contacts.whatsapp, waMsg);
+        // Reset form inputs for next time
+        if (modalsRoot.querySelector("#review-client-name")) modalsRoot.querySelector("#review-client-name").value = "";
+        if (modalsRoot.querySelector("#review-client-text")) modalsRoot.querySelector("#review-client-text").value = "";
 
-        // Refresh reviews list & stats
-        this.container.querySelector("#reviews-list-container").innerHTML = this.renderReviewsList();
+        window.OmniApp.showToast(`Thank you, ${author}! Your review is now live. ★`);
+
+        // Refresh reviews list on page immediately
+        const reviewsContainer = this.container.querySelector("#reviews-list-container");
+        if (reviewsContainer) {
+          reviewsContainer.innerHTML = this.renderReviewsList();
+        }
+
+        // Refresh rating overview and stats
         const newStats = this.getReviewStats();
+        const overviewEl = this.container.querySelector("#rating-overview-container");
+        if (overviewEl) {
+          const scoreEl = overviewEl.querySelector(".rating-big-score");
+          if (scoreEl) scoreEl.textContent = newStats.avg;
+          const countEl = overviewEl.querySelector(".rating-based-count");
+          if (countEl) countEl.textContent = `Based on ${newStats.count} ratings`;
+        }
+
         const ratingPill = this.container.querySelector(".rating-pill");
         if (ratingPill) ratingPill.innerHTML = `<span>★</span><span>${newStats.avg} (${newStats.count} reviews)</span>`;
       });
