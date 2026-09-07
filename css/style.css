@@ -2722,6 +2722,56 @@ input[type="date"]:valid {
   gap: 10px;
 }
 
+.features-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .features-highlights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.highlight-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.highlight-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.highlight-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.highlight-sub {
+  font-size: 0.74rem;
+  color: var(--theme-text-muted, #94A3B8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .minimal-feature-row {
   display: flex;
   align-items: flex-start;
@@ -2866,6 +2916,32 @@ input[type="date"]:valid {
 
 .package-list-opt-btn:hover {
   transform: scale(1.03);
+}
+
+.package-list-item.compact {
+  padding: 13px 16px;
+  gap: 8px;
+}
+
+.package-list-actions.compact {
+  padding-top: 10px;
+}
+
+.admin-whatsapp-contact-banner {
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.08) 0%, rgba(15, 19, 28, 0.95) 100%);
+  border: 1px solid rgba(37, 211, 102, 0.35);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.admin-whatsapp-contact-banner .btn-whatsapp-submit {
+  margin-top: 0 !important;
 }
 
 .admin-login-banner-card {

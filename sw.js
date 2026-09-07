@@ -1,5 +1,5 @@
 // OmniCard Service Worker for Offline Caching & PWA Support
-const CACHE_NAME = "omnicard-cache-v4";
+const CACHE_NAME = "omnicard-cache-v5";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -15,7 +15,10 @@ const ASSETS_TO_CACHE = [
   "./js/admin.js",
   "./js/whatsapp.js",
   "./js/pwa.js",
-  "./assets/icons/icon.svg"
+  "./assets/icons/icon.svg",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./assets/icons/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (event) => {

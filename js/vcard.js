@@ -36,6 +36,7 @@ export class VCardController {
     this.selectedServices.clear();
     this.cart = {};
     this.applyTheme();
+    PWAHandler.updateManifestForVendor(v);
     this.render();
   }
 
@@ -1035,7 +1036,7 @@ export class VCardController {
     const pwaBtn = this.container.querySelector("#btn-vcard-install-pwa");
     if (pwaBtn) {
       pwaBtn.addEventListener("click", () => {
-        PWAHandler.promptInstall(v.branding.businessName);
+        PWAHandler.promptInstall(v.branding.businessName, v);
       });
     }
 

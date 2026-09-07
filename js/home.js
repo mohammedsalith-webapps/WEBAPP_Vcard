@@ -56,112 +56,94 @@ export class HomeController {
           </div>
         </div>
 
-        <!-- 2. List of Features Granted for vCard -->
+        <!-- 2. Features Granted for vCard (Key Highlights Only - Neat & Compact) -->
         <div class="minimal-features-card">
           <div class="minimal-section-title">
             <span>✨</span>
-            <span>Features Granted for Business vCards</span>
+            <span>Modular vCard Features</span>
           </div>
           <div class="minimal-section-desc">
-            Each digital business card is modular. Core profile is default, and specific business tabs are granted and managed by the Admin:
+            Core profile is default. Specific features are granted and managed per business by Admin:
           </div>
 
-          <div class="minimal-features-list">
-            <!-- Feature 1: Home Profile -->
-            <div class="minimal-feature-row">
-              <div class="minimal-feature-icon">🏠</div>
-              <div style="flex: 1;">
-                <div class="minimal-feature-name">
+          <div class="features-highlights-grid">
+            <div class="highlight-item">
+              <span class="highlight-icon">🏠</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
                   <span>Home Profile</span>
-                  <span class="pill-status-active" style="font-size: 0.65rem; padding: 2px 7px;">DEFAULT</span>
+                  <span class="pill-status-active" style="font-size: 0.62rem; padding: 1px 6px;">DEFAULT</span>
                 </div>
-                <div class="minimal-feature-detail">
-                  Complete digital branding, verified badge, operating hours, direct phone calling, email launcher, turn-by-turn Google Maps GPS route, and 1-tap save contact (.vcf) to smartphone phonebook.
-                </div>
+                <div class="highlight-sub">Contacts, Hours, GPS Maps & .vcf Phonebook Save</div>
               </div>
             </div>
 
-            <!-- Feature 2: Services & Quote Builder -->
-            <div class="minimal-feature-row">
-              <div class="minimal-feature-icon">📋</div>
-              <div style="flex: 1;">
-                <div class="minimal-feature-name">
-                  <span>Services & Quote Builder</span>
-                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: var(--theme-primary);">ADMIN GRANTED</span>
+            <div class="highlight-item">
+              <span class="highlight-icon">📋</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
+                  <span>Services Quote</span>
+                  <span class="package-tab-tag active" style="font-size: 0.62rem; padding: 1px 6px;">ADMIN GRANTED</span>
                 </div>
-                <div class="minimal-feature-detail">
-                  Interactive service catalog with categories. Clients check services and submit a customized quotation request directly to vendor WhatsApp. Includes live sticky preview bar.
-                </div>
+                <div class="highlight-sub">Service Catalog with 1-Click WhatsApp Quote Builder</div>
               </div>
             </div>
 
-            <!-- Feature 3: Shop & E-Commerce Cart -->
-            <div class="minimal-feature-row">
-              <div class="minimal-feature-icon">🛍️</div>
-              <div style="flex: 1;">
-                <div class="minimal-feature-name">
-                  <span>E-Commerce Product Shop & Cart</span>
-                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #10B981;">ADMIN GRANTED</span>
+            <div class="highlight-item">
+              <span class="highlight-icon">🛍️</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
+                  <span>Product Shop</span>
+                  <span class="package-tab-tag active" style="font-size: 0.62rem; padding: 1px 6px;">ADMIN GRANTED</span>
                 </div>
-                <div class="minimal-feature-detail">
-                  Showcase products with categories, units, and prices. Includes real-time quantity counters, sticky cart preview bar, and 1-click itemized WhatsApp order checkout.
-                </div>
+                <div class="highlight-sub">E-Commerce Catalog, Cart Counters & WhatsApp Checkout</div>
               </div>
             </div>
 
-            <!-- Feature 4: Book Appointment -->
-            <div class="minimal-feature-row">
-              <div class="minimal-feature-icon">📅</div>
-              <div style="flex: 1;">
-                <div class="minimal-feature-name">
-                  <span>Book Appointment & Slots</span>
-                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #00E5FF;">ADMIN GRANTED</span>
+            <div class="highlight-item">
+              <span class="highlight-icon">📅</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
+                  <span>Book Appointment</span>
+                  <span class="package-tab-tag active" style="font-size: 0.62rem; padding: 1px 6px;">ADMIN GRANTED</span>
                 </div>
-                <div class="minimal-feature-detail">
-                  Interactive calendar date picker, matching color time-slot selection (morning, afternoon, evening), and automated WhatsApp booking notification.
-                </div>
+                <div class="highlight-sub">Interactive Calendar Date & Time-Slot Booking</div>
               </div>
             </div>
 
-            <!-- Feature 5: Customer Reviews -->
-            <div class="minimal-feature-row">
-              <div class="minimal-feature-icon">★</div>
-              <div style="flex: 1;">
-                <div class="minimal-feature-name">
-                  <span>5-Star Customer Reviews</span>
-                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #F59E0B;">ADMIN GRANTED</span>
+            <div class="highlight-item">
+              <span class="highlight-icon">★</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
+                  <span>Customer Reviews</span>
+                  <span class="package-tab-tag active" style="font-size: 0.62rem; padding: 1px 6px;">ADMIN GRANTED</span>
                 </div>
-                <div class="minimal-feature-detail">
-                  Public star ratings, verified client compliments, and direct WhatsApp review submission so business owners receive instant client feedback.
-                </div>
+                <div class="highlight-sub">5-Star Client Ratings, Feedback Tags & WhatsApp Review</div>
               </div>
             </div>
 
-            <!-- Feature 6: PWA & Offline Support -->
-            <div class="minimal-feature-row">
-              <div class="minimal-feature-icon">📱</div>
-              <div style="flex: 1;">
-                <div class="minimal-feature-name">
-                  <span>PWA Offline App Installation</span>
-                  <span class="pill-status-active" style="font-size: 0.65rem; padding: 2px 7px;">INCLUDED</span>
+            <div class="highlight-item">
+              <span class="highlight-icon">📱</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
+                  <span>1-Tap PWA App</span>
+                  <span class="pill-status-active" style="font-size: 0.62rem; padding: 1px 6px;">INCLUDED</span>
                 </div>
-                <div class="minimal-feature-detail">
-                  Installable directly onto client home screens without App Store or Play Store downloads. Works smoothly offline with instant sub-second loading.
-                </div>
+                <div class="highlight-sub">Install to iPhone & Android Home Screen + Offline Access</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 3. Package Types in LIST TYPE (Not Grid) -->
-        <div style="margin-bottom: 24px;">
+        <!-- 3. Package Types in Compact List (No Long Descriptions) -->
+        <div style="margin-bottom: 20px;">
           <div style="margin-bottom: 12px;">
             <div class="minimal-section-title">
               <span>💳</span>
-              <span>Available Subscription Packages</span>
+              <span>Available Packages</span>
             </div>
             <div class="minimal-section-desc">
-              Choose a package suited for your business. Select any plan to activate instantly via WhatsApp:
+              Choose your plan. Activate instantly via WhatsApp:
             </div>
           </div>
 
@@ -179,7 +161,7 @@ export class HomeController {
               const planWaUrl = `https://wa.me/${cleanWa}?text=${planMsg}`;
 
               return `
-                <div class="package-list-item ${isPopular || isDemo ? 'featured' : ''}">
+                <div class="package-list-item compact ${isPopular || isDemo ? 'featured' : ''}">
                   <div class="package-list-header">
                     <div class="package-list-name-col">
                       <div class="package-list-name">
@@ -187,20 +169,17 @@ export class HomeController {
                         ${isDemo ? `<span class="pill-status-active" style="font-size: 0.65rem;">🎁 FREE TRIAL</span>` : ""}
                         ${isPopular && !isDemo ? `<span class="pill-status-active" style="font-size: 0.65rem; background: rgba(0,229,255,0.15); color: #00E5FF; border-color: rgba(0,229,255,0.4);">POPULAR</span>` : ""}
                       </div>
-                      <div style="font-size: 0.78rem; color: var(--theme-text-muted, #94A3B8); margin-top: 3px; line-height: 1.4;">
-                        ${plan.description}
-                      </div>
                     </div>
 
                     <div class="package-list-price-col">
                       <div class="package-list-price">${priceDisplay}</div>
-                      <div style="font-size: 0.72rem; color: var(--theme-text-muted, #94A3B8);">${plan.durationDays} Days Validity</div>
+                      <div style="font-size: 0.72rem; color: var(--theme-text-muted, #94A3B8);">${plan.durationDays} Days</div>
                     </div>
                   </div>
 
-                  <!-- Granted Tabs / Features in this package -->
+                  <!-- Compact Granted Feature Tags -->
                   <div class="package-list-badges-row">
-                    <span class="package-tab-tag active">✓ 🏠 Home (Default)</span>
+                    <span class="package-tab-tag active">✓ 🏠 Home</span>
                     <span class="package-tab-tag ${plan.features?.quoteBuilder !== false ? 'active' : ''}">
                       ${plan.features?.quoteBuilder !== false ? '✓' : '✗'} 📋 Services
                     </span>
@@ -208,23 +187,23 @@ export class HomeController {
                       ${plan.features?.ecommerceShop !== false ? '✓' : '✗'} 🛍️ Shop
                     </span>
                     <span class="package-tab-tag ${plan.features?.calendarBooking !== false ? 'active' : ''}">
-                      ${plan.features?.calendarBooking !== false ? '✓' : '✗'} 📅 Book Appointment
+                      ${plan.features?.calendarBooking !== false ? '✓' : '✗'} 📅 Book
                     </span>
                     <span class="package-tab-tag ${plan.features?.customerReviews !== false ? 'active' : ''}">
                       ${plan.features?.customerReviews !== false ? '✓' : '✗'} ★ Reviews
                     </span>
                     <span class="package-tab-tag ${plan.features?.pwaInstall !== false ? 'active' : ''}">
-                      ${plan.features?.pwaInstall !== false ? '✓' : '✗'} 📱 PWA App
+                      ${plan.features?.pwaInstall !== false ? '✓' : '✗'} 📱 PWA
                     </span>
                   </div>
 
                   <!-- 1-Click WhatsApp Opt Action -->
-                  <div class="package-list-actions">
+                  <div class="package-list-actions compact">
                     <div style="font-size: 0.74rem; color: var(--theme-text-muted);">
-                      ${isFree ? 'Zero payment required • Test all features immediately' : 'Instant WhatsApp activation by Admin'}
+                      ${isFree ? 'Zero payment required' : 'Instant activation by Admin'}
                     </div>
                     <a href="${planWaUrl}" target="_blank" rel="noopener noreferrer" class="package-list-opt-btn">
-                      <span>${isDemo ? '🎁 Opt 3-Day Demo on WhatsApp' : `⚡ Opt for ${plan.name} on WhatsApp`}</span>
+                      <span>${isDemo ? '🎁 Opt Demo' : `⚡ Opt on WhatsApp`}</span>
                       <span>↗</span>
                     </a>
                   </div>
@@ -232,6 +211,25 @@ export class HomeController {
               `;
             }).join("")}
           </div>
+        </div>
+
+        <!-- 4. More questions? Chat to Admin on WhatsApp for more details -->
+        <div class="admin-whatsapp-contact-banner">
+          <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 240px;">
+            <div style="font-size: 2.2rem; flex-shrink: 0;">💬</div>
+            <div>
+              <div style="font-size: 1rem; font-weight: 800; color: #FFFFFF; margin-bottom: 2px;">
+                Have More Questions?
+              </div>
+              <div style="font-size: 0.78rem; color: var(--theme-text-muted, #94A3B8); line-height: 1.4;">
+                Chat to Admin on WhatsApp for more details, custom features, or instant activation.
+              </div>
+            </div>
+          </div>
+          <a href="${generalWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-submit" style="width: auto; padding: 12px 24px; font-size: 0.9rem; flex-shrink: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            <span>Chat to Admin on WhatsApp →</span>
+          </a>
         </div>
 
         <!-- 4. Prominent Super Admin Login Card -->
