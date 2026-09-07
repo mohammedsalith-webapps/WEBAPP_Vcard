@@ -193,8 +193,30 @@ class OmniAppManager {
   }
 }
 
-// Global App Instance
+// Global App Instance & Resilient Bootstrap
 window.OmniApp = new OmniAppManager();
-window.addEventListener("DOMContentLoaded", () => {
-  window.OmniApp.init();
-});
+
+const bootApp = () => {
+  try {
+    window.OmniApp.init();
+  } catch (err) {
+    console.error("OmniApp boot error:", err);
+    const root = document.getElementById("app-content-root");
+    if (root) {
+      root.innerHTML = `
+        <div style="padding: 40px 20px; text-align: center; color: #FFF; background: #0F131C; margin: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+          <h3 style="color: #EF4444; font-size: 1.2rem; margin-bottom: 8px;">Initialization Error</h3>
+          <p style="color: #94A3B8; font-size: 0.85rem; margin-bottom: 16px;">${err.message || err}</p>
+          <button class="btn-pill active" onclick="location.reload()">Reload Application</button>
+        </div>
+      `;
+    }
+  }
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootApp);
+} else {
+  // DOM is already parsed (common with ES modules on fast CDNs)
+  bootApp();
+}
