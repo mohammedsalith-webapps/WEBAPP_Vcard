@@ -1165,6 +1165,5 @@ export class VendorConsoleController {
     });
   }
 }
-}
 
 
