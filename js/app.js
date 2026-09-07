@@ -54,6 +54,20 @@ class OmniAppManager {
       }
       this.handleRoute();
     });
+
+    // 7. Real-time Live Cloud Sync Listener (Updates UI across phones & desktops when Firebase changes)
+    db.listeners.push(() => {
+      if (this.currentView === "card") {
+        const v = db.getVendor(this.currentVendorSlug);
+        if (v) this.vcardCtrl.loadVendor(this.currentVendorSlug);
+      } else if (this.currentView === "home") {
+        this.homeCtrl.render();
+      } else if (this.currentView === "admin") {
+        this.adminCtrl.renderDashboard();
+      } else if (this.currentView === "vendor") {
+        this.vendorCtrl.renderDashboard();
+      }
+    });
   }
 
   bindTopbarEvents() {

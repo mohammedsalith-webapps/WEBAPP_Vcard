@@ -585,6 +585,10 @@ export class AdminConsoleController {
                   <input type="text" class="form-input" id="fb-storageBucket" placeholder="your-app.appspot.com" value="${settings.firebaseConfig?.storageBucket || ''}" />
                 </div>
                 <div class="form-group">
+                  <label class="form-label">Messaging Sender ID</label>
+                  <input type="text" class="form-input" id="fb-messagingSenderId" placeholder="1079367774104" value="${settings.firebaseConfig?.messagingSenderId || ''}" />
+                </div>
+                <div class="form-group">
                   <label class="form-label">App ID</label>
                   <input type="text" class="form-input" id="fb-appId" placeholder="1:123456789:web:abcdef" value="${settings.firebaseConfig?.appId || ''}" />
                 </div>
@@ -1885,6 +1889,7 @@ export class AdminConsoleController {
           projectId: this.container.querySelector("#fb-projectId").value.trim(),
           authDomain: this.container.querySelector("#fb-authDomain").value.trim(),
           storageBucket: this.container.querySelector("#fb-storageBucket").value.trim(),
+          messagingSenderId: this.container.querySelector("#fb-messagingSenderId")?.value.trim() || "",
           appId: this.container.querySelector("#fb-appId").value.trim()
         };
         const res = await db.updateFirebaseConfig(conf);

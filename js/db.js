@@ -28,6 +28,17 @@ class DatabaseService {
       this.saveLocal();
     }
 
+    // Ensure Firebase cloud config from INITIAL_DATA is adopted across all devices
+    const initFbConf = INITIAL_DATA.platformSettings?.firebaseConfig;
+    if (initFbConf && initFbConf.apiKey) {
+      if (!this.data.platformSettings) this.data.platformSettings = {};
+      const curFb = this.data.platformSettings.firebaseConfig;
+      if (!curFb || !curFb.apiKey) {
+        this.data.platformSettings.firebaseConfig = { ...initFbConf };
+        this.saveLocal();
+      }
+    }
+
     // Ensure 3-Day Free Demo plan exists even for existing local storage data
     if (this.data && Array.isArray(this.data.subscriptionPlans)) {
       if (!this.data.subscriptionPlans.some(p => p.id === "plan-demo")) {
@@ -81,7 +92,7 @@ class DatabaseService {
     }
 
     // Try initializing Firebase if config exists in settings
-    this.tryInitFirebase();
+    await this.tryInitFirebase();
 
     return this.data;
   }
@@ -113,23 +124,45 @@ class DatabaseService {
   }
 
   // Firebase Realtime DB optional sync
-  tryInitFirebase() {
+  async tryInitFirebase() {
     const fbConf = this.data?.platformSettings?.firebaseConfig;
-    if (fbConf && fbConf.apiKey && fbConf.databaseURL && window.firebase) {
+    if (fbConf && fbConf.apiKey && fbConf.databaseURL && typeof window !== "undefined" && window.firebase) {
       try {
-        if (!window.firebase.apps.length) {
+        if (!window.firebase.apps || !window.firebase.apps.length) {
           this.firebaseApp = window.firebase.initializeApp(fbConf);
         } else {
-          this.firebaseApp = window.firebase.app();
+          this.firebaseApp = window.firebase.apps[0];
         }
         this.firebaseDb = window.firebase.database();
         this.isFirebaseReady = true;
         console.log("Firebase Realtime DB connected successfully.");
 
-        // Listen for live updates
+        // Initial fetch: wait for cloud snapshot (with 2.5s timeout fallback so offline mode doesn't freeze)
+        try {
+          const fetchPromise = this.firebaseDb.ref("omnicard").once("value");
+          const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 2500));
+          const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
+          if (snapshot && snapshot.exists()) {
+            const cloudData = snapshot.val();
+            if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
+              this.data = cloudData;
+              // Ensure local firebaseConfig is preserved
+              if (!this.data.platformSettings) this.data.platformSettings = {};
+              this.data.platformSettings.firebaseConfig = { ...fbConf };
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+            }
+          } else if (snapshot && !snapshot.exists()) {
+            // Cloud is empty, seed it with current local data!
+            await this.syncToCloud();
+          }
+        } catch (fetchErr) {
+          console.warn("Initial Firebase fetch warning:", fetchErr);
+        }
+
+        // Listen for live updates across all devices
         this.firebaseDb.ref("omnicard").on("value", (snapshot) => {
           const cloudData = snapshot.val();
-          if (cloudData && typeof cloudData === "object") {
+          if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
             this.data = cloudData;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
             this.notifyListeners();
@@ -259,10 +292,15 @@ class DatabaseService {
     if (!this.data.platformSettings) this.data.platformSettings = {};
     this.data.platformSettings.firebaseConfig = { ...fbConf };
     this.saveLocal();
-    this.tryInitFirebase();
+    if (typeof window !== "undefined" && window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+      try {
+        await Promise.all(window.firebase.apps.map(a => a.delete()));
+      } catch (_) {}
+    }
+    await this.tryInitFirebase();
     if (this.isFirebaseReady) {
       await this.syncToCloud();
-      return { success: true, connected: true };
+      return { success: true, connected: true, message: "Connected to Firebase Realtime Database and synchronized successfully!" };
     }
     return { success: true, connected: false, message: "Configuration saved to LocalStorage. Connect to internet to sync with Firebase." };
   }

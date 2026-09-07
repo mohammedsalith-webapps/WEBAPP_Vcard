@@ -8,13 +8,13 @@ export const INITIAL_DATA = {
     supportEmail: "support@omnicard.io",
     adminPin: "1234",
     firebaseConfig: {
-      apiKey: "",
-      authDomain: "",
-      databaseURL: "",
-      projectId: "",
-      storageBucket: "",
-      messagingSenderId: "",
-      appId: ""
+      apiKey: "AIzaSyC1F2gHzKlIiyGDEF8hMT8L2Dc1eO1YUYk",
+      authDomain: "flavours-catering-3b122.firebaseapp.com",
+      databaseURL: "https://flavours-catering-3b122-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "flavours-catering-3b122",
+      storageBucket: "flavours-catering-3b122.firebasestorage.app",
+      messagingSenderId: "1079367774104",
+      appId: "1:1079367774104:web:64c6f439a7f906ac4b85ed"
     }
   },
   subscriptionPlans: [
