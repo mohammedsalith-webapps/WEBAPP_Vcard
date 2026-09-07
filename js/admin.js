@@ -2120,18 +2120,6 @@ export class AdminConsoleController {
       });
     }
 
-    // Quick select demo on Create Vendor Form
-    const quickDemoBtn = this.container.querySelector("#btn-quick-demo-plan");
-    if (quickDemoBtn) {
-      quickDemoBtn.addEventListener("click", () => {
-        const planSelect = this.container.querySelector("#new-v-plan");
-        if (planSelect) {
-          planSelect.value = "plan-demo";
-          window.OmniApp.showToast("Selected 3-Day Free Demo Package for new vendor.");
-        }
-      });
-    }
-
     // Assign 3-Day Demo in Edit Vendor Modal
     const assignDemoBtn = this.container.querySelector("#btn-edit-assign-demo");
     if (assignDemoBtn) {
@@ -2152,7 +2140,6 @@ export class AdminConsoleController {
     }
 
     // Auto-update expiry date when changing plan in Edit Vendor Modal
-    const editPlanSelect = this.container.querySelector("#edit-v-plan");
     if (editPlanSelect) {
       editPlanSelect.addEventListener("change", (e) => {
         const p = db.getSubscriptionPlans().find(plan => plan.id === e.target.value);
