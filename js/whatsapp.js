@@ -131,7 +131,6 @@ export const WhatsAppEngine = {
       tagsText +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       commentSection +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
       `_Review submitted via Smart vCard on ${now}_\n` +
       `_Thank you for your service!_`;
   },

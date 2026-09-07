@@ -533,7 +533,7 @@ export class VendorConsoleController {
                       </div>
                       <span style="color: #F59E0B;">${"★".repeat(r.rating || 5)}</span>
                     </div>
-                    <div style="font-size: 0.8rem; color: #E2E8F0; margin-bottom: 8px; line-height: 1.4;">${r.content}</div>
+                    ${r.content ? `<div style="font-size: 0.8rem; color: #E2E8F0; margin-bottom: 8px; line-height: 1.4;">${r.content}</div>` : ""}
                     <div style="display: flex; gap: 6px;">
                       <button class="btn-pill" style="padding: 3px 8px; font-size: 0.7rem; color: var(--theme-secondary);" data-edit-rev="${r.id}">Edit</button>
                       <button class="btn-pill" style="padding: 3px 8px; font-size: 0.7rem; color: #EF4444;" data-del-rev="${r.id}">Delete</button>
@@ -753,8 +753,8 @@ export class VendorConsoleController {
               <input type="text" class="form-input" id="edit-rev-date" />
             </div>
             <div class="form-group">
-              <label class="form-label">Review Content</label>
-              <textarea class="form-textarea" id="edit-rev-content" rows="3" required></textarea>
+              <label class="form-label">Review Content <span style="font-size: 0.75rem; color: var(--theme-text-muted); font-weight: normal;">(Optional)</span></label>
+              <textarea class="form-textarea" id="edit-rev-content" rows="3" placeholder="Review content (optional)"></textarea>
             </div>
             <button type="submit" class="btn-submit-primary">Save Review Changes</button>
           </form>

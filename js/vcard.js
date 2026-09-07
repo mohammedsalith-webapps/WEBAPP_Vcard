@@ -180,6 +180,14 @@ export class VCardController {
             </a>
           </div>
 
+          <!-- Save Contact to Phonebook (.vcf) Action -->
+          <div style="padding: 0 16px; margin-bottom: 18px;">
+            <button type="button" class="btn-pill" id="btn-vcard-save-contact" style="width: 100%; justify-content: center; padding: 10px 16px; font-weight: 700; font-size: 0.82rem; gap: 8px; border-color: rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.05);">
+              <span>💾</span>
+              <span>Save Contact to Phonebook (.vcf)</span>
+            </button>
+          </div>
+
           <!-- Promotional Offer Banner (if enabled) -->
           ${v.features.promoBanner && v.promo?.enabled ? `
             <div class="promo-card" style="margin: 0 16px 18px;">
@@ -1033,9 +1041,17 @@ export class VCardController {
     if (quickWa) {
       quickWa.addEventListener("click", () => {
         WhatsAppEngine.openChat(
-          v.contacts.whatsapp,
+          v.contacts.whatsapp || v.contacts.phone,
           `Hello *${v.branding.businessName}*, I found your smart card and would like to inquire about your services!`
         );
+      });
+    }
+
+    // Save contact (.vcf) button
+    const saveContactBtn = this.container.querySelector("#btn-vcard-save-contact");
+    if (saveContactBtn) {
+      saveContactBtn.addEventListener("click", () => {
+        this.downloadVCard();
       });
     }
 
@@ -1044,7 +1060,7 @@ export class VCardController {
     if (claimBtn) {
       claimBtn.addEventListener("click", () => {
         const text = WhatsAppEngine.buildClaimOfferMessage(v, v.promo);
-        WhatsAppEngine.openChat(v.contacts.whatsapp, text);
+        WhatsAppEngine.openChat(v.contacts.whatsapp || v.contacts.phone, text);
       });
     }
 
@@ -1217,7 +1233,7 @@ export class VCardController {
         }
 
         const msg = WhatsAppEngine.buildQuoteMessage(v, selectedList, { eventDate, notes });
-        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
+        WhatsAppEngine.openChat(v.contacts.whatsapp || v.contacts.phone, msg);
         window.OmniApp.showToast("Quote inquiry opened in WhatsApp!");
         modal.classList.remove("active");
         if (!document.querySelector(".modal-overlay.active")) {
@@ -1387,7 +1403,7 @@ export class VCardController {
         }
 
         const msg = WhatsAppEngine.buildOrderMessage(v, cartItems, { address });
-        WhatsAppEngine.openChat(v.contacts.whatsapp, msg);
+        WhatsAppEngine.openChat(v.contacts.whatsapp || v.contacts.phone, msg);
         window.OmniApp.showToast("Order prepared for WhatsApp!");
         modal.classList.remove("active");
         if (!document.querySelector(".modal-overlay.active")) {
@@ -1453,7 +1469,7 @@ export class VCardController {
 
         // 2. Open WhatsApp Confirmation
         const msg = WhatsAppEngine.buildBookingMessage(this.vendor, bookingData);
-        WhatsAppEngine.openChat(this.vendor.contacts.whatsapp, msg);
+        WhatsAppEngine.openChat(this.vendor.contacts.whatsapp || this.vendor.contacts.phone, msg);
 
         // Reset form
         const notesInput = this.container.querySelector("#booking-client-notes");
@@ -1841,5 +1857,46 @@ export class VCardController {
       if (p) subtotal += (Number(p.price || 0) * qty);
     }
     return subtotal;
+  }
+
+  // Generate and download standard vCard (.vcf) contact file
+  downloadVCard() {
+    const v = this.vendor;
+    if (!v) return;
+    const phone = (v.contacts?.phone || "").replace(/[^\d+]/g, "");
+    const wa = (v.contacts?.whatsapp || "").replace(/[^\d+]/g, "");
+    const email = v.contacts?.email || "";
+    const name = v.branding?.ownerName || v.branding?.businessName || "Business Contact";
+    const org = v.branding?.businessName || "";
+    const title = v.branding?.category || "";
+    const note = v.about?.description || v.branding?.tagline || "";
+    const url = window.location.href;
+    const address = (v.contacts?.location || "").replace(/[\r\n]+/g, " ");
+
+    const vcf = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${name}`,
+      `ORG:${org}`,
+      title ? `TITLE:${title}` : "",
+      phone ? `TEL;TYPE=WORK,VOICE:${phone}` : "",
+      wa ? `TEL;TYPE=CELL,VOICE:${wa}` : "",
+      email ? `EMAIL;TYPE=WORK,INTERNET:${email}` : "",
+      `URL:${url}`,
+      address ? `ADR;TYPE=WORK:;;${address.replace(/;/g, " ")};;;;` : "",
+      note ? `NOTE:${note.replace(/[\r\n]+/g, " ")}` : "",
+      "END:VCARD"
+    ].filter(Boolean).join("\r\n");
+
+    const blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `${(v.branding?.businessName || "contact").replace(/[^a-zA-Z0-9]/g, "_")}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    window.OmniApp.showToast("Contact card (.vcf) downloaded! Tap to save in your phonebook.");
   }
 }

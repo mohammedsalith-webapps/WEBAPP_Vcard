@@ -2123,12 +2123,12 @@ export class AdminConsoleController {
         const rating = Number(this.container.querySelector("#admin-new-rev-rating").value || 5);
         const content = this.container.querySelector("#admin-new-rev-content").value.trim();
 
-        if (!author || !content) {
-          window.OmniApp.showToast("Please provide author name and review feedback.");
+        if (!author) {
+          window.OmniApp.showToast("Please provide author / client name.");
           return;
         }
 
-        await db.addReview(vId, { author, rating, content });
+        await db.addReview(vId, { author, rating, content: content || "" });
         window.OmniApp.showToast("New testimonial review added for vendor!");
         this.container.querySelector("#admin-new-rev-author").value = "";
         this.container.querySelector("#admin-new-rev-content").value = "";
@@ -2998,11 +2998,12 @@ export class AdminConsoleController {
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-weight: 700; color: #FFF; font-size: 0.88rem;">${r.author}</span>
                 <span style="color: #F59E0B; font-size: 0.8rem;">${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}</span>
-                <span style="font-size: 0.68rem; color: var(--theme-text-muted);">${r.date || ''}</span>
+                ${r.date ? `<span style="font-size: 0.68rem; color: var(--theme-text-muted);">${r.date}</span>` : ""}
               </div>
+              ${r.content ? `
               <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-top: 3px; font-style: italic;">
                 "${r.content}"
-              </div>
+              </div>` : ""}
             </div>
             <div style="display: flex; gap: 5px; flex-shrink: 0;">
               <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem; color: var(--theme-secondary);" data-admin-edit-rev="${r.id}">Edit</button>
