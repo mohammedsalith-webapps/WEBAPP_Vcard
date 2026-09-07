@@ -121,6 +121,7 @@ export const WhatsAppEngine = {
     const tagsText = (review.tags && review.tags.length > 0) ? `*Feedback Tags:* ${review.tags.join(", ")}\n` : "";
     const clientName = review.author || review.name || "Valued Client";
     const commentText = review.content || review.comment || "";
+    const commentSection = commentText ? `*Review Feedback:*\n"${commentText}"\n━━━━━━━━━━━━━━━━━━━━\n` : "";
 
     return `*⭐ NEW CUSTOMER REVIEW & RATING*\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -129,7 +130,7 @@ export const WhatsAppEngine = {
       `*Rating Given:* ${stars} (${ratingVal}/5 Stars)\n` +
       tagsText +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `*Review Feedback:*\n"${commentText}"\n` +
+      commentSection +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `_Review submitted via Smart vCard on ${now}_\n` +
       `_Thank you for your service!_`;

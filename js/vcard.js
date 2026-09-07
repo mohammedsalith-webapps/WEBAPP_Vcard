@@ -419,7 +419,8 @@ export class VCardController {
               <div class="rating-based-count" style="font-size: 0.75rem; color: var(--theme-text-muted);">Based on ${stats.count} ratings</div>
             </div>
             <div style="flex: 1; font-size: 0.8rem; color: var(--theme-text-muted); border-left: 1px solid var(--theme-border); padding-left: 16px;">
-              <p style="color: #FFF; font-weight: 600; margin-bottom: 4px;">Top Client Compliments</p>
+              <p style="color: #FFFFFF; font-weight: 700; margin-bottom: 2px;">Top Client Compliments</p>
+              <div style="color: #FFFFFF; font-size: 0.74rem; font-weight: 700; margin-bottom: 6px;">You can use tags to share quick feedback</div>
               <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                 ${(v.reviewTags || []).slice(0, 4).map(t => `<span class="review-tag-chip">✓ ${t}</span>`).join("")}
               </div>
@@ -711,7 +712,7 @@ export class VCardController {
             ${r.tags.map(t => `<span class="review-tag-chip">${t}</span>`).join("")}
           </div>
         ` : ""}
-        <div class="review-content">${r.content}</div>
+        ${r.content ? `<div class="review-content">${r.content}</div>` : ""}
       </div>
     `).join("");
   }
@@ -902,10 +903,13 @@ export class VCardController {
           </div>
 
           <div class="form-group">
-            <label class="form-label">Quick Feedback Tags</label>
+            <label class="form-label" style="font-weight: 700; color: #FFFFFF; margin-bottom: 2px;">Feedback Tags</label>
+            <p class="review-tags-instruction" style="color: #FFFFFF; font-size: 0.8rem; font-weight: 700; margin: 0 0 8px 0;">
+              You can use tags to highlight your experience
+            </p>
             <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="review-tags-picker">
               ${(v.reviewTags || []).map(tag => `
-                <button type="button" class="filter-chip" data-review-tag="${tag}">${tag}</button>
+                <button type="button" class="filter-chip" data-review-tag="${tag}" style="font-weight: 700;">${tag}</button>
               `).join("")}
             </div>
           </div>
@@ -916,8 +920,8 @@ export class VCardController {
           </div>
 
           <div class="form-group">
-            <label class="form-label">Your Review Comment</label>
-            <textarea class="form-textarea" id="review-client-text" rows="3" placeholder="Describe your experience with our team and services..." required></textarea>
+            <label class="form-label">Your Review Comment <span style="font-size: 0.75rem; color: var(--theme-text-muted); font-weight: normal;">(Optional)</span></label>
+            <textarea class="form-textarea" id="review-client-text" rows="3" placeholder="Describe your experience with our team and services (optional)..."></textarea>
           </div>
 
           <button type="button" class="btn-submit-primary" id="btn-submit-review" style="width: 100%; padding: 13px 18px; font-size: 0.92rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -1594,10 +1598,10 @@ export class VCardController {
     if (submitReview) {
       submitReview.addEventListener("click", async () => {
         const author = modalsRoot.querySelector("#review-client-name")?.value.trim();
-        const content = modalsRoot.querySelector("#review-client-text")?.value.trim();
+        const content = modalsRoot.querySelector("#review-client-text")?.value.trim() || "";
 
-        if (!author || !content) {
-          window.OmniApp.showToast("Please enter your name and review feedback.");
+        if (!author) {
+          window.OmniApp.showToast("Please enter your name to submit a review.");
           return;
         }
 
@@ -1621,6 +1625,8 @@ export class VCardController {
         // Reset form inputs for next time
         if (modalsRoot.querySelector("#review-client-name")) modalsRoot.querySelector("#review-client-name").value = "";
         if (modalsRoot.querySelector("#review-client-text")) modalsRoot.querySelector("#review-client-text").value = "";
+        this.selectedReviewTags.clear();
+        modalsRoot.querySelectorAll("[data-review-tag]").forEach(chip => chip.classList.remove("active"));
 
         window.OmniApp.showToast(`Thank you, ${author}! Your review is now live. ★`);
 
