@@ -1,5 +1,6 @@
 // Module 3: Super Admin Management Console Controller
 import { db } from "./db.js";
+import { WhatsAppEngine } from "./whatsapp.js";
 
 export class AdminConsoleController {
   constructor(containerEl) {
@@ -8,6 +9,7 @@ export class AdminConsoleController {
     this.activeTab = "overview"; // overview, vendors, create, plans, settings
     this.vendorFilterQuery = "";
     this.vendorFilterStatus = "all";
+    this.vendorFilterCategory = "all";
   }
 
   init() {
@@ -27,22 +29,24 @@ export class AdminConsoleController {
       <div class="portal-container" style="max-width: 440px;">
         <div class="bento-card" style="padding: 32px 24px; text-align: center;">
           <div style="font-size: 2.6rem; margin-bottom: 12px;">🛡️</div>
-          <h2 style="font-size: 1.45rem; margin-bottom: 6px;">Super Admin Portal</h2>
-          <p style="font-size: 0.82rem; color: var(--theme-text-muted); margin-bottom: 24px;">
-            Enter your 4-digit Master Security PIN to manage vendors and platform configuration.
+          <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 6px; color: #FFFFFF;">Super Admin Access</h2>
+          <p style="font-size: 0.8rem; color: var(--theme-text-muted); margin-bottom: 20px;">
+            OmniCard Platform Control Plane. Enter master security PIN to continue.
           </p>
 
           <form id="form-admin-login">
-            <div class="form-group" style="text-align: left;">
-              <label class="form-label">Security PIN (Default: 1234)</label>
-              <input type="password" maxlength="4" class="form-input" id="admin-pin-input" placeholder="••••" value="1234" required style="font-size: 1.2rem; text-align: center; letter-spacing: 6px;" />
+            <div class="form-group" style="margin-bottom: 16px;">
+              <input type="password" maxlength="8" class="form-input" id="admin-pin-input" placeholder="••••" required style="font-size: 1.2rem; text-align: center; letter-spacing: 6px;" autocomplete="off" />
             </div>
-
-            <button type="submit" class="btn-submit-primary" style="margin-top: 14px;">
+            <button type="submit" class="btn-submit-primary" style="padding: 12px;">
               <span>Unlock Admin Console</span>
               <span>→</span>
             </button>
           </form>
+
+          <div style="margin-top: 20px; font-size: 0.72rem; color: var(--theme-text-muted);">
+            🔒 Restricted Area. Master system governance.
+          </div>
         </div>
       </div>
     `;
@@ -52,12 +56,12 @@ export class AdminConsoleController {
       e.preventDefault();
       const pin = this.container.querySelector("#admin-pin-input").value.trim();
       const actual = db.getPlatformSettings()?.adminPin || "1234";
-
       if (pin === actual) {
         this.isAuthenticated = true;
-        this.renderDashboard();
+        this.render();
+        window.OmniApp.showToast("Super Admin Authenticated");
       } else {
-        window.OmniApp.showToast("Invalid Security PIN.");
+        window.OmniApp.showToast("Access Denied: Invalid Security PIN");
       }
     });
   }
@@ -66,8 +70,14 @@ export class AdminConsoleController {
     const vendors = db.getVendors();
     const plans = db.getSubscriptionPlans();
     const totalCards = vendors.length;
-    const activeCards = vendors.filter(v => v.status === "active").length;
-    const expiredCards = vendors.filter(v => new Date(v.expiresAt) < new Date()).length;
+    const now = new Date();
+    const activeCards = vendors.filter(v => v.status === "active" && new Date(v.expiresAt) >= now).length;
+    const expiredCards = vendors.filter(v => new Date(v.expiresAt) < now || v.status === "expired").length;
+    const expiring7d = vendors.filter(v => {
+      const diffMs = new Date(v.expiresAt) - now;
+      const daysLeft = diffMs / (1000 * 60 * 60 * 24);
+      return daysLeft >= 0 && daysLeft <= 7;
+    }).length;
 
     // Calculate revenue from vendors based on their plan
     let totalRevenue = 0;
@@ -76,9 +86,7 @@ export class AdminConsoleController {
       if (p) totalRevenue += Number(p.price || 0);
     });
 
-    const activeSubs = vendors.filter(v => v.status === "active" && new Date(v.expiresAt) > new Date()).length;
-
-    return { totalCards, activeCards, totalRevenue, activeSubs, expiredCards };
+    return { totalCards, activeCards, totalRevenue, expiredCards, expiring7d };
   }
 
   renderRecentBookingsPreview() {
@@ -171,18 +179,23 @@ export class AdminConsoleController {
 
         <!-- 1. Overview Pane matching Screenshot 4 -->
         <div class="portal-pane ${this.activeTab === 'overview' ? 'active' : ''}" id="apane-overview">
-          <div class="kpi-neon-grid">
-            <div class="kpi-card-neon neon-purple">
+          <div class="kpi-neon-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+            <div class="kpi-card-neon neon-purple" id="kpi-card-total" style="cursor: pointer;" title="Click to view all vendors">
               <div class="kpi-neon-val">${metrics.totalCards}</div>
               <div class="kpi-neon-lbl">👤 TOTAL VENDORS</div>
             </div>
 
-            <div class="kpi-card-neon neon-green">
+            <div class="kpi-card-neon neon-green" id="kpi-card-active" style="cursor: pointer;" title="Click to view active vendors">
               <div class="kpi-neon-val">${metrics.activeCards}</div>
               <div class="kpi-neon-lbl">✓ ACTIVE CARDS</div>
             </div>
 
-            <div class="kpi-card-neon neon-red">
+            <div class="kpi-card-neon neon-amber" id="kpi-card-expiring-7d" style="cursor: pointer;" title="Click to view vendors expiring in 7 days">
+              <div class="kpi-neon-val">${metrics.expiring7d || 0}</div>
+              <div class="kpi-neon-lbl">⏳ EXPIRING IN 7 DAYS</div>
+            </div>
+
+            <div class="kpi-card-neon neon-red" id="kpi-card-expired" style="cursor: pointer;" title="Click to view expired vendors">
               <div class="kpi-neon-val">${metrics.expiredCards || 0}</div>
               <div class="kpi-neon-lbl">🕒 EXPIRED PAGES</div>
             </div>
@@ -213,16 +226,42 @@ export class AdminConsoleController {
         <!-- 2. Vendors Management Pane matching Screenshot 2 & 3 -->
         <div class="portal-pane ${this.activeTab === 'vendors' ? 'active' : ''}" id="apane-vendors">
           <div class="bento-card" style="margin-bottom: 16px;">
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
-              <div style="display: flex; gap: 8px; flex: 1; min-width: 240px;">
-                <input type="text" class="form-input" id="admin-vendor-search" placeholder="Search by name, owner, or category..." value="${this.vendorFilterQuery}" />
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Top Row: Search & Business Category Filter -->
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 8px; flex: 1; min-width: 240px;">
+                  <input type="text" class="form-input" id="admin-vendor-search" placeholder="Search by name, owner, category, or slug..." value="${this.vendorFilterQuery}" />
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 0.76rem; color: #94A3B8; font-weight: 700; text-transform: uppercase; white-space: nowrap;">🏢 Category:</span>
+                  <select class="form-select" id="admin-vendor-category-filter" style="min-width: 200px; font-size: 0.8rem; padding: 7px 10px; background: rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.15); color: #FFF;">
+                    <option value="all">All Business Categories (${db.getVendors().length})</option>
+                    ${Array.from(new Set(db.getVendors().map(v => v.branding?.category).filter(Boolean))).sort().map(cat => {
+                      const count = db.getVendors().filter(v => (v.branding?.category || '').toLowerCase() === cat.toLowerCase()).length;
+                      return `<option value="${cat}" ${this.vendorFilterCategory.toLowerCase() === cat.toLowerCase() ? 'selected' : ''}>${cat} (${count})</option>`;
+                    }).join('')}
+                  </select>
+                </div>
               </div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                ${["all", "active", "suspended", "expired"].map(st => `
-                  <button class="filter-chip ${this.vendorFilterStatus === st ? 'active' : ''}" data-admin-status-filter="${st}">
-                    ${st.toUpperCase()}
-                  </button>
-                `).join("")}
+
+              <!-- Bottom Row: Lifecycle & Expiry Status Filters with Live Counts -->
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <span style="font-size: 0.76rem; color: #94A3B8; font-weight: 700; text-transform: uppercase; margin-right: 4px;">Status:</span>
+                <button class="filter-chip ${this.vendorFilterStatus === 'all' ? 'active' : ''}" data-admin-status-filter="all">
+                  ALL (${db.getVendors().length})
+                </button>
+                <button class="filter-chip ${this.vendorFilterStatus === 'active' ? 'active' : ''}" data-admin-status-filter="active">
+                  ACTIVE (${db.getVendors().filter(v => v.status === 'active' && new Date(v.expiresAt) >= new Date()).length})
+                </button>
+                <button class="filter-chip ${this.vendorFilterStatus === 'expiring-7d' ? 'active' : ''} ${db.getVendors().filter(v => { const d = (new Date(v.expiresAt) - new Date()) / 86400000; return d >= 0 && d <= 7; }).length > 0 ? 'chip-expiring' : ''}" data-admin-status-filter="expiring-7d" title="Subscriptions expiring within 7 days">
+                  ⏳ EXPIRING IN 7 DAYS (${db.getVendors().filter(v => { const d = (new Date(v.expiresAt) - new Date()) / 86400000; return d >= 0 && d <= 7; }).length})
+                </button>
+                <button class="filter-chip ${this.vendorFilterStatus === 'expired' ? 'active' : ''}" data-admin-status-filter="expired">
+                  ⚠️ EXPIRED (${db.getVendors().filter(v => new Date(v.expiresAt) < new Date() || v.status === 'expired').length})
+                </button>
+                <button class="filter-chip ${this.vendorFilterStatus === 'suspended' ? 'active' : ''}" data-admin-status-filter="suspended">
+                  ⏸️ SUSPENDED (${db.getVendors().filter(v => v.status === 'suspended').length})
+                </button>
               </div>
             </div>
           </div>
@@ -321,45 +360,54 @@ export class AdminConsoleController {
                 </div>
 
                 <div style="margin-top: 14px; border-top: 1px solid var(--theme-border); padding-top: 12px;">
-                  <div style="font-size: 0.75rem; font-weight: 700; color: var(--theme-text-muted); margin-bottom: 10px; text-transform: uppercase;">
-                    Module Feature Permissions:
+                  <div style="font-size: 0.75rem; font-weight: 700; color: var(--theme-text-muted); margin-bottom: 6px; text-transform: uppercase;">
+                    vCard Tabs & Feature Access Permissions:
+                  </div>
+                  <div style="font-size: 0.72rem; color: var(--theme-primary); margin-bottom: 10px; line-height: 1.4;">
+                    ⚡ Features auto-selected based on chosen package. Admin can freely override any feature below for this business:
                   </div>
 
                   <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <label class="switch-label" style="opacity: 0.85;">
+                      <input type="checkbox" class="switch-input" id="toggle-feat-home" checked disabled />
+                      <span class="switch-slider"></span>
+                      <span><strong>Home Tab</strong> — Default (Always Active)</span>
+                    </label>
+
                     <label class="switch-label">
                       <input type="checkbox" class="switch-input" id="toggle-feat-quote" checked />
                       <span class="switch-slider"></span>
-                      <span>Enable Quote Builder (Multi-Select)</span>
+                      <span><strong>Services Tab</strong> (Quote Builder & Selection)</span>
                     </label>
 
                     <label class="switch-label">
                       <input type="checkbox" class="switch-input" id="toggle-feat-shop" checked />
                       <span class="switch-slider"></span>
-                      <span>Enable E-Commerce Shop & Cart</span>
+                      <span><strong>Shop Tab</strong> (E-Commerce Catalog & Cart)</span>
                     </label>
 
                     <label class="switch-label">
                       <input type="checkbox" class="switch-input" id="toggle-feat-booking" checked />
                       <span class="switch-slider"></span>
-                      <span>Enable Calendar Booking</span>
+                      <span><strong>Book Appointment Tab</strong> (Calendar Scheduling)</span>
                     </label>
 
                     <label class="switch-label">
                       <input type="checkbox" class="switch-input" id="toggle-feat-reviews" checked />
                       <span class="switch-slider"></span>
-                      <span>Enable Customer Reviews</span>
+                      <span><strong>Reviews Tab</strong> (Customer Ratings & Testimonials)</span>
                     </label>
 
                     <label class="switch-label">
                       <input type="checkbox" class="switch-input" id="toggle-feat-promo" checked />
                       <span class="switch-slider"></span>
-                      <span>Enable Promo Offer Banner</span>
+                      <span>Promo Offer Banner (Home Tab)</span>
                     </label>
 
                     <label class="switch-label">
                       <input type="checkbox" class="switch-input" id="toggle-feat-pwa" checked />
                       <span class="switch-slider"></span>
-                      <span>Enable PWA App Installation</span>
+                      <span>PWA Web App Installation</span>
                     </label>
                   </div>
                 </div>
@@ -408,12 +456,13 @@ export class AdminConsoleController {
                 </p>
 
                 <div style="font-size: 0.75rem; color: #FFF; margin-bottom: 14px;">
-                  <div style="padding: 2px 0;">${plan.features?.quoteBuilder !== false ? '✓' : '✗'} Quote Builder</div>
-                  <div style="padding: 2px 0;">${plan.features?.ecommerceShop !== false ? '✓' : '✗'} E-Commerce Shop</div>
-                  <div style="padding: 2px 0;">${plan.features?.calendarBooking !== false ? '✓' : '✗'} Calendar Booking</div>
-                  <div style="padding: 2px 0;">${plan.features?.customerReviews !== false ? '✓' : '✗'} Customer Reviews</div>
-                  <div style="padding: 2px 0;">${plan.features?.promoBanner !== false ? '✓' : '✗'} Promo Offer Banner</div>
-                  <div style="padding: 2px 0;">${plan.features?.pwaInstall !== false ? '✓' : '✗'} PWA App Install</div>
+                  <div style="padding: 2px 0; color: var(--theme-primary); font-weight: 600;">✓ 🏠 Home Tab (Default)</div>
+                  <div style="padding: 2px 0;">${plan.features?.quoteBuilder !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 📋 Quote Builder (Services)</div>
+                  <div style="padding: 2px 0;">${plan.features?.ecommerceShop !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 🛍️ E-Commerce Shop (Products)</div>
+                  <div style="padding: 2px 0;">${plan.features?.calendarBooking !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 📅 Calendar Booking (Appointments)</div>
+                  <div style="padding: 2px 0;">${plan.features?.customerReviews !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} ⭐ Customer Reviews & Rating</div>
+                  <div style="padding: 2px 0;">${plan.features?.promoBanner !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 🏷️ Promo Offer Banner</div>
+                  <div style="padding: 2px 0;">${plan.features?.pwaInstall !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 📱 PWA Web App Installation</div>
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -751,6 +800,58 @@ export class AdminConsoleController {
               </div>
             </div>
 
+            <!-- 6. vCard Tabs & Granted Features -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <h4 style="font-size: 0.92rem; color: var(--theme-primary); margin: 0; display: flex; align-items: center; gap: 6px;">
+                  <span>📑</span> 6. vCard Tabs & Granted Features (Admin Access Control)
+                </h4>
+                <button type="button" class="btn-pill" id="btn-edit-apply-plan-feats" style="font-size: 0.7rem; color: var(--theme-primary); border-color: rgba(212,255,0,0.35); padding: 2px 8px;">
+                  ⚡ Sync from Selected Plan
+                </button>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-bottom: 10px;">
+                Features are granted based on package chosen. Admin can freely override any feature below for this specific business.
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label class="switch-label" style="opacity: 0.85;">
+                  <input type="checkbox" class="switch-input" id="edit-feat-home" checked disabled />
+                  <span class="switch-slider"></span>
+                  <span><strong>Home Tab</strong> — Default (Always Active)</span>
+                </label>
+
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-input" id="edit-feat-quote" />
+                  <span class="switch-slider"></span>
+                  <span><strong>Services Tab</strong> (Quote Builder & Selection)</span>
+                </label>
+
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-input" id="edit-feat-shop" />
+                  <span class="switch-slider"></span>
+                  <span><strong>Shop Tab</strong> (E-Commerce Catalog & Cart)</span>
+                </label>
+
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-input" id="edit-feat-booking" />
+                  <span class="switch-slider"></span>
+                  <span><strong>Book Appointment Tab</strong> (Calendar Scheduling)</span>
+                </label>
+
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-input" id="edit-feat-reviews" />
+                  <span class="switch-slider"></span>
+                  <span><strong>Reviews Tab</strong> (Customer Ratings & Testimonials)</span>
+                </label>
+
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-input" id="edit-feat-pwa" />
+                  <span class="switch-slider"></span>
+                  <span><strong>PWA Web App Installation</strong></span>
+                </label>
+              </div>
+            </div>
+
             <button type="submit" class="btn-submit-primary" style="margin-top: 10px; padding: 14px;">
               <span>Save Complete vCard Changes</span>
               <span>💾</span>
@@ -832,9 +933,13 @@ export class AdminConsoleController {
                   <input type="number" class="form-input" id="admin-new-prod-price" placeholder="250" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Unit Type (e.g. pack, box, kg, plate)</label>
-                  <input type="text" class="form-input" id="admin-new-prod-unit" placeholder="e.g. pack, box, kg, plate" />
+                  <label class="form-label">Category</label>
+                  <input type="text" class="form-input" id="admin-new-prod-category" placeholder="e.g. Desserts, Spices, Meals" />
                 </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit Type (e.g. pack, box, kg, plate)</label>
+                <input type="text" class="form-input" id="admin-new-prod-unit" placeholder="e.g. pack, box, kg, plate" />
               </div>
               <button type="button" class="btn-pill active" id="btn-admin-save-new-prod">Save Product</button>
             </div>
@@ -946,37 +1051,42 @@ export class AdminConsoleController {
               <textarea class="form-textarea" id="plan-desc" rows="2" required placeholder="Describe what is included in this package"></textarea>
             </div>
             <div style="margin-top: 10px; margin-bottom: 14px; border-top: 1px solid var(--theme-border); padding-top: 10px;">
-              <label class="form-label" style="margin-bottom: 8px;">Included Feature Modules</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="form-label" style="margin-bottom: 0;">Tick Features Included in this Package</label>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-bottom: 8px;">
+                Cards deployed under this package will inherit these ticked features by default (admin can still override anytime).
+              </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <label class="switch-label" style="font-size: 0.78rem;">
                   <input type="checkbox" class="switch-input" id="plan-feat-quote" checked />
                   <span class="switch-slider"></span>
-                  <span>Quote Builder</span>
+                  <span>📋 Quote Builder (Services)</span>
                 </label>
                 <label class="switch-label" style="font-size: 0.78rem;">
                   <input type="checkbox" class="switch-input" id="plan-feat-shop" checked />
                   <span class="switch-slider"></span>
-                  <span>E-Commerce Shop</span>
+                  <span>🛍️ E-Commerce Shop (Products)</span>
                 </label>
                 <label class="switch-label" style="font-size: 0.78rem;">
                   <input type="checkbox" class="switch-input" id="plan-feat-cal" checked />
                   <span class="switch-slider"></span>
-                  <span>Booking Calendar</span>
+                  <span>📅 Booking Calendar (Appointments)</span>
                 </label>
                 <label class="switch-label" style="font-size: 0.78rem;">
                   <input type="checkbox" class="switch-input" id="plan-feat-review" checked />
                   <span class="switch-slider"></span>
-                  <span>Customer Reviews</span>
+                  <span>⭐ Customer Reviews & Rating</span>
                 </label>
                 <label class="switch-label" style="font-size: 0.78rem;">
                   <input type="checkbox" class="switch-input" id="plan-feat-promo" checked />
                   <span class="switch-slider"></span>
-                  <span>Promo Banner</span>
+                  <span>🏷️ Promo Banner (Home)</span>
                 </label>
                 <label class="switch-label" style="font-size: 0.78rem;">
                   <input type="checkbox" class="switch-input" id="plan-feat-pwa" checked />
                   <span class="switch-slider"></span>
-                  <span>PWA App Install</span>
+                  <span>📱 PWA Web App Installation</span>
                 </label>
               </div>
             </div>
@@ -987,26 +1097,140 @@ export class AdminConsoleController {
           </form>
         </div>
       </div>
+
+      <!-- Modal: Share & Bio Link Generator (For Admin to give clean link to business owners & social media) -->
+      <div class="modal-overlay" id="modal-admin-share-vcard">
+        <div class="modal-card" style="max-width: 520px; padding: 24px 20px;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔗 Shareable Web App & Bio Link</h3>
+            <button class="btn-modal-close" data-close-modal="modal-admin-share-vcard">×</button>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 0.95rem; font-weight: 700; color: #FFF; margin-bottom: 2px;" id="share-modal-biz-name">Business Name</div>
+            <div style="font-size: 0.75rem; color: var(--theme-text-muted);" id="share-modal-owner-info">Owner • Category</div>
+          </div>
+
+          <!-- Clean Direct URL -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Official Customer Web App URL (Clean Standalone Link)</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="form-input" id="share-modal-url" readonly style="font-size: 0.8rem; font-family: monospace; color: var(--theme-primary); background: rgba(0,0,0,0.4);" />
+              <button type="button" class="btn-pill active" id="btn-copy-vcard-url" style="white-space: nowrap; padding: 6px 14px; font-weight: 700;">
+                📋 Copy
+              </button>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px;">
+              Direct link for customers. Clicking Back will never land them in the Admin portal.
+            </div>
+          </div>
+
+          <!-- Instagram & Social Bio Link Snippet -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">📸 Social Media / Instagram Bio Ready Snippet</label>
+            <textarea class="form-textarea" id="share-modal-bio-snippet" rows="2" readonly style="font-size: 0.8rem; background: rgba(0,0,0,0.4);"></textarea>
+            <button type="button" class="btn-pill" id="btn-copy-vcard-bio" style="margin-top: 6px; width: 100%; justify-content: center; font-size: 0.78rem; color: #00E5FF; border-color: rgba(0,229,255,0.4);">
+              📸 Copy for Instagram Bio
+            </button>
+          </div>
+
+          <!-- Direct WhatsApp Dispatch to Vendor -->
+          <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 14px; margin-bottom: 18px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #10B981; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>💬</span> Send Live Link to Business Owner via WhatsApp
+            </div>
+            <p style="font-size: 0.75rem; color: #CBD5E1; line-height: 1.4; margin-bottom: 10px;">
+              Send the live vCard Web App link and installation instructions directly to the business owner on their WhatsApp number.
+            </p>
+            <button type="button" class="btn-submit-primary" id="btn-send-link-whatsapp" style="padding: 10px; font-size: 0.82rem; background: #10B981; color: #000;">
+              <span>Send Link to Owner on WhatsApp 💬 ↗</span>
+            </button>
+          </div>
+
+          <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <a href="#" target="_blank" rel="noopener" class="btn-pill" id="btn-share-modal-preview" style="text-decoration: none;">
+              Open Web App ↗
+            </a>
+            <button type="button" class="btn-pill" data-close-modal="modal-admin-share-vcard">
+              Done
+            </button>
+          </div>
+        </div>
+      <!-- Modal: 1-Click Package / Plan Assignment -->
+      <div class="modal-overlay" id="modal-admin-assign-plan">
+        <div class="modal-card" style="max-width: 560px; max-height: 85vh; overflow-y: auto; padding: 24px 20px;">
+          <div class="modal-header">
+            <h3 class="modal-title">💳 1-Click Assign Subscription Package</h3>
+            <button class="btn-modal-close" data-close-modal="modal-admin-assign-plan">×</button>
+          </div>
+          
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--theme-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
+            <div style="font-size: 1rem; font-weight: 800; color: #FFF;" id="assign-plan-modal-biz-name">Business Name</div>
+            <div style="font-size: 0.78rem; color: var(--theme-text-muted); margin-top: 2px;" id="assign-plan-modal-details">Owner • Current Plan • Expiry</div>
+          </div>
+
+          <div style="font-size: 0.82rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 10px;">
+            Select Package to Activate Instantly:
+          </div>
+
+          <div id="assign-plan-modal-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <div style="margin-top: 16px; text-align: right;">
+            <button type="button" class="btn-pill" data-close-modal="modal-admin-assign-plan">Cancel</button>
+          </div>
+        </div>
+      </div>
     `;
 
     this.bindDashboardEvents();
   }
 
-  renderVendorCards() {
+  getFilteredVendors() {
     let vendors = db.getVendors();
+    const now = new Date();
 
-    if (this.vendorFilterStatus !== "all") {
-      vendors = vendors.filter(v => v.status === this.vendorFilterStatus);
+    // 1. Lifecycle / Status filter
+    if (this.vendorFilterStatus === "active") {
+      vendors = vendors.filter(v => v.status === "active" && new Date(v.expiresAt) >= now);
+    } else if (this.vendorFilterStatus === "expiring-7d") {
+      vendors = vendors.filter(v => {
+        const diffMs = new Date(v.expiresAt) - now;
+        const daysLeft = diffMs / (1000 * 60 * 60 * 24);
+        return daysLeft >= 0 && daysLeft <= 7;
+      });
+    } else if (this.vendorFilterStatus === "expired") {
+      vendors = vendors.filter(v => new Date(v.expiresAt) < now || v.status === "expired");
+    } else if (this.vendorFilterStatus === "suspended") {
+      vendors = vendors.filter(v => v.status === "suspended");
     }
 
+    // 2. Business Category filter
+    if (this.vendorFilterCategory && this.vendorFilterCategory !== "all") {
+      vendors = vendors.filter(v => 
+        (v.branding?.category || "").toLowerCase() === this.vendorFilterCategory.toLowerCase()
+      );
+    }
+
+    // 3. Search query filter
     if (this.vendorFilterQuery) {
       const q = this.vendorFilterQuery.toLowerCase();
       vendors = vendors.filter(v => 
-        v.branding.businessName.toLowerCase().includes(q) ||
-        v.branding.ownerName.toLowerCase().includes(q) ||
-        v.branding.category.toLowerCase().includes(q)
+        (v.branding?.businessName || "").toLowerCase().includes(q) ||
+        (v.branding?.ownerName || "").toLowerCase().includes(q) ||
+        (v.branding?.category || "").toLowerCase().includes(q) ||
+        (v.slug || "").toLowerCase().includes(q)
       );
     }
+
+    return vendors;
+  }
+
+  renderVendorCards() {
+    const vendors = this.getFilteredVendors();
+    const plans = db.getSubscriptionPlans();
+    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
 
     if (vendors.length === 0) {
       return `<div style="text-align: center; color: var(--theme-text-muted); padding: 32px 16px; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px dashed var(--theme-border);">No matching vendors found.</div>`;
@@ -1017,49 +1241,101 @@ export class AdminConsoleController {
       const isExpired = expiryDate < new Date();
       const diffMs = expiryDate - new Date();
       const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-
-      const modules = [];
-      if (v.features?.quoteBuilder !== false) modules.push("📋 Quote");
-      if (v.features?.ecommerceShop !== false) modules.push("🛍️ Shop");
-      if (v.features?.calendarBooking !== false) modules.push("📅 Booking");
-      if (v.features?.customerReviews !== false) modules.push("⭐ Reviews");
-      if (v.features?.promoBanner !== false) modules.push("🏷️ Promo");
-      if (v.features?.pwaInstall !== false) modules.push("📱 PWA");
+      const isExpiringSoon = !isExpired && daysLeft <= 7;
+      const currentPlan = plans.find(p => p.id === v.planId);
 
       return `
-        <div class="admin-vendor-card" data-vendor-id="${v.id}">
+        <div class="admin-vendor-card ${isExpiringSoon ? 'card-expiring-soon' : ''}" data-vendor-id="${v.id}">
           <div class="vendor-card-header">
             <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
               <div class="vendor-card-avatar ${idx % 2 === 1 ? 'accent-orange' : ''}">
-                ${v.branding.avatarEmoji || '🏢'}
+                ${v.branding?.avatarEmoji || '🏢'}
               </div>
               <div class="vendor-card-identity" style="min-width: 0;">
-                <div class="vendor-card-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.branding.businessName}</div>
-                <div class="vendor-card-subtitle">${v.branding.ownerName} • ${v.branding.category}</div>
+                <div class="vendor-card-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.branding?.businessName}</div>
+                <div class="vendor-card-subtitle">${v.branding?.ownerName} • ${v.branding?.category}</div>
                 <div class="vendor-card-phone">📱 ${v.contacts?.whatsapp || v.contacts?.phone || 'No Phone'} • 🔑 ${v.password || v.pin || '2026'}</div>
               </div>
             </div>
-            <span class="${v.status === 'active' ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem; flex-shrink: 0;">
-              ${v.status.toUpperCase()}
-            </span>
-          </div>
-
-          <div class="vendor-plan-line">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
-              <span style="color: #A78BFA; font-weight: 700;">Plan: ${v.planId}</span>
-              <span style="color: ${isExpired ? '#EF4444' : '#94A3B8'}; font-size: 0.72rem;">
-                ${isExpired ? '⚠️ EXPIRED' : `⏳ Expires: ${expiryDate.toLocaleDateString()} (${daysLeft}d left)`}
+            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+              ${isExpiringSoon ? `
+                <span style="background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">
+                  ⏳ EXPIRING SOON
+                </span>
+              ` : ''}
+              <span class="${v.status === 'active' ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem;">
+                ${v.status.toUpperCase()}
               </span>
             </div>
           </div>
 
-          <div class="vendor-modules-line">
-            <span style="color: #64748B; font-weight: 600;">Active Modules: </span>
-            <span style="color: #CBD5E1;">${modules.length > 0 ? modules.join(" · ") : "None"}</span>
+          <div class="vendor-plan-line" style="margin: 10px 0 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="color: #A78BFA; font-weight: 700; font-size: 0.8rem;">
+                  💳 Plan: <strong style="color: #FFFFFF;">${currentPlan?.name || v.planId}</strong>
+                </span>
+
+                <!-- 1-Click Package Quick-Assign Selector directly on card -->
+                <div style="display: inline-flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 0.72rem; color: #94A3B8; font-weight: 600;">⚡ Quick Assign:</span>
+                  <select class="form-select quick-assign-plan-select" data-assign-plan-vendor="${v.id}" style="padding: 2px 8px; font-size: 0.72rem; width: auto; height: 26px; border-radius: 6px; background: rgba(0,0,0,0.6); border: 1px solid rgba(167, 139, 250, 0.4); color: #A78BFA; font-weight: 600; cursor: pointer;">
+                    <option value="" disabled selected>Select Plan ▾</option>
+                    ${plans.map(p => `
+                      <option value="${p.id}" ${p.id === v.planId ? 'style="font-weight: bold; color: #22C55E;"' : ''}>
+                        ${p.name} (${p.durationDays}d • ${p.price > 0 ? `${currency}${p.price}` : 'Free'})${p.id === v.planId ? ' ✓ (Current)' : ''}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                ${isExpired ? `
+                  <span style="background: rgba(239,68,68,0.2); color: #EF4444; border: 1px solid rgba(239,68,68,0.4); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                    ⚠️ EXPIRED (${expiryDate.toLocaleDateString()})
+                  </span>
+                ` : isExpiringSoon ? `
+                  <span style="background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                    ⏳ EXPIRES IN ${daysLeft} DAYS (${expiryDate.toLocaleDateString()})
+                  </span>
+                ` : `
+                  <span style="color: #94A3B8; font-size: 0.72rem;">
+                    ⏳ Expires: ${expiryDate.toLocaleDateString()} (${daysLeft}d left)
+                  </span>
+                `}
+              </div>
+            </div>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 8px 12px; margin: 10px 0;">
+            <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">
+              vCard Tabs & Granted Features:
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+              <span class="tab-grant-badge locked" title="Home is always active">🏠 Home: Default</span>
+              <button type="button" class="tab-grant-badge ${v.features?.quoteBuilder !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="quoteBuilder" data-v-id="${v.id}" title="Click to Grant/Revoke Services Tab">
+                📋 Services: ${v.features?.quoteBuilder !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.ecommerceShop !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="ecommerceShop" data-v-id="${v.id}" title="Click to Grant/Revoke Shop Tab">
+                🛍️ Shop: ${v.features?.ecommerceShop !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.calendarBooking !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="calendarBooking" data-v-id="${v.id}" title="Click to Grant/Revoke Book Appointment Tab">
+                📅 Book: ${v.features?.calendarBooking !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.customerReviews !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="customerReviews" data-v-id="${v.id}" title="Click to Grant/Revoke Reviews Tab">
+                ⭐ Reviews: ${v.features?.customerReviews !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.pwaInstall !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="pwaInstall" data-v-id="${v.id}" title="Click to Grant/Revoke PWA Web App Installation">
+                📱 PWA: ${v.features?.pwaInstall !== false ? 'ON' : 'OFF'}
+              </button>
+            </div>
           </div>
 
           <div class="vendor-actions-grid">
-            <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="text-decoration: none;">Preview ↗</a>
+            <button class="btn-pill active" style="background: rgba(212,255,0,0.15); color: var(--theme-primary); border-color: rgba(212,255,0,0.45); font-weight: 700;" data-share-vendor="${v.id}" title="Copy Clean Link / Instagram Bio Link">🔗 Bio Link</button>
+            <a href="?v=${v.slug}" target="_blank" rel="noopener" class="btn-pill" style="text-decoration: none;">Preview ↗</a>
+            <button class="btn-pill" style="color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
             <button class="btn-pill" style="color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
             <button class="btn-pill" style="color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>
             <button class="btn-pill" style="color: #10B981;" data-manage-products="${v.id}">🛍️ Products (${v.products?.length || 0})</button>
@@ -1076,6 +1352,103 @@ export class AdminConsoleController {
     }).join("");
   }
 
+  async assignPlanToVendor(vendorId, planId) {
+    const v = db.getVendor(vendorId);
+    const plan = db.getSubscriptionPlans().find(p => p.id === planId);
+    if (!v || !plan) return;
+
+    v.planId = plan.id;
+    v.status = "active";
+    const days = Number(plan.durationDays) || 30;
+    v.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+    // Auto-grant feature modules associated with the assigned plan
+    if (plan.features) {
+      v.features = {
+        quoteBuilder: plan.features.quoteBuilder !== false,
+        ecommerceShop: plan.features.ecommerceShop !== false,
+        calendarBooking: plan.features.calendarBooking !== false,
+        customerReviews: plan.features.customerReviews !== false,
+        promoBanner: plan.features.promoBanner !== false,
+        pwaInstall: plan.features.pwaInstall !== false,
+      };
+    }
+
+    await db.saveVendor(v);
+    window.OmniApp.showToast(`⚡ Assigned "${plan.name}" (${days}d) to ${v.branding.businessName}! Features updated.`);
+    this.refreshVendorsList();
+  }
+
+  openAssignPlanModal(vendorId) {
+    const v = db.getVendor(vendorId);
+    if (!v) return;
+    const modal = this.container.querySelector("#modal-admin-assign-plan");
+    if (!modal) return;
+
+    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+    const plans = db.getSubscriptionPlans();
+    const expiryDate = new Date(v.expiresAt);
+    const diffMs = expiryDate - new Date();
+    const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    const isExpired = expiryDate < new Date();
+
+    modal.querySelector("#assign-plan-modal-biz-name").textContent = v.branding?.businessName || v.id;
+    modal.querySelector("#assign-plan-modal-details").innerHTML = `
+      <span>👤 ${v.branding?.ownerName || 'Owner'}</span> • 
+      <span style="color: #A78BFA; font-weight: 700;">Current Plan: ${v.planId}</span> • 
+      <span style="color: ${isExpired ? '#EF4444' : '#94A3B8'}; font-weight: 600;">
+        ${isExpired ? '⚠️ Expired' : `⏳ ${daysLeft} days left`}
+      </span>
+    `;
+
+    const listEl = modal.querySelector("#assign-plan-modal-list");
+    listEl.innerHTML = plans.map(plan => {
+      const isCurrent = plan.id === v.planId;
+      const isFree = plan.price === 0 || plan.id === "plan-demo";
+      const priceDisplay = isFree ? "FREE TRIAL" : `${currency}${plan.price}`;
+
+      return `
+        <div style="background: rgba(255,255,255,0.02); border: 1.5px solid ${isCurrent ? 'var(--theme-primary)' : 'var(--theme-border)'}; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.95rem; font-weight: 800; color: #FFF;">${plan.name}</span>
+              ${isCurrent ? '<span style="font-size: 0.65rem; background: var(--theme-primary); color: #000; font-weight: 800; padding: 1px 6px; border-radius: 4px;">CURRENT</span>' : ''}
+            </div>
+            <div style="font-size: 0.8rem; color: #A78BFA; font-weight: 700; margin-top: 2px;">
+              ${priceDisplay} • ${plan.durationDays} Days Validity
+            </div>
+            <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px;">
+              ${plan.description || ''}
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+              ${plan.features?.quoteBuilder !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Services</span>' : ''}
+              ${plan.features?.ecommerceShop !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Shop</span>' : ''}
+              ${plan.features?.calendarBooking !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Booking</span>' : ''}
+              ${plan.features?.customerReviews !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Reviews</span>' : ''}
+              ${plan.features?.pwaInstall !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ PWA</span>' : ''}
+            </div>
+          </div>
+          <div>
+            <button type="button" class="btn-submit-primary" data-confirm-assign-plan="${plan.id}" data-confirm-vendor="${v.id}" style="padding: 8px 14px; font-size: 0.8rem; white-space: nowrap;">
+              <span>${isCurrent ? '⚡ Re-Activate Plan' : '⚡ 1-Click Activate'}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll("[data-confirm-assign-plan]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const pId = btn.getAttribute("data-confirm-assign-plan");
+        const vId = btn.getAttribute("data-confirm-vendor");
+        modal.classList.remove("active");
+        await this.assignPlanToVendor(vId, pId);
+      });
+    });
+
+    modal.classList.add("active");
+  }
+
   refreshVendorsList() {
     const cardList = this.container.querySelector("#admin-vendors-card-list");
     if (cardList) cardList.innerHTML = this.renderVendorCards();
@@ -1086,20 +1459,7 @@ export class AdminConsoleController {
 
   renderVendorTableRows() {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
-    let vendors = db.getVendors();
-
-    if (this.vendorFilterStatus !== "all") {
-      vendors = vendors.filter(v => v.status === this.vendorFilterStatus);
-    }
-
-    if (this.vendorFilterQuery) {
-      const q = this.vendorFilterQuery.toLowerCase();
-      vendors = vendors.filter(v => 
-        v.branding.businessName.toLowerCase().includes(q) ||
-        v.branding.ownerName.toLowerCase().includes(q) ||
-        v.branding.category.toLowerCase().includes(q)
-      );
-    }
+    const vendors = this.getFilteredVendors();
 
     if (vendors.length === 0) {
       return `<tr><td colspan="4" style="text-align: center; color: var(--theme-text-muted);">No matching vendors found.</td></tr>`;
@@ -1175,7 +1535,7 @@ export class AdminConsoleController {
       });
     });
 
-    // Filter status
+    // Lifecycle & Expiry Filter chips
     this.container.querySelectorAll("[data-admin-status-filter]").forEach(chip => {
       chip.addEventListener("click", () => {
         this.vendorFilterStatus = chip.getAttribute("data-admin-status-filter");
@@ -1183,7 +1543,50 @@ export class AdminConsoleController {
       });
     });
 
-    // Search
+    // Business Category filter
+    const catFilter = this.container.querySelector("#admin-vendor-category-filter");
+    if (catFilter) {
+      catFilter.addEventListener("change", (e) => {
+        this.vendorFilterCategory = e.target.value;
+        this.refreshVendorsList();
+      });
+    }
+
+    // KPI Cards: Click to Filter
+    const kpiTotal = this.container.querySelector("#kpi-card-total");
+    if (kpiTotal) {
+      kpiTotal.addEventListener("click", () => {
+        this.activeTab = "vendors";
+        this.vendorFilterStatus = "all";
+        this.renderDashboard();
+      });
+    }
+    const kpiActive = this.container.querySelector("#kpi-card-active");
+    if (kpiActive) {
+      kpiActive.addEventListener("click", () => {
+        this.activeTab = "vendors";
+        this.vendorFilterStatus = "active";
+        this.renderDashboard();
+      });
+    }
+    const kpiExpiring = this.container.querySelector("#kpi-card-expiring-7d");
+    if (kpiExpiring) {
+      kpiExpiring.addEventListener("click", () => {
+        this.activeTab = "vendors";
+        this.vendorFilterStatus = "expiring-7d";
+        this.renderDashboard();
+      });
+    }
+    const kpiExpired = this.container.querySelector("#kpi-card-expired");
+    if (kpiExpired) {
+      kpiExpired.addEventListener("click", () => {
+        this.activeTab = "vendors";
+        this.vendorFilterStatus = "expired";
+        this.renderDashboard();
+      });
+    }
+
+    // Search input
     const searchInput = this.container.querySelector("#admin-vendor-search");
     if (searchInput) {
       searchInput.addEventListener("input", (e) => {
@@ -1199,6 +1602,31 @@ export class AdminConsoleController {
     if (presetSelect) {
       presetSelect.addEventListener("change", (e) => {
         this.applyPreset(e.target.value);
+      });
+    }
+
+    // Auto-update features when changing plan in Create Vendor form
+    const newPlanSelect = this.container.querySelector("#new-v-plan");
+    if (newPlanSelect) {
+      newPlanSelect.addEventListener("change", (e) => {
+        const plan = db.getSubscriptionPlans().find(p => p.id === e.target.value);
+        if (plan && plan.features) {
+          if (this.container.querySelector("#toggle-feat-quote")) this.container.querySelector("#toggle-feat-quote").checked = plan.features.quoteBuilder !== false;
+          if (this.container.querySelector("#toggle-feat-shop")) this.container.querySelector("#toggle-feat-shop").checked = plan.features.ecommerceShop !== false;
+          if (this.container.querySelector("#toggle-feat-booking")) this.container.querySelector("#toggle-feat-booking").checked = plan.features.calendarBooking !== false;
+          if (this.container.querySelector("#toggle-feat-reviews")) this.container.querySelector("#toggle-feat-reviews").checked = plan.features.customerReviews !== false;
+          if (this.container.querySelector("#toggle-feat-promo")) this.container.querySelector("#toggle-feat-promo").checked = plan.features.promoBanner !== false;
+          if (this.container.querySelector("#toggle-feat-pwa")) this.container.querySelector("#toggle-feat-pwa").checked = plan.features.pwaInstall !== false;
+          window.OmniApp.showToast(`Applied features from '${plan.name}' (override anytime below)`);
+        }
+      });
+    }
+
+    const quickDemoBtn = this.container.querySelector("#btn-quick-demo-plan");
+    if (quickDemoBtn && newPlanSelect) {
+      quickDemoBtn.addEventListener("click", () => {
+        newPlanSelect.value = "plan-demo";
+        newPlanSelect.dispatchEvent(new Event("change"));
       });
     }
 
@@ -1319,9 +1747,10 @@ export class AdminConsoleController {
         };
 
         await db.saveVendor(newVendor);
-        window.OmniApp.showToast("New smart card created successfully!");
+        window.OmniApp.showToast("New smart card deployed successfully!");
         this.activeTab = "vendors";
         this.renderDashboard();
+        this.openShareModal(newVendor.id);
       });
     }
 
@@ -1531,11 +1960,54 @@ export class AdminConsoleController {
         if (expiryVal) {
           v.expiresAt = new Date(expiryVal + "T23:59:59.000Z").toISOString();
         }
+        // 7. vCard Tabs & Feature Access Grants
+        if (!v.features) v.features = {};
+        v.features.home = true;
+        const editQuoteEl = this.container.querySelector("#edit-feat-quote");
+        const editShopEl = this.container.querySelector("#edit-feat-shop");
+        const editBkgEl = this.container.querySelector("#edit-feat-booking");
+        const editRevEl = this.container.querySelector("#edit-feat-reviews");
+        const editPwaEl = this.container.querySelector("#edit-feat-pwa");
+        if (editQuoteEl) v.features.quoteBuilder = editQuoteEl.checked;
+        if (editShopEl) v.features.ecommerceShop = editShopEl.checked;
+        if (editBkgEl) v.features.calendarBooking = editBkgEl.checked;
+        if (editRevEl) v.features.customerReviews = editRevEl.checked;
+        if (editPwaEl) v.features.pwaInstall = editPwaEl.checked;
 
         await db.saveVendor(v);
         this.container.querySelector("#modal-admin-edit-vendor")?.classList.remove("active");
         window.OmniApp.showToast(`Updated '${v.branding.businessName}' & all card texts successfully!`);
         this.renderDashboard();
+      });
+    }
+
+    // Sync features from selected plan in Edit Vendor modal
+    const editPlanSelect = this.container.querySelector("#edit-v-plan");
+    const applyPlanFeatsBtn = this.container.querySelector("#btn-edit-apply-plan-feats");
+    if (applyPlanFeatsBtn && editPlanSelect) {
+      applyPlanFeatsBtn.addEventListener("click", () => {
+        const plan = db.getSubscriptionPlans().find(p => p.id === editPlanSelect.value);
+        if (plan && plan.features) {
+          if (this.container.querySelector("#edit-feat-quote")) this.container.querySelector("#edit-feat-quote").checked = plan.features.quoteBuilder !== false;
+          if (this.container.querySelector("#edit-feat-shop")) this.container.querySelector("#edit-feat-shop").checked = plan.features.ecommerceShop !== false;
+          if (this.container.querySelector("#edit-feat-booking")) this.container.querySelector("#edit-feat-booking").checked = plan.features.calendarBooking !== false;
+          if (this.container.querySelector("#edit-feat-reviews")) this.container.querySelector("#edit-feat-reviews").checked = plan.features.customerReviews !== false;
+          if (this.container.querySelector("#edit-feat-pwa")) this.container.querySelector("#edit-feat-pwa").checked = plan.features.pwaInstall !== false;
+          window.OmniApp.showToast(`Synced feature toggles to '${plan.name}' defaults (custom overrides preserved on save)`);
+        }
+      });
+    }
+
+    const editAssignDemoBtn = this.container.querySelector("#btn-edit-assign-demo");
+    if (editAssignDemoBtn && editPlanSelect) {
+      editAssignDemoBtn.addEventListener("click", () => {
+        editPlanSelect.value = "plan-demo";
+        const now = new Date();
+        const demoExpiry = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+        if (this.container.querySelector("#edit-v-expiry")) {
+          this.container.querySelector("#edit-v-expiry").value = demoExpiry;
+        }
+        applyPlanFeatsBtn?.click();
       });
     }
 
@@ -1592,17 +2064,21 @@ export class AdminConsoleController {
         const emoji = this.container.querySelector("#admin-new-prod-emoji").value.trim() || "🛍️";
         const price = Number(this.container.querySelector("#admin-new-prod-price").value || 0);
         const unit = this.container.querySelector("#admin-new-prod-unit").value.trim() || "unit";
+        const category = this.container.querySelector("#admin-new-prod-category") ? this.container.querySelector("#admin-new-prod-category").value.trim() : "General";
 
         if (!name) {
           window.OmniApp.showToast("Please enter a product name.");
           return;
         }
 
-        await db.addProduct(vId, { name, emoji, price, unit, description: "", visible: true });
+        await db.addProduct(vId, { name, emoji, price, unit, category: category || "General", description: "", visible: true });
         window.OmniApp.showToast("New product added for vendor!");
         this.container.querySelector("#admin-new-prod-name").value = "";
         this.container.querySelector("#admin-new-prod-price").value = "";
         this.container.querySelector("#admin-new-prod-unit").value = "";
+        if (this.container.querySelector("#admin-new-prod-category")) {
+          this.container.querySelector("#admin-new-prod-category").value = "";
+        }
         this.container.querySelector("#admin-add-prod-panel").style.display = "none";
         this.renderAdminProductsList(vId);
         this.refreshVendorsList();
@@ -1836,6 +2312,12 @@ export class AdminConsoleController {
           modal.querySelector("#edit-v-promoCode").value = v.promo?.code || "";
           modal.querySelector("#edit-v-promoDiscount").value = v.promo?.discount || "";
           modal.querySelector("#edit-v-promoEnabled").checked = v.promo?.enabled !== false;
+          if (!v.features) v.features = {};
+          if (modal.querySelector("#edit-feat-quote")) modal.querySelector("#edit-feat-quote").checked = v.features.quoteBuilder !== false;
+          if (modal.querySelector("#edit-feat-shop")) modal.querySelector("#edit-feat-shop").checked = v.features.ecommerceShop !== false;
+          if (modal.querySelector("#edit-feat-booking")) modal.querySelector("#edit-feat-booking").checked = v.features.calendarBooking !== false;
+          if (modal.querySelector("#edit-feat-reviews")) modal.querySelector("#edit-feat-reviews").checked = v.features.customerReviews !== false;
+          if (modal.querySelector("#edit-feat-pwa")) modal.querySelector("#edit-feat-pwa").checked = v.features.pwaInstall !== false;
           modal.classList.add("active");
         }
       });
@@ -1916,21 +2398,28 @@ export class AdminConsoleController {
       });
     });
 
+    // 1-Click Package Quick-Assign Selector directly on card
+    this.container.querySelectorAll("[data-assign-plan-vendor]").forEach(sel => {
+      sel.addEventListener("change", async (e) => {
+        const vId = sel.getAttribute("data-assign-plan-vendor");
+        const pId = e.target.value;
+        await this.assignPlanToVendor(vId, pId);
+      });
+    });
+
+    // 1-Click Package Assign Modal Trigger
+    this.container.querySelectorAll("[data-open-plan-modal]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-open-plan-modal");
+        this.openAssignPlanModal(id);
+      });
+    });
+
     // Quick 1-Click Assign 3-Day Free Demo Package
     this.container.querySelectorAll("[data-assign-demo]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-assign-demo");
-        const v = db.getVendor(id);
-        if (v) {
-          const demoPlan = db.getSubscriptionPlans().find(p => p.id === "plan-demo");
-          const days = demoPlan ? demoPlan.durationDays : 3;
-          v.planId = "plan-demo";
-          v.status = "active";
-          v.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-          await db.saveVendor(v);
-          window.OmniApp.showToast(`Assigned ${demoPlan?.name || "3-Day Free Demo"} to '${v.branding.businessName}'! Expiry set to ${days} days from now.`);
-          this.renderDashboard();
-        }
+        await this.assignPlanToVendor(id, "plan-demo");
       });
     });
 
@@ -1974,6 +2463,90 @@ export class AdminConsoleController {
         }
       });
     });
+
+    // Quick-toggle tabs on vendor card
+    this.container.querySelectorAll("[data-quick-toggle-tab]").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const vId = btn.getAttribute("data-v-id");
+        const tabKey = btn.getAttribute("data-quick-toggle-tab");
+        const v = db.getVendor(vId);
+        if (!v) return;
+        if (!v.features) v.features = {};
+        const currentVal = v.features[tabKey] !== false;
+        v.features[tabKey] = !currentVal;
+        await db.saveVendor(v);
+        const tabName = tabKey === 'quoteBuilder' ? 'Services' : tabKey === 'ecommerceShop' ? 'Shop' : tabKey === 'calendarBooking' ? 'Book Appointment' : tabKey === 'customerReviews' ? 'Reviews' : 'PWA Web App';
+        window.OmniApp.showToast(`${tabName} ${!currentVal ? 'GRANTED' : 'REVOKED'} for ${v.branding.businessName}`);
+        this.refreshVendorsList();
+      });
+    });
+
+    // Bio Link & Share Modal Opener
+    this.container.querySelectorAll("[data-share-vendor]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-share-vendor");
+        this.openShareModal(id);
+      });
+    });
+  }
+
+  openShareModal(vendorId) {
+    const v = db.getVendor(vendorId);
+    if (!v) return;
+    const modal = this.container.querySelector("#modal-admin-share-vcard");
+    if (!modal) return;
+
+    const origin = window.location.origin;
+    const pathname = window.location.pathname;
+    const cleanUrl = `${origin}${pathname}?v=${v.slug}`;
+
+    modal.querySelector("#share-modal-biz-name").textContent = v.branding.businessName;
+    modal.querySelector("#share-modal-owner-info").textContent = `${v.branding.ownerName} • ${v.branding.category} • Plan: ${v.planId}`;
+    modal.querySelector("#share-modal-url").value = cleanUrl;
+    modal.querySelector("#share-modal-bio-snippet").value = `🔗 Visit our Smart Business Web App: ${cleanUrl} | Contact, Book & Shop Online ✨`;
+    modal.querySelector("#btn-share-modal-preview").href = cleanUrl;
+
+    // 1-Click Copy Clean URL
+    const copyUrlBtn = modal.querySelector("#btn-copy-vcard-url");
+    copyUrlBtn.onclick = () => {
+      navigator.clipboard.writeText(cleanUrl).then(() => {
+        window.OmniApp.showToast("vCard Web App link copied! Ready to share or use in Instagram Bio. 📋");
+      }).catch(() => {
+        modal.querySelector("#share-modal-url").select();
+        document.execCommand("copy");
+        window.OmniApp.showToast("Link copied!");
+      });
+    };
+
+    // Copy Instagram Bio Snippet
+    const copyBioBtn = modal.querySelector("#btn-copy-vcard-bio");
+    copyBioBtn.onclick = () => {
+      const bioText = modal.querySelector("#share-modal-bio-snippet").value;
+      navigator.clipboard.writeText(bioText).then(() => {
+        window.OmniApp.showToast("Instagram Bio text copied! 📸");
+      }).catch(() => {
+        modal.querySelector("#share-modal-bio-snippet").select();
+        document.execCommand("copy");
+        window.OmniApp.showToast("Bio text copied!");
+      });
+    };
+
+    // Send on WhatsApp to Vendor Owner
+    const sendWaBtn = modal.querySelector("#btn-send-link-whatsapp");
+    sendWaBtn.onclick = () => {
+      const waNumber = (v.contacts?.whatsapp || v.contacts?.phone || "").replace(/[^0-9]/g, "");
+      const msg = `🎉 *Hello ${v.branding.ownerName}!* Your official Smart Business vCard Web App for *${v.branding.businessName}* is now live!\n\n` +
+        `🔗 *Your Web App Link:* ${cleanUrl}\n\n` +
+        `📱 *How to use:* \n` +
+        `1. Paste this link into your *Instagram / Social Media Bio*.\n` +
+        `2. Send this link to your clients on WhatsApp.\n` +
+        `3. Clients can install it on their phone home screen as a Web App with 1 tap.\n\n` +
+        `Enjoy growing your business with your new digital card! 🚀`;
+      WhatsAppEngine.openChat(waNumber, msg);
+    };
+
+    modal.classList.add("active");
   }
 
   renderAdminServicesList(vendorId) {
@@ -2079,8 +2652,9 @@ export class AdminConsoleController {
             <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
               <span style="font-size: 1.5rem;">${p.emoji || '🛍️'}</span>
               <div style="flex: 1; min-width: 0;">
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                   <span style="font-weight: 700; color: #FFF; font-size: 0.88rem;">${p.name}</span>
+                  <span class="tab-grant-badge locked" style="font-size: 0.65rem; padding: 1px 6px;">${p.category || 'General'}</span>
                   <span class="pill-status-pending" style="font-size: 0.65rem; padding: 1px 6px;">${p.unit || 'unit'}</span>
                   <span class="${p.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.65rem; padding: 1px 6px;">
                     ${p.visible !== false ? 'In Stock' : 'Hidden'}
@@ -2130,6 +2704,8 @@ export class AdminConsoleController {
         if (!prod) return;
         const newName = prompt("Product Name:", prod.name);
         if (newName === null) return;
+        const newCat = prompt("Product Category (e.g. Starters, Spices, Desserts):", prod.category || "General");
+        if (newCat === null) return;
         const newEmoji = prompt("Emoji / Icon:", prod.emoji || "🛍️");
         if (newEmoji === null) return;
         const newPrice = prompt(`Price (${currency}):`, prod.price);
@@ -2139,6 +2715,7 @@ export class AdminConsoleController {
 
         await db.updateProduct(vendorId, pId, {
           name: newName.trim(),
+          category: newCat.trim() || "General",
           emoji: newEmoji.trim() || "🛍️",
           price: Number(newPrice || 0),
           unit: newUnit.trim() || "unit",

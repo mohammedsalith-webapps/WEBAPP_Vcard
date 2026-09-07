@@ -109,6 +109,19 @@ export class VendorConsoleController {
     const waMsg = encodeURIComponent(`Hello Admin, I need assistance regarding my vendor account: ${v.branding.businessName} (${v.id}).`);
     const adminWhatsAppLink = `https://wa.me/${supportWa}?text=${waMsg}`;
 
+    // Ensure activeTab is valid for granted features
+    const isTabAvailable = (tab) => {
+      if (tab === "profile") return true;
+      if (tab === "services") return v.features?.quoteBuilder !== false;
+      if (tab === "shop") return v.features?.ecommerceShop !== false;
+      if (tab === "bookings") return v.features?.calendarBooking !== false;
+      if (tab === "reviews") return v.features?.customerReviews !== false;
+      return true;
+    };
+    if (!isTabAvailable(this.activeTab)) {
+      this.activeTab = "profile";
+    }
+
     this.container.innerHTML = `
       <div class="portal-container">
         <!-- Vendor Header Bar -->
@@ -142,20 +155,26 @@ export class VendorConsoleController {
           <button class="portal-tab-btn ${this.activeTab === 'profile' ? 'active' : ''}" data-vtab="profile">
             🎨 Profile
           </button>
-          <button class="portal-tab-btn ${this.activeTab === 'services' ? 'active' : ''}" data-vtab="services">
-            📋 Services (${v.services?.length || 0})
-          </button>
-          ${v.features.ecommerceShop ? `
+          ${v.features?.quoteBuilder !== false ? `
+            <button class="portal-tab-btn ${this.activeTab === 'services' ? 'active' : ''}" data-vtab="services">
+              📋 Services (${v.services?.length || 0})
+            </button>
+          ` : ""}
+          ${v.features?.ecommerceShop !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'shop' ? 'active' : ''}" data-vtab="shop">
               🛍️ Shop (${v.products?.length || 0})
             </button>
           ` : ""}
-          <button class="portal-tab-btn ${this.activeTab === 'bookings' ? 'active' : ''}" data-vtab="bookings">
-            📅 Bookings (${v.bookings?.length || 0})
-          </button>
-          <button class="portal-tab-btn ${this.activeTab === 'reviews' ? 'active' : ''}" data-vtab="reviews">
-            ★ Reviews (${v.reviews?.length || 0})
-          </button>
+          ${v.features?.calendarBooking !== false ? `
+            <button class="portal-tab-btn ${this.activeTab === 'bookings' ? 'active' : ''}" data-vtab="bookings">
+              📅 Bookings (${v.bookings?.length || 0})
+            </button>
+          ` : ""}
+          ${v.features?.customerReviews !== false ? `
+            <button class="portal-tab-btn ${this.activeTab === 'reviews' ? 'active' : ''}" data-vtab="reviews">
+              ★ Reviews (${v.reviews?.length || 0})
+            </button>
+          ` : ""}
         </div>
 
         <!-- 1. Branding & Profile Pane -->
@@ -401,6 +420,7 @@ export class VendorConsoleController {
                           <span style="font-size: 1.5rem;">${p.emoji || '🛍️'}</span>
                           <div>
                             <div style="font-weight: 700; color: #FFF;">${p.name}</div>
+                            <div style="font-size: 0.72rem; color: var(--theme-secondary);">${p.category || 'General'}</div>
                           </div>
                         </div>
                       </td>
@@ -594,6 +614,10 @@ export class VendorConsoleController {
               <input type="text" class="form-input" id="new-prod-name" required />
             </div>
             <div class="form-group">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-input" id="new-prod-category" placeholder="e.g. Starters, Spices, Desserts" required />
+            </div>
+            <div class="form-group">
               <label class="form-label">Emoji / Icon</label>
               <input type="text" class="form-input" id="new-prod-emoji" value="🛍️" required />
             </div>
@@ -622,6 +646,10 @@ export class VendorConsoleController {
             <div class="form-group">
               <label class="form-label">Product Name</label>
               <input type="text" class="form-input" id="edit-prod-name" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-input" id="edit-prod-category" placeholder="e.g. Starters, Spices, Desserts" required />
             </div>
             <div class="bento-grid bento-grid-2">
               <div class="form-group">
@@ -909,9 +937,11 @@ export class VendorConsoleController {
     if (formNewProd) {
       formNewProd.addEventListener("submit", async (e) => {
         e.preventDefault();
+        const category = this.container.querySelector("#new-prod-category") ? this.container.querySelector("#new-prod-category").value.trim() : "General";
         const newProd = {
           id: "prod-" + Date.now(),
           name: this.container.querySelector("#new-prod-name").value.trim(),
+          category: category || "General",
           emoji: this.container.querySelector("#new-prod-emoji").value.trim(),
           unit: this.container.querySelector("#new-prod-unit").value.trim(),
           price: Number(this.container.querySelector("#new-prod-price").value || 0),
@@ -925,6 +955,8 @@ export class VendorConsoleController {
         window.OmniApp.showToast("Product added to catalog!");
         this.renderDashboard();
       });
+    }
+
     // Edit Product Modal Opener
     this.container.querySelectorAll("[data-edit-prod]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -935,6 +967,7 @@ export class VendorConsoleController {
         if (modal) {
           modal.querySelector("#edit-prod-id").value = p.id;
           modal.querySelector("#edit-prod-name").value = p.name || "";
+          modal.querySelector("#edit-prod-category").value = p.category || "";
           modal.querySelector("#edit-prod-emoji").value = p.emoji || "🛍️";
           modal.querySelector("#edit-prod-unit").value = p.unit || "unit";
           modal.querySelector("#edit-prod-price").value = p.price || 0;
@@ -951,12 +984,13 @@ export class VendorConsoleController {
         e.preventDefault();
         const id = this.container.querySelector("#edit-prod-id").value;
         const name = this.container.querySelector("#edit-prod-name").value.trim();
+        const category = this.container.querySelector("#edit-prod-category") ? this.container.querySelector("#edit-prod-category").value.trim() : "General";
         const emoji = this.container.querySelector("#edit-prod-emoji").value.trim() || "🛍️";
         const unit = this.container.querySelector("#edit-prod-unit").value.trim() || "unit";
         const price = Number(this.container.querySelector("#edit-prod-price").value || 0);
         const visible = this.container.querySelector("#edit-prod-visible").checked;
 
-        await db.updateProduct(v.id, id, { name, emoji, unit, price, description: "", visible });
+        await db.updateProduct(v.id, id, { name, category: category || "General", emoji, unit, price, description: "", visible });
         this.container.querySelector("#modal-edit-product")?.classList.remove("active");
         window.OmniApp.showToast(`Updated product '${name}' successfully!`);
         this.renderDashboard();

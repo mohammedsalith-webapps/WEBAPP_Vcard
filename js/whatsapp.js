@@ -4,7 +4,11 @@
 export const WhatsAppEngine = {
   cleanPhone(phone) {
     if (!phone) return "";
-    return phone.toString().replace(/[^\d]/g, "");
+    let cleaned = phone.toString().replace(/[^\d]/g, "");
+    if (cleaned.length === 10 && /^[6-9]/.test(cleaned)) {
+      cleaned = "91" + cleaned;
+    }
+    return cleaned;
   },
 
   getLink(phone, text) {
@@ -109,7 +113,29 @@ export const WhatsAppEngine = {
       `\nPlease let me know how I can redeem this offer. Thank you!`;
   },
 
-  // 5. Vendor Direct Reply to Client
+  // 5. Customer Review Submission
+  buildReviewMessage(vendor, review = {}) {
+    const ratingVal = Number(review.rating) || 5;
+    const stars = "★".repeat(Math.max(1, Math.min(5, ratingVal))) + "☆".repeat(Math.max(0, 5 - Math.max(1, Math.min(5, ratingVal))));
+    const now = new Date().toLocaleString();
+    const tagsText = (review.tags && review.tags.length > 0) ? `*Feedback Tags:* ${review.tags.join(", ")}\n` : "";
+    const clientName = review.author || review.name || "Valued Client";
+    const commentText = review.content || review.comment || "";
+
+    return `*⭐ NEW CUSTOMER REVIEW & RATING*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*Business:* ${vendor.branding.businessName}\n` +
+      `*Client Name:* ${clientName}\n` +
+      `*Rating Given:* ${stars} (${ratingVal}/5 Stars)\n` +
+      tagsText +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*Review Feedback:*\n"${commentText}"\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `_Review submitted via Smart vCard on ${now}_\n` +
+      `_Thank you for your service!_`;
+  },
+
+  // 6. Vendor Direct Reply to Client
   buildVendorReply(vendor, clientName, message) {
     return `Hello ${clientName || "there"}, this is *${vendor.branding.businessName}*:\n\n${message}`;
   }

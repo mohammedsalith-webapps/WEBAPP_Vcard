@@ -19,371 +19,249 @@ export class HomeController {
     const plans = db.getSubscriptionPlans() || [];
     const vendors = db.getVendors() || [];
 
-    // Pre-calculated WhatsApp message for general inquiry
+    // General WhatsApp support link
     const generalInquiryText = encodeURIComponent(
-      `Hello Admin! I am interested in getting an interactive Smart Business vCard for my business on ${settings.platformName || "OmniCard OS"}. Please guide me on the packages and setup.`
+      `Hello Admin! I am interested in getting an interactive Smart Business vCard on ${settings.platformName || "OmniCard OS"}. Please guide me on setup and package activation.`
     );
     const generalWaUrl = `https://wa.me/${cleanWa}?text=${generalInquiryText}`;
 
-    // Demo plan quick WhatsApp link
-    const demoPlan = plans.find(p => p.id === "plan-demo");
-    const demoDays = demoPlan ? demoPlan.durationDays : 3;
-    const demoInquiryText = encodeURIComponent(
-      `Hello Admin! I want to claim the *3-Day Free Demo Package* (FREE) for my business on ${settings.platformName || "OmniCard OS"}. Please create my demo card so I can test all features!`
-    );
-    const demoWaUrl = `https://wa.me/${cleanWa}?text=${demoInquiryText}`;
-
     this.container.innerHTML = `
-      <div class="portal-container home-showcase-container">
+      <div class="minimal-home-container">
 
-        <!-- 1. Hero Section -->
-        <div class="bento-card home-hero-card">
-          <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212,255,0,0.1); border: 1px solid rgba(212,255,0,0.3); border-radius: 999px; padding: 4px 12px; margin-bottom: 16px;">
-            <span style="font-size: 0.8rem;">⚡</span>
-            <span style="font-size: 0.75rem; font-weight: 700; color: var(--theme-primary); text-transform: uppercase; letter-spacing: 0.05em;">Smart Business vCard & SaaS OS</span>
+        <!-- 1. Minimal Header / Hero -->
+        <div class="minimal-hero">
+          <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212,255,0,0.1); border: 1px solid rgba(212,255,0,0.3); border-radius: 999px; padding: 4px 12px; margin-bottom: 14px;">
+            <span style="font-size: 0.85rem;">⚡</span>
+            <span style="font-size: 0.74rem; font-weight: 700; color: var(--theme-primary, #D4FF00); text-transform: uppercase; letter-spacing: 0.05em;">Smart Business vCard Platform</span>
           </div>
 
-          <h1 class="home-hero-title">
-            Supercharge Your Business With An Interactive Smart vCard
+          <h1 class="minimal-title">
+            ${settings.platformName || "OmniCard OS"}
           </h1>
 
-          <p class="home-hero-desc">
-            Upgrade from flat paper cards to a high-converting digital storefront built directly for WhatsApp. Showcase services, take product orders, schedule calendar bookings, and collect 5-star reviews — all in a sleek, offline-capable PWA.
+          <p class="minimal-subtitle">
+            Interactive digital business storefronts with integrated WhatsApp quote requests, product ordering, calendar slot booking, and customer reviews.
           </p>
 
-          <div class="home-hero-cta-group">
-            <a href="${demoWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-submit-primary home-btn-primary">
-              <span>🎁 Claim ${demoDays}-Day Free Demo on WhatsApp</span>
+          <!-- Top Quick Actions -->
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <a href="?view=admin" class="btn-pill active" style="text-decoration: none; padding: 9px 18px; font-weight: 700; font-size: 0.84rem;">
+              <span>🛡️ Admin Login</span>
+              <span>→</span>
+            </a>
+            <a href="${generalWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-pill" style="text-decoration: none; padding: 9px 18px; font-weight: 600; font-size: 0.84rem; color: #25D366; border-color: rgba(37,211,102,0.35);">
+              <span>💬 WhatsApp Support</span>
               <span>↗</span>
             </a>
-            <a href="#section-pricing" class="btn-pill active home-btn-pill">
-              <span>💎 View All Packages & Prices</span>
-              <span>↓</span>
-            </a>
-            <a href="#section-demos" class="btn-pill home-btn-pill">
-              <span>👀 Test Live Demo Cards</span>
-            </a>
-          </div>
-
-          <!-- Quick Trust Badges -->
-          <div class="home-trust-badges">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="color: var(--theme-primary);">✓</span> Zero App Store Download Required
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="color: var(--theme-primary);">✓</span> 1-Click WhatsApp Ordering & Checkout
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="color: var(--theme-primary);">✓</span> 1-Tap Save Contact to Phonebook (.vcf)
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="color: var(--theme-primary);">✓</span> Secure Vendor Console (Long-Press Access)
-            </div>
           </div>
         </div>
 
-        <!-- 2. Features Grid: Everything included in this vCard -->
-        <div style="margin-bottom: 36px;">
-          <div style="margin-bottom: 18px;">
-            <h2 style="font-size: 1.4rem; font-weight: 700; color: #FFFFFF; margin-bottom: 4px;">
-              ✨ Complete Operating Suite Built Into Every vCard
-            </h2>
-            <p style="font-size: 0.85rem; color: var(--theme-text-muted);">
-              All the tools your business needs to turn card viewers into paying customers on WhatsApp.
-            </p>
+        <!-- 2. List of Features Granted for vCard -->
+        <div class="minimal-features-card">
+          <div class="minimal-section-title">
+            <span>✨</span>
+            <span>Features Granted for Business vCards</span>
+          </div>
+          <div class="minimal-section-desc">
+            Each digital business card is modular. Core profile is default, and specific business tabs are granted and managed by the Admin:
           </div>
 
-          <div class="bento-grid bento-grid-3">
-            <!-- Feature 1: E-Commerce Store -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">🛍️</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                WhatsApp E-Commerce Store
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Display physical or digital products with photos, prices, unit tags, and quantities. Customers add to cart and dispatch orders directly to your WhatsApp with auto-calculated totals.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Direct WhatsApp Checkout</span>
-            </div>
-
-            <!-- Feature 2: Service Quote Builder -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">📋</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                Request-to-Quote Service Builder
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Clients select one or multiple services from your catalog to request an itemized quotation. Vendors quote custom pricing tailored to each client's scope, requirements, and volume directly on WhatsApp.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Custom Quotation on Demand</span>
-            </div>
-
-            <!-- Feature 3: Calendar Booking -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">📅</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                Slot & Appointment Booking
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Allow customers to choose booking dates, time slots (morning, afternoon, evening), and appointment consultation types without endless phone tag.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Direct Slot Booking</span>
-            </div>
-
-            <!-- Feature 4: Customer Reviews -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">★</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                Social Proof & 5-Star Reviews
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Showcase genuine customer reviews, average star scores, and verified buyer badges right on your card to establish immediate trust with new leads.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Verified Feedback</span>
-            </div>
-
-            <!-- Feature 5: 1-Tap Contact Saving -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">📲</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                1-Tap Save Contact (.vcf)
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Never lose a connection. Customers download your complete business contact profile (.vcf file) into their Apple or Android phonebook with a single tap.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Instant Phonebook Sync</span>
-            </div>
-
-            <!-- Feature 6: Long-Press Security Backoffice -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">🔒</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                Hidden Long-Press Login
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Customers never see any login buttons. You access your vendor management portal by pressing and holding (1.5s) your card logo with an Admin-assigned password.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Tamper-Proof Privacy</span>
-            </div>
-
-            <!-- Feature 7: PWA Offline App -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">📱</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                Installable Progressive Web App
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Clients can add your digital card to their smartphone home screen with an app icon. Works seamlessly offline and loads in under 1 second.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Native App Feel</span>
-            </div>
-
-            <!-- Feature 8: Promo Coupons & Announcements -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">🏷️</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                Promo Coupons & Marquee
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                Broadcast ticker announcements across the top of your card and feature promotional discount badges (e.g. 15% OFF) with 1-click copy coupon codes.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">High-Conversion Offers</span>
-            </div>
-
-            <!-- Feature 9: Directions & Coordinates -->
-            <div class="bento-card">
-              <div style="font-size: 1.8rem; margin-bottom: 10px;">📍</div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #FFF; margin-bottom: 6px;">
-                GPS Directions & Calling
-              </h3>
-              <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.5; margin-bottom: 10px;">
-                1-tap direct calling, email launcher, operating hours display, and turnkey Google Maps GPS route navigation right to your shop or office doorstep.
-              </p>
-              <span class="pill-status-active" style="font-size: 0.65rem;">Turn-by-Turn GPS</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Live Demo Cards Section -->
-        <div id="section-demos" style="margin-bottom: 36px;">
-          <div style="margin-bottom: 18px;">
-            <h2 style="font-size: 1.4rem; font-weight: 700; color: #FFFFFF; margin-bottom: 4px;">
-              👀 Test Drive Real Live vCard Showcases
-            </h2>
-            <p style="font-size: 0.85rem; color: var(--theme-text-muted);">
-              Experience the actual interactive cards active on the platform. Try adding products to cart, building quotes, and testing the tabs.
-            </p>
-          </div>
-
-          <div class="bento-grid bento-grid-3">
-            ${vendors.map(v => `
-              <div class="bento-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <span style="font-size: 2.2rem;">${v.branding.avatarEmoji || '🏢'}</span>
-                    <span class="btn-pill" style="font-size: 0.68rem; padding: 2px 8px; color: var(--theme-primary);">${v.branding.category}</span>
-                  </div>
-                  <h3 style="font-size: 1.1rem; color: #FFF; margin-bottom: 4px;">${v.branding.businessName}</h3>
-                  <div style="font-size: 0.78rem; color: var(--theme-secondary); margin-bottom: 8px;">By ${v.branding.ownerName}</div>
-                  <p style="font-size: 0.8rem; color: var(--theme-text-muted); line-height: 1.4; margin-bottom: 14px;">
-                    ${v.branding.tagline || v.about?.description?.substring(0, 80) + '...'}
-                  </p>
-                  <div style="font-size: 0.75rem; color: #FFF; margin-bottom: 14px;">
-                    <div>🛍️ Products: <b>${v.products?.length || 0} items</b></div>
-                    <div>📋 Services: <b>${v.services?.length || 0} items</b></div>
-                    <div>★ Reviews: <b>${v.reviews?.length || 0} reviews</b></div>
-                  </div>
+          <div class="minimal-features-list">
+            <!-- Feature 1: Home Profile -->
+            <div class="minimal-feature-row">
+              <div class="minimal-feature-icon">🏠</div>
+              <div style="flex: 1;">
+                <div class="minimal-feature-name">
+                  <span>Home Profile</span>
+                  <span class="pill-status-active" style="font-size: 0.65rem; padding: 2px 7px;">DEFAULT</span>
                 </div>
-
-                <a href="?v=${v.slug || v.id}" class="btn-pill active" style="text-align: center; text-decoration: none; padding: 10px; font-weight: 700; font-size: 0.82rem; display: block;">
-                  <span>Open Live Demo vCard</span>
-                  <span>↗</span>
-                </a>
+                <div class="minimal-feature-detail">
+                  Complete digital branding, verified badge, operating hours, direct phone calling, email launcher, turn-by-turn Google Maps GPS route, and 1-tap save contact (.vcf) to smartphone phonebook.
+                </div>
               </div>
-            `).join("")}
+            </div>
+
+            <!-- Feature 2: Services & Quote Builder -->
+            <div class="minimal-feature-row">
+              <div class="minimal-feature-icon">📋</div>
+              <div style="flex: 1;">
+                <div class="minimal-feature-name">
+                  <span>Services & Quote Builder</span>
+                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: var(--theme-primary);">ADMIN GRANTED</span>
+                </div>
+                <div class="minimal-feature-detail">
+                  Interactive service catalog with categories. Clients check services and submit a customized quotation request directly to vendor WhatsApp. Includes live sticky preview bar.
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature 3: Shop & E-Commerce Cart -->
+            <div class="minimal-feature-row">
+              <div class="minimal-feature-icon">🛍️</div>
+              <div style="flex: 1;">
+                <div class="minimal-feature-name">
+                  <span>E-Commerce Product Shop & Cart</span>
+                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #10B981;">ADMIN GRANTED</span>
+                </div>
+                <div class="minimal-feature-detail">
+                  Showcase products with categories, units, and prices. Includes real-time quantity counters, sticky cart preview bar, and 1-click itemized WhatsApp order checkout.
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature 4: Book Appointment -->
+            <div class="minimal-feature-row">
+              <div class="minimal-feature-icon">📅</div>
+              <div style="flex: 1;">
+                <div class="minimal-feature-name">
+                  <span>Book Appointment & Slots</span>
+                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #00E5FF;">ADMIN GRANTED</span>
+                </div>
+                <div class="minimal-feature-detail">
+                  Interactive calendar date picker, matching color time-slot selection (morning, afternoon, evening), and automated WhatsApp booking notification.
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature 5: Customer Reviews -->
+            <div class="minimal-feature-row">
+              <div class="minimal-feature-icon">★</div>
+              <div style="flex: 1;">
+                <div class="minimal-feature-name">
+                  <span>5-Star Customer Reviews</span>
+                  <span class="btn-pill" style="font-size: 0.65rem; padding: 2px 7px; color: #F59E0B;">ADMIN GRANTED</span>
+                </div>
+                <div class="minimal-feature-detail">
+                  Public star ratings, verified client compliments, and direct WhatsApp review submission so business owners receive instant client feedback.
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature 6: PWA & Offline Support -->
+            <div class="minimal-feature-row">
+              <div class="minimal-feature-icon">📱</div>
+              <div style="flex: 1;">
+                <div class="minimal-feature-name">
+                  <span>PWA Offline App Installation</span>
+                  <span class="pill-status-active" style="font-size: 0.65rem; padding: 2px 7px;">INCLUDED</span>
+                </div>
+                <div class="minimal-feature-detail">
+                  Installable directly onto client home screens without App Store or Play Store downloads. Works smoothly offline with instant sub-second loading.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 4. Subscription Packages & Pricing Section -->
-        <div id="section-pricing" style="margin-bottom: 36px;">
-          <div style="margin-bottom: 18px;">
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); border-radius: 999px; padding: 3px 10px; margin-bottom: 8px;">
-              <span style="font-size: 0.75rem; font-weight: 700; color: var(--theme-secondary); text-transform: uppercase;">Transparent Pricing</span>
+        <!-- 3. Package Types in LIST TYPE (Not Grid) -->
+        <div style="margin-bottom: 24px;">
+          <div style="margin-bottom: 12px;">
+            <div class="minimal-section-title">
+              <span>💳</span>
+              <span>Available Subscription Packages</span>
             </div>
-            <h2 style="font-size: 1.5rem; font-weight: 700; color: #FFFFFF; margin-bottom: 4px;">
-              💎 Choose Your Business Package
-            </h2>
-            <p style="font-size: 0.85rem; color: var(--theme-text-muted);">
-              All packages include full platform capabilities. Select a package and opt directly through WhatsApp with 1 click.
-            </p>
+            <div class="minimal-section-desc">
+              Choose a package suited for your business. Select any plan to activate instantly via WhatsApp:
+            </div>
           </div>
 
-          <div class="bento-grid bento-grid-3">
+          <div class="package-list-container">
             ${plans.map((plan, idx) => {
               const isDemo = plan.id === "plan-demo";
               const isFree = Number(plan.price) === 0;
               const isPopular = idx === 1 || plan.id === "growth" || plan.id === "pro-30";
               const priceDisplay = isFree ? "FREE" : `${currency}${Number(plan.price).toLocaleString()}`;
-              
-              // Direct WhatsApp ordering URL for this specific plan
+
+              // Direct WhatsApp request link for this plan
               const planMsg = encodeURIComponent(
-                `Hello Admin! I would like to get a Smart Business vCard for my business. I want to opt for the *${plan.name}* package (${isFree ? 'FREE TRIAL' : `${priceDisplay} / ${plan.durationDays} Days`}). Please set up my card!`
+                `Hello Admin! I would like to opt for the *${plan.name}* package (${isFree ? 'FREE TRIAL' : `${priceDisplay} / ${plan.durationDays} Days`}) on ${settings.platformName || "OmniCard OS"}. Please set up my smart vCard!`
               );
               const planWaUrl = `https://wa.me/${cleanWa}?text=${planMsg}`;
 
               return `
-                <div class="bento-card ${isPopular ? 'plan-neon-card' : ''}" style="display: flex; flex-direction: column; justify-content: space-between; ${isDemo ? 'border-color: rgba(212,255,0,0.45); background: rgba(212,255,0,0.025);' : ''}">
-                  ${isPopular ? '<div class="plan-ribbon">POPULAR</div>' : ''}
-                  <div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                      <div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; color: #FFFFFF;">${plan.name}</h3>
-                        ${isDemo ? `
-                          <span class="pill-status-active" style="font-size: 0.65rem; background: rgba(212,255,0,0.15); color: var(--theme-primary); border-color: rgba(212,255,0,0.4); margin-top: 4px; display: inline-block;">
-                            🎁 FREE TRIAL NO PAYMENT
-                          </span>
-                        ` : ''}
+                <div class="package-list-item ${isPopular || isDemo ? 'featured' : ''}">
+                  <div class="package-list-header">
+                    <div class="package-list-name-col">
+                      <div class="package-list-name">
+                        <span>${plan.name}</span>
+                        ${isDemo ? `<span class="pill-status-active" style="font-size: 0.65rem;">🎁 FREE TRIAL</span>` : ""}
+                        ${isPopular && !isDemo ? `<span class="pill-status-active" style="font-size: 0.65rem; background: rgba(0,229,255,0.15); color: #00E5FF; border-color: rgba(0,229,255,0.4);">POPULAR</span>` : ""}
                       </div>
-                      <span class="btn-pill" style="font-size: 0.72rem; padding: 3px 10px; color: var(--theme-primary);">
-                        ${plan.durationDays} Days
-                      </span>
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                      <div style="font-size: 2.2rem; font-weight: 800; color: ${isDemo ? 'var(--theme-primary)' : '#FFFFFF'};">
-                        ${priceDisplay}
-                      </div>
-                      <div style="font-size: 0.72rem; color: var(--theme-text-muted);">
-                        ${isFree ? '100% Free Trial • No Credit Card Required' : `Valid for ${plan.durationDays} days of service`}
+                      <div style="font-size: 0.78rem; color: var(--theme-text-muted, #94A3B8); margin-top: 3px; line-height: 1.4;">
+                        ${plan.description}
                       </div>
                     </div>
 
-                    <p style="font-size: 0.82rem; color: var(--theme-text-muted); line-height: 1.45; margin-bottom: 18px;">
-                      ${plan.description}
-                    </p>
-
-                    <div style="border-top: 1px solid var(--theme-border); padding-top: 14px; margin-bottom: 20px; font-size: 0.78rem; color: #FFFFFF;">
-                      <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--theme-text-muted); margin-bottom: 8px;">
-                        Package Inclusions:
-                      </div>
-                      <div style="padding: 3px 0; display: flex; align-items: center; gap: 6px;">
-                        <span style="color: ${plan.features?.quoteBuilder !== false ? '#10B981' : '#EF4444'};">
-                          ${plan.features?.quoteBuilder !== false ? '✓' : '✗'}
-                        </span>
-                        <span>Interactive Service Quote Builder</span>
-                      </div>
-                      <div style="padding: 3px 0; display: flex; align-items: center; gap: 6px;">
-                        <span style="color: ${plan.features?.ecommerceShop !== false ? '#10B981' : '#EF4444'};">
-                          ${plan.features?.ecommerceShop !== false ? '✓' : '✗'}
-                        </span>
-                        <span>WhatsApp E-Commerce Product Shop</span>
-                      </div>
-                      <div style="padding: 3px 0; display: flex; align-items: center; gap: 6px;">
-                        <span style="color: ${plan.features?.calendarBooking !== false ? '#10B981' : '#EF4444'};">
-                          ${plan.features?.calendarBooking !== false ? '✓' : '✗'}
-                        </span>
-                        <span>Direct Calendar Slot Booking</span>
-                      </div>
-                      <div style="padding: 3px 0; display: flex; align-items: center; gap: 6px;">
-                        <span style="color: ${plan.features?.customerReviews !== false ? '#10B981' : '#EF4444'};">
-                          ${plan.features?.customerReviews !== false ? '✓' : '✗'}
-                        </span>
-                        <span>Customer Reviews & Ratings System</span>
-                      </div>
-                      <div style="padding: 3px 0; display: flex; align-items: center; gap: 6px;">
-                        <span style="color: ${plan.features?.promoBanner !== false ? '#10B981' : '#EF4444'};">
-                          ${plan.features?.promoBanner !== false ? '✓' : '✗'}
-                        </span>
-                        <span>Announcement Marquee & Promo Banner</span>
-                      </div>
-                      <div style="padding: 3px 0; display: flex; align-items: center; gap: 6px;">
-                        <span style="color: ${plan.features?.pwaInstall !== false ? '#10B981' : '#EF4444'};">
-                          ${plan.features?.pwaInstall !== false ? '✓' : '✗'}
-                        </span>
-                        <span>PWA Installable App & Offline Mode</span>
-                      </div>
+                    <div class="package-list-price-col">
+                      <div class="package-list-price">${priceDisplay}</div>
+                      <div style="font-size: 0.72rem; color: var(--theme-text-muted, #94A3B8);">${plan.durationDays} Days Validity</div>
                     </div>
                   </div>
 
-                  <!-- 1-Click WhatsApp Request Action Button -->
-                  <a href="${planWaUrl}" target="_blank" rel="noopener noreferrer" class="${isDemo ? 'btn-submit-primary' : 'btn-pill active'}" style="text-align: center; text-decoration: none; padding: 12px; font-weight: 700; font-size: 0.85rem; display: flex; justify-content: center; align-items: center; gap: 6px;">
-                    <span>${isDemo ? '🎁 Opt 3-Day Demo on WhatsApp' : `⚡ Opt for ${plan.name} on WhatsApp`}</span>
-                    <span>↗</span>
-                  </a>
+                  <!-- Granted Tabs / Features in this package -->
+                  <div class="package-list-badges-row">
+                    <span class="package-tab-tag active">✓ 🏠 Home (Default)</span>
+                    <span class="package-tab-tag ${plan.features?.quoteBuilder !== false ? 'active' : ''}">
+                      ${plan.features?.quoteBuilder !== false ? '✓' : '✗'} 📋 Services
+                    </span>
+                    <span class="package-tab-tag ${plan.features?.ecommerceShop !== false ? 'active' : ''}">
+                      ${plan.features?.ecommerceShop !== false ? '✓' : '✗'} 🛍️ Shop
+                    </span>
+                    <span class="package-tab-tag ${plan.features?.calendarBooking !== false ? 'active' : ''}">
+                      ${plan.features?.calendarBooking !== false ? '✓' : '✗'} 📅 Book Appointment
+                    </span>
+                    <span class="package-tab-tag ${plan.features?.customerReviews !== false ? 'active' : ''}">
+                      ${plan.features?.customerReviews !== false ? '✓' : '✗'} ★ Reviews
+                    </span>
+                    <span class="package-tab-tag ${plan.features?.pwaInstall !== false ? 'active' : ''}">
+                      ${plan.features?.pwaInstall !== false ? '✓' : '✗'} 📱 PWA App
+                    </span>
+                  </div>
+
+                  <!-- 1-Click WhatsApp Opt Action -->
+                  <div class="package-list-actions">
+                    <div style="font-size: 0.74rem; color: var(--theme-text-muted);">
+                      ${isFree ? 'Zero payment required • Test all features immediately' : 'Instant WhatsApp activation by Admin'}
+                    </div>
+                    <a href="${planWaUrl}" target="_blank" rel="noopener noreferrer" class="package-list-opt-btn">
+                      <span>${isDemo ? '🎁 Opt 3-Day Demo on WhatsApp' : `⚡ Opt for ${plan.name} on WhatsApp`}</span>
+                      <span>↗</span>
+                    </a>
+                  </div>
                 </div>
               `;
             }).join("")}
           </div>
         </div>
 
-        <!-- 5. 1-Click Admin WhatsApp Support Banner -->
-        <div class="bento-card home-support-card">
-          <div style="font-size: 2.2rem; margin-bottom: 10px;">💬</div>
-          <h2 class="home-support-title">
-            Have Questions or Need a Custom Business Card Solution?
+        <!-- 4. Prominent Super Admin Login Card -->
+        <div class="admin-login-banner-card">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🛡️</div>
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: #FFFFFF; margin-bottom: 6px;">
+            Super Admin Portal
           </h2>
-          <p class="home-support-desc">
-            Chat directly with our platform team on WhatsApp. We will help you select the ideal package, configure your services and products, and launch your vCard in minutes.
+          <p style="font-size: 0.82rem; color: var(--theme-text-muted, #94A3B8); max-width: 440px; margin: 0 auto 16px; line-height: 1.45;">
+            Master administrative console to register new business vCards, grant or revoke tabs (Services, Shop, Bookings), and manage subscription plans.
           </p>
-          <a href="${generalWaUrl}" target="_blank" rel="noopener noreferrer" class="btn-submit-primary home-support-btn">
-            <span>💬 Chat Directly with Admin on WhatsApp (${rawWa})</span>
-            <span>↗</span>
+          <a href="?view=admin" class="btn-submit-primary" style="max-width: 280px; margin: 0 auto; text-decoration: none; padding: 12px 24px; font-size: 0.92rem;">
+            <span>🛡️ Open Super Admin Login</span>
+            <span>→</span>
           </a>
         </div>
 
-        <!-- 6. Footer / Portal Access -->
-        <div class="home-footer">
-          <div>
-            <b>${settings.platformName || "OmniCard OS"}</b> • The Modern Digital Business Card & Operating System
+        <!-- 5. Quick Demo vCards -->
+        <div style="margin-top: 24px; text-align: center;">
+          <div style="font-size: 0.76rem; color: var(--theme-text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+            Test Live Demo vCards:
           </div>
-          <div class="home-footer-actions">
-            <span>Are you a registered business?</span>
-            <a href="?v=elite-catering" class="btn-pill" style="font-size: 0.72rem; padding: 4px 10px; text-decoration: none;">
-              Open Card & Hold Logo to Login
-            </a>
-            <a href="?view=admin" class="btn-pill" style="font-size: 0.72rem; padding: 4px 10px; text-decoration: none; color: var(--theme-primary);">
-              🛡️ Super Admin Portal
-            </a>
+          <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+            ${vendors.map(v => `
+              <a href="?v=${v.slug || v.id}" class="btn-pill" style="text-decoration: none; font-size: 0.78rem; padding: 5px 12px;">
+                <span>${v.branding.avatarEmoji || '🏢'}</span>
+                <span>${v.branding.businessName}</span>
+                <span>↗</span>
+              </a>
+            `).join("")}
           </div>
         </div>
 

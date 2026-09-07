@@ -63,6 +63,17 @@ class DatabaseService {
             }
           });
         }
+        if (Array.isArray(v.products)) {
+          // If demo vendor, sync default categories
+          const initV = INITIAL_DATA.vendors && INITIAL_DATA.vendors.find(iv => iv.id === v.id);
+          v.products.forEach(p => {
+            if (!p.category) {
+              const initP = initV && initV.products && initV.products.find(ip => ip.id === p.id);
+              p.category = (initP && initP.category) || "General Products";
+              cleaned = true;
+            }
+          });
+        }
       });
       if (cleaned) {
         this.saveLocal();
@@ -161,7 +172,11 @@ class DatabaseService {
 
   getVendor(idOrSlug) {
     if (!idOrSlug) return null;
-    return this.getVendors().find((v) => v.id === idOrSlug || v.slug === idOrSlug) || null;
+    const target = String(idOrSlug).trim().toLowerCase();
+    return this.getVendors().find((v) => 
+      (v.id && v.id.toLowerCase() === target) || 
+      (v.slug && v.slug.toLowerCase() === target)
+    ) || null;
   }
 
   async saveVendor(vendorData) {
@@ -400,6 +415,7 @@ class DatabaseService {
     const product = {
       id: newProduct.id || ("prod-" + Date.now()),
       name: newProduct.name || "New Product",
+      category: newProduct.category || "General",
       price: Number(newProduct.price || 0),
       unit: newProduct.unit || "unit",
       emoji: newProduct.emoji || "🛍️",

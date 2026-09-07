@@ -39,8 +39,19 @@ class OmniAppManager {
     // 5. Handle Initial Route
     this.handleRoute();
 
-    // 6. Listen for browser back/forward buttons
+    // 6. Listen for browser back/forward buttons with customer route isolation
     window.addEventListener("popstate", () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view");
+      const vendorParam = params.get("v");
+
+      // Customer protection: If user was on a customer vCard and back attempts to load admin/vendor:
+      if (this.currentView === "card" && (viewParam === "admin" || viewParam === "vendor")) {
+        const safeSlug = this.currentVendorSlug || vendorParam || "elite-catering";
+        window.history.replaceState({ view: "card", slug: safeSlug }, "", `?v=${safeSlug}`);
+        this.setView("card", safeSlug);
+        return;
+      }
       this.handleRoute();
     });
   }
@@ -72,7 +83,15 @@ class OmniAppManager {
     const viewParam = params.get("view");
     const vendorParam = params.get("v");
 
-    if (viewParam === "vendor") {
+    if (vendorParam && !viewParam) {
+      // Direct customer vendor card link (e.g. from Instagram Bio / WhatsApp share)
+      this.currentVendorSlug = vendorParam;
+      // Isolate history state so this customer session is rooted on the vCard
+      if (!window.history.state || window.history.state.view !== "card") {
+        window.history.replaceState({ view: "card", slug: vendorParam }, "", window.location.href);
+      }
+      this.setView("card", vendorParam);
+    } else if (viewParam === "vendor") {
       this.setView("vendor", vendorParam);
     } else if (viewParam === "admin") {
       this.setView("admin");
@@ -80,10 +99,6 @@ class OmniAppManager {
       const slug = vendorParam || this.currentVendorSlug || "elite-catering";
       this.currentVendorSlug = slug;
       this.setView("card", slug);
-    } else if (vendorParam) {
-      // Direct vendor card link, e.g. ?v=elite-catering
-      this.currentVendorSlug = vendorParam;
-      this.setView("card", vendorParam);
     } else {
       // Default: Business Landing Home Page with All Packages & Features
       this.setView("home");

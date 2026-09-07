@@ -1,6 +1,7 @@
 // Module 1: Public Digital Business Card (vCard) Controller
 import { db } from "./db.js";
 import { WhatsAppEngine } from "./whatsapp.js";
+import { PWAHandler } from "./pwa.js";
 
 export class VCardController {
   constructor(containerEl) {
@@ -14,6 +15,7 @@ export class VCardController {
     this.selectedReviewRating = 5;
     this.selectedReviewTags = new Set();
     this.serviceFilter = "All";
+    this.productFilter = "All";
   }
 
   async loadVendor(idOrSlug) {
@@ -25,7 +27,7 @@ export class VCardController {
           <p style="color: var(--theme-text-muted); font-size: 0.9rem; margin-bottom: 20px;">
             The requested business card does not exist or has been removed.
           </p>
-          <button class="btn-pill active" onclick="location.search='?v=elite-catering'">View Demo Card</button>
+          <a href="?v=elite-catering" class="btn-pill active" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">View Demo Card</a>
         </div>
       `;
       return;
@@ -90,23 +92,22 @@ export class VCardController {
         <!-- Tab 1: Profile & About Pane -->
         <div class="tab-pane ${this.activeTab === 'home' ? 'active' : ''}" id="pane-home">
           
-          <!-- Top Navigation Header inside vCard -->
+          <!-- Top Navigation Header inside vCard (Settings icon removed for security, only Share displayed) -->
           <div class="vcard-top-nav">
-            <a href="?view=home" class="vcard-circle-btn" title="Back to Packages">
-              <span>←</span>
-            </a>
-            <div style="display: flex; gap: 8px;">
-              <button class="vcard-circle-btn" id="btn-vcard-settings" title="Vendor Management Console">
-                <span>⚙️</span>
-              </button>
+            ${(document.referrer && (document.referrer.includes("view=home") || document.referrer.includes("view=admin"))) || window.location.search.includes("preview=1") ? `
+              <a href="?view=home" class="vcard-circle-btn" title="Back to Packages">
+                <span>←</span>
+              </a>
+            ` : `<div></div>`}
+            <div>
               <button class="vcard-circle-btn" id="btn-vcard-share" title="Share Business Card">
                 <span>📤</span>
               </button>
             </div>
           </div>
 
-          <!-- Centered Glowing Avatar Ring -->
-          <div class="avatar-ring-wrapper" id="vcard-avatar-wrapper" title="Hold 1.5s for Vendor Console">
+          <!-- Centered Glowing Avatar Ring (Hold 1.5s for Vendor Owner Access) -->
+          <div class="avatar-ring-wrapper" id="vcard-avatar-wrapper">
             <div class="avatar-glowing-ring" id="vcard-avatar-ring">
               ${v.branding.avatarEmoji || (v.branding.businessName ? v.branding.businessName.substring(0, 2).toUpperCase() : "💼")}
             </div>
@@ -179,6 +180,23 @@ export class VCardController {
               <button class="btn-claim-offer" id="btn-claim-promo">
                 <span>Claim Offer</span>
                 <span>⚡</span>
+              </button>
+            </div>
+          ` : ""}
+
+          <!-- PWA Web App Installation Banner (Granted by Admin) -->
+          ${v.features?.pwaInstall !== false ? `
+            <div class="vcard-pwa-banner" id="vcard-pwa-install-banner">
+              <div class="pwa-banner-content">
+                <div class="pwa-banner-icon">📲</div>
+                <div class="pwa-banner-text">
+                  <div class="pwa-banner-title">Install ${v.branding.businessName} App</div>
+                  <div class="pwa-banner-desc">Save to your home screen for 1-tap fast offline access</div>
+                </div>
+              </div>
+              <button type="button" class="pwa-banner-btn" id="btn-vcard-install-pwa">
+                <span>Install</span>
+                <span>⬇</span>
               </button>
             </div>
           ` : ""}
@@ -259,7 +277,7 @@ export class VCardController {
         <div class="tab-pane ${this.activeTab === 'services' ? 'active' : ''}" id="pane-services">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
-              <div class="tab-topbar-avatar" data-tab-avatar="true" title="Hold for Owner">${v.branding.avatarEmoji || "📋"}</div>
+              <div class="tab-topbar-avatar" data-tab-avatar="true">${v.branding.avatarEmoji || "📋"}</div>
               <div>
                 <div class="tab-topbar-title">Services & Quote</div>
                 <div class="tab-topbar-subtitle">Select services to request a quote</div>
@@ -282,12 +300,17 @@ export class VCardController {
         <div class="tab-pane ${this.activeTab === 'shop' ? 'active' : ''}" id="pane-shop">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
-              <div class="tab-topbar-avatar" data-tab-avatar="true" title="Hold for Owner">${v.branding.avatarEmoji || "🛍️"}</div>
+              <div class="tab-topbar-avatar" data-tab-avatar="true">${v.branding.avatarEmoji || "🛍️"}</div>
               <div>
                 <div class="tab-topbar-title">Shop Products</div>
                 <div class="tab-topbar-subtitle">Order items directly via WhatsApp</div>
               </div>
             </div>
+          </div>
+
+          <!-- Product Category filter chips -->
+          <div class="services-filter-bar" id="products-filter-container">
+            ${this.renderProductCategoryChips()}
           </div>
 
           <!-- Products Listing Stack -->
@@ -300,7 +323,7 @@ export class VCardController {
         <div class="tab-pane ${this.activeTab === 'calendar' ? 'active' : ''}" id="pane-calendar">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
-              <div class="tab-topbar-avatar" data-tab-avatar="true" title="Hold for Owner">${v.branding.avatarEmoji || "📅"}</div>
+              <div class="tab-topbar-avatar" data-tab-avatar="true">${v.branding.avatarEmoji || "📅"}</div>
               <div>
                 <div class="tab-topbar-title">Book an Appointment</div>
                 <div class="tab-topbar-subtitle">Select date & preferred time slot</div>
@@ -344,7 +367,7 @@ export class VCardController {
             <div class="form-group">
               <label class="form-label">Select Service / Purpose</label>
               <select class="form-select" id="booking-service-select">
-                ${v.services.filter(s => s.visible).map(s => `
+                ${(v.services || []).filter(s => s.visible).map(s => `
                   <option value="${s.name}">${s.name}</option>
                 `).join("")}
                 <option value="General Consultation">General Consultation</option>
@@ -367,7 +390,7 @@ export class VCardController {
         <div class="tab-pane ${this.activeTab === 'reviews' ? 'active' : ''}" id="pane-reviews">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
-              <div class="tab-topbar-avatar" data-tab-avatar="true" title="Hold for Owner">${v.branding.avatarEmoji || "★"}</div>
+              <div class="tab-topbar-avatar" data-tab-avatar="true">${v.branding.avatarEmoji || "★"}</div>
               <div>
                 <div class="tab-topbar-title">Customer Reviews</div>
                 <div class="tab-topbar-subtitle">Verified feedback from genuine clients</div>
@@ -414,57 +437,167 @@ export class VCardController {
     const dockRoot = document.getElementById("app-dock-root");
     if (!dockRoot) return;
     const v = this.vendor;
+    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+
+    // Tab visibility granted by admin:
+    // Home: Default (always granted)
+    // Services: Granted by admin with toggle button (quoteBuilder)
+    // Shop: Granted by admin with toggle button (ecommerceShop)
+    // Book appointment: Granted by admin with toggle button (calendarBooking)
+    // Reviews: Granted by admin with toggle button (customerReviews)
+    const visibleTabs = [
+      { id: "home", icon: "🏠", label: "Home" }
+    ];
+
+    if (v.features?.quoteBuilder !== false) {
+      visibleTabs.push({
+        id: "services",
+        icon: "📋",
+        label: "Services",
+        badge: this.selectedServices.size > 0 ? this.selectedServices.size : null
+      });
+    }
+
+    if (v.features?.ecommerceShop !== false) {
+      visibleTabs.push({
+        id: "shop",
+        icon: "🛍️",
+        label: "Shop",
+        badge: this.getCartTotalItems() > 0 ? this.getCartTotalItems() : null
+      });
+    }
+
+    if (v.features?.calendarBooking !== false) {
+      visibleTabs.push({ id: "calendar", icon: "📅", label: "Book" });
+    }
+
+    if (v.features?.customerReviews !== false) {
+      visibleTabs.push({ id: "reviews", icon: "★", label: "Reviews" });
+    }
+
+    // Fallback if current active tab is not visible
+    if (!visibleTabs.some(t => t.id === this.activeTab)) {
+      this.activeTab = "home";
+      this.container.querySelectorAll(".tab-pane").forEach(pane => {
+        pane.classList.toggle("active", pane.id === "pane-home");
+      });
+    }
+
     dockRoot.style.display = "block";
     dockRoot.innerHTML = `
-      <div class="bottom-dock">
-        <button class="dock-item ${this.activeTab === 'home' ? 'active' : ''}" data-tab="home">
-          <span class="dock-icon">🏠</span>
-          <span class="dock-label">Home</span>
-        </button>
-        <button class="dock-item ${this.activeTab === 'services' ? 'active' : ''}" data-tab="services">
-          <span class="dock-icon">📋</span>
-          <span class="dock-label">Services</span>
-          ${this.selectedServices.size > 0 ? `<span class="badge-cart-count">${this.selectedServices.size}</span>` : ""}
-        </button>
-        ${v.features.ecommerceShop ? `
-          <button class="dock-item ${this.activeTab === 'shop' ? 'active' : ''}" data-tab="shop">
-            <span class="dock-icon">🛍️</span>
-            <span class="dock-label">Shop</span>
-            ${this.getCartTotalItems() > 0 ? `<span class="badge-cart-count">${this.getCartTotalItems()}</span>` : ""}
+      <div id="dock-preview-container">
+        ${this.renderDockPreviewBar(currency)}
+      </div>
+      <div class="bottom-dock" style="grid-template-columns: repeat(${visibleTabs.length}, 1fr);">
+        ${visibleTabs.map(tab => `
+          <button class="dock-item ${this.activeTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">
+            <span class="dock-icon">${tab.icon}</span>
+            <span class="dock-label">${tab.label}</span>
+            ${tab.badge ? `<span class="badge-cart-count">${tab.badge}</span>` : ""}
           </button>
-        ` : ""}
-        <button class="dock-item ${this.activeTab === 'calendar' ? 'active' : ''}" data-tab="calendar">
-          <span class="dock-icon">📅</span>
-          <span class="dock-label">Book</span>
-        </button>
-        <button class="dock-item ${this.activeTab === 'reviews' ? 'active' : ''}" data-tab="reviews">
-          <span class="dock-icon">★</span>
-          <span class="dock-label">Reviews</span>
-        </button>
+        `).join("")}
       </div>
     `;
 
-    // Bind dock events
+    // Bind dock clicks
     dockRoot.querySelectorAll(".dock-item").forEach(btn => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-tab");
-        const currency = db.getPlatformSettings()?.currencySymbol || "₹";
-
-        if (tab === "services" && this.selectedServices.size > 0) {
-          this.switchTab("services");
-          this.openServicesCartModal();
-          return;
-        }
-
-        if (tab === "shop" && this.getCartTotalItems() > 0) {
-          this.switchTab("shop");
-          this.openProductsCartModal(currency);
-          return;
-        }
-
         this.switchTab(tab);
       });
     });
+
+    this.bindDockPreviewEvents(currency);
+
+    const screen = document.getElementById("app-content-root");
+    const hasPreview = (this.activeTab === "services" && this.selectedServices.size > 0) ||
+                       (this.activeTab === "shop" && this.getCartTotalItems() > 0);
+    if (screen) {
+      screen.classList.toggle("has-dock-preview", hasPreview);
+    }
+  }
+
+  renderDockPreviewBar(currency) {
+    if (this.activeTab === "services" && this.selectedServices.size > 0) {
+      const count = this.selectedServices.size;
+      return `
+        <div class="dock-preview-bar" id="dock-preview-services">
+          <div class="dock-preview-info">
+            <span class="dock-preview-subtitle">SELECTED SERVICES</span>
+            <span class="dock-preview-title">${count} selected</span>
+          </div>
+          <button type="button" class="dock-preview-action-btn" id="btn-dock-quote-preview">
+            <span>Request Quote 📋</span>
+          </button>
+        </div>
+      `;
+    }
+
+    if (this.activeTab === "shop" && this.getCartTotalItems() > 0) {
+      const totalItems = this.getCartTotalItems();
+      const subtotal = this.getCartSubtotal();
+      return `
+        <div class="dock-preview-bar" id="dock-preview-shop">
+          <div class="dock-preview-info">
+            <span class="dock-preview-subtitle">SELECTED PRODUCTS</span>
+            <span class="dock-preview-title">${totalItems} item${totalItems > 1 ? 's' : ''} • ${currency}${subtotal.toLocaleString()}</span>
+          </div>
+          <button type="button" class="dock-preview-action-btn" id="btn-dock-shop-preview">
+            <span>View Cart 🛍️</span>
+          </button>
+        </div>
+      `;
+    }
+
+    return "";
+  }
+
+  bindDockPreviewEvents(currency) {
+    const dockRoot = document.getElementById("app-dock-root");
+    if (!dockRoot) return;
+
+    const quoteBtn = dockRoot.querySelector("#btn-dock-quote-preview");
+    if (quoteBtn) {
+      quoteBtn.addEventListener("click", () => {
+        this.openServicesCartModal();
+      });
+    }
+
+    const shopBtn = dockRoot.querySelector("#btn-dock-shop-preview");
+    if (shopBtn) {
+      shopBtn.addEventListener("click", () => {
+        this.openProductsCartModal(currency);
+      });
+    }
+  }
+
+  updateDockPreviewBar() {
+    const dockRoot = document.getElementById("app-dock-root");
+    if (!dockRoot) return;
+    const previewContainer = dockRoot.querySelector("#dock-preview-container");
+    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+    const screen = document.getElementById("app-content-root");
+
+    if (previewContainer) {
+      previewContainer.innerHTML = this.renderDockPreviewBar(currency);
+      this.bindDockPreviewEvents(currency);
+
+      const hasPreview = (this.activeTab === "services" && this.selectedServices.size > 0) ||
+                         (this.activeTab === "shop" && this.getCartTotalItems() > 0);
+      if (screen) {
+        screen.classList.toggle("has-dock-preview", hasPreview);
+      }
+    }
+  }
+
+  renderProductCategoryChips() {
+    const products = this.vendor?.products || [];
+    const categories = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
+    return categories.map(cat => `
+      <button class="filter-chip ${this.productFilter === cat ? 'active' : ''}" data-prod-category="${cat}">
+        ${cat}
+      </button>
+    `).join("");
   }
 
   renderServiceCategoryChips() {
@@ -505,9 +638,14 @@ export class VCardController {
   }
 
   renderProductsList(currency) {
-    const products = (this.vendor?.products || []).filter(p => p.visible);
+    const products = (this.vendor?.products || []).filter(p => {
+      if (!p.visible) return false;
+      if (this.productFilter === "All") return true;
+      return p.category === this.productFilter;
+    });
+
     if (products.length === 0) {
-      return `<div style="text-align: center; padding: 24px; color: var(--theme-text-muted);">No products currently in catalog.</div>`;
+      return `<div style="text-align: center; padding: 24px; color: var(--theme-text-muted);">No products currently in this category.</div>`;
     }
 
     return products.map(p => {
@@ -520,6 +658,7 @@ export class VCardController {
               <span class="prod-title">${p.name}</span>
               <span class="prod-unit-tag">${p.unit || 'unit'}</span>
             </div>
+            ${p.category ? `<div style="font-size: 0.7rem; color: var(--theme-text-muted); margin-bottom: 2px;">${p.category}</div>` : ""}
             <div class="prod-price-text">${currency}${Number(p.price).toLocaleString()}</div>
           </div>
           <div class="prod-action-col">
@@ -764,8 +903,8 @@ export class VCardController {
           </div>
 
           <button class="btn-submit-primary" id="btn-submit-review">
-            <span>Publish Review</span>
-            <span>🚀</span>
+            <span>Submit Review via WhatsApp</span>
+            <span>💬 ↗</span>
           </button>
         </div>
       </div>
@@ -840,23 +979,15 @@ export class VCardController {
       });
     });
 
-    // Settings Gear -> Open Owner Login
-    const settingsBtn = this.container.querySelector("#btn-vcard-settings");
-    if (settingsBtn) {
-      settingsBtn.addEventListener("click", () => {
-        const modal = this.container.querySelector("#modal-owner-pin");
-        if (modal) modal.classList.add("active");
-      });
-    }
-
-    // Share Card -> Native share or copy link
+    // Share Card -> Native share or copy clean link
     const shareBtn = this.container.querySelector("#btn-vcard-share");
     if (shareBtn) {
       shareBtn.addEventListener("click", async () => {
+        const cleanUrl = `${window.location.origin}${window.location.pathname}?v=${v.slug}`;
         const shareData = {
           title: v.branding.businessName,
           text: `Check out ${v.branding.businessName} smart digital vCard!`,
-          url: window.location.href
+          url: cleanUrl
         };
         if (navigator.share) {
           try {
@@ -866,10 +997,10 @@ export class VCardController {
           }
         } else {
           try {
-            await navigator.clipboard.writeText(window.location.href);
+            await navigator.clipboard.writeText(cleanUrl);
             window.OmniApp.showToast("vCard link copied to clipboard!");
           } catch (e) {
-            window.OmniApp.showToast("Link: " + window.location.href);
+            window.OmniApp.showToast("Link: " + cleanUrl);
           }
         }
       });
@@ -895,6 +1026,14 @@ export class VCardController {
       });
     }
 
+    // PWA Install Web App Button
+    const pwaBtn = this.container.querySelector("#btn-vcard-install-pwa");
+    if (pwaBtn) {
+      pwaBtn.addEventListener("click", () => {
+        PWAHandler.promptInstall(v.branding.businessName);
+      });
+    }
+
     // Category filter chips
     this.container.querySelectorAll(".filter-chip[data-category]").forEach(chip => {
       chip.addEventListener("click", () => {
@@ -906,11 +1045,29 @@ export class VCardController {
       });
     });
 
+    // Product Category filter chips
+    this.bindProductCategoryEvents();
+
     this.bindServicesEvents();
     this.bindCartEvents();
     this.bindCalendarEvents();
     this.bindModalEvents();
     this.bindAvatarLongPress();
+  }
+
+  bindProductCategoryEvents() {
+    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
+    this.container.querySelectorAll(".filter-chip[data-prod-category]").forEach(chip => {
+      chip.addEventListener("click", () => {
+        this.productFilter = chip.getAttribute("data-prod-category");
+        const filterContainer = this.container.querySelector("#products-filter-container");
+        if (filterContainer) filterContainer.innerHTML = this.renderProductCategoryChips();
+        const listContainer = this.container.querySelector("#products-list-container");
+        if (listContainer) listContainer.innerHTML = this.renderProductsList(currency);
+        this.bindProductCategoryEvents();
+        this.bindCartEvents();
+      });
+    });
   }
 
   bindCategoryEvents() {
@@ -969,6 +1126,9 @@ export class VCardController {
         badge.remove();
       }
     }
+
+    // 2. Update Sticky Preview Bar
+    this.updateDockPreviewBar();
 
     // 3. If modal is currently active, re-render its content
     const modal = this.container.querySelector("#modal-services-cart");
@@ -1120,6 +1280,9 @@ export class VCardController {
         badge.remove();
       }
     }
+
+    // 3. Update Sticky Preview Bar
+    this.updateDockPreviewBar();
 
     // 5. If modal is currently active, re-render content
     const modal = this.container.querySelector("#modal-products-cart");
@@ -1402,15 +1565,21 @@ export class VCardController {
           return;
         }
 
-        await db.addReview(v.id, {
+        const reviewData = {
           author,
           rating: this.selectedReviewRating,
           tags: Array.from(this.selectedReviewTags),
           content
-        });
+        };
+
+        await db.addReview(v.id, reviewData);
 
         this.container.querySelector("#modal-review")?.classList.remove("active");
-        window.OmniApp.showToast("Thank you! Review published.");
+        window.OmniApp.showToast("Thank you! Review submitted via WhatsApp.");
+
+        // Dispatch review to vendor via WhatsApp
+        const waMsg = WhatsAppEngine.buildReviewMessage(v, reviewData);
+        WhatsAppEngine.openChat(v.contacts.whatsapp, waMsg);
 
         // Refresh reviews list & stats
         this.container.querySelector("#reviews-list-container").innerHTML = this.renderReviewsList();
@@ -1421,19 +1590,32 @@ export class VCardController {
     }
   }
 
-  // Long-press detection on Avatar logo to trigger secret vendor owner login
+  // Long-press detection on Avatar circle to trigger secret vendor owner login (No visible settings icon)
   bindAvatarLongPress() {
-    const avatars = this.container.querySelectorAll("#vcard-avatar-wrapper, [data-tab-avatar='true']");
+    const avatars = this.container.querySelectorAll("#vcard-avatar-wrapper, #vcard-avatar-ring, [data-tab-avatar='true']");
     if (avatars.length === 0) return;
 
     let pressTimer = null;
     let activeAvatar = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     const startPress = (el) => {
       activeAvatar = el;
       el.classList.add("avatar-holding");
+      const wrapper = el.closest("#vcard-avatar-wrapper") || el;
+      wrapper.classList.add("avatar-holding");
+
       pressTimer = setTimeout(() => {
         el.classList.remove("avatar-holding");
+        wrapper.classList.remove("avatar-holding");
+        activeAvatar = null;
+
+        // Subtle haptic vibration on mobile if supported
+        if (navigator.vibrate) {
+          try { navigator.vibrate([40, 50, 40]); } catch (_) {}
+        }
+
         // Open secret owner PIN modal
         const modal = this.container.querySelector("#modal-owner-pin");
         if (modal) {
@@ -1454,18 +1636,47 @@ export class VCardController {
       }
       if (activeAvatar) {
         activeAvatar.classList.remove("avatar-holding");
+        const wrapper = activeAvatar.closest("#vcard-avatar-wrapper") || activeAvatar;
+        wrapper.classList.remove("avatar-holding");
         activeAvatar = null;
       }
     };
 
     avatars.forEach(avatar => {
-      // Mobile touch events
-      avatar.addEventListener("touchstart", () => startPress(avatar), { passive: true });
+      // Suppress browser default context menu / touch-callout on the circle
+      avatar.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      });
+
+      // Mobile touch events with scroll jitter threshold
+      avatar.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches.length > 0) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+        startPress(avatar);
+      }, { passive: true });
+
+      avatar.addEventListener("touchmove", (e) => {
+        if (e.touches && e.touches.length > 0) {
+          const dx = Math.abs(e.touches[0].clientX - touchStartX);
+          const dy = Math.abs(e.touches[0].clientY - touchStartY);
+          // If customer is scrolling page (> 15px), abort hold
+          if (dx > 15 || dy > 15) {
+            cancelPress();
+          }
+        }
+      }, { passive: true });
+
       avatar.addEventListener("touchend", cancelPress);
       avatar.addEventListener("touchcancel", cancelPress);
 
-      // Desktop mouse events
-      avatar.addEventListener("mousedown", () => startPress(avatar));
+      // Desktop mouse events (Left click hold only)
+      avatar.addEventListener("mousedown", (e) => {
+        if (e.button === 0) startPress(avatar);
+      });
       avatar.addEventListener("mouseup", cancelPress);
       avatar.addEventListener("mouseleave", cancelPress);
     });
@@ -1534,6 +1745,7 @@ export class VCardController {
       dockRoot.querySelectorAll(".dock-item").forEach(item => {
         item.classList.toggle("active", item.getAttribute("data-tab") === tabName);
       });
+      this.updateDockPreviewBar();
     }
     this.container.querySelectorAll(".tab-pane").forEach(pane => {
       pane.classList.toggle("active", pane.id === `pane-${tabName}`);

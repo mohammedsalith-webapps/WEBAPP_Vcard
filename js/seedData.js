@@ -178,6 +178,7 @@ export const INITIAL_DATA = {
         {
           id: "prod-1",
           name: "Chef's Artisanal Spice Rubs (Pack of 4)",
+          category: "Artisanal Spices",
           price: 799,
           unit: "box",
           emoji: "🌶️",
@@ -187,6 +188,7 @@ export const INITIAL_DATA = {
         {
           id: "prod-2",
           name: "Heritage Saffron Dum Pukht Biryani Handi (Serves 4)",
+          category: "Signature Biryani",
           price: 1850,
           unit: "handi",
           emoji: "🍲",
@@ -196,6 +198,7 @@ export const INITIAL_DATA = {
         {
           id: "prod-3",
           name: "Royal Baklava & Rose Halwa Sweets Hamper",
+          category: "Royal Desserts",
           price: 1250,
           unit: "tin",
           emoji: "🍯",
@@ -205,6 +208,7 @@ export const INITIAL_DATA = {
         {
           id: "prod-4",
           name: "Cold-Pressed Kashmiri Saffron Kahwa Elixir (500ml)",
+          category: "Beverages",
           price: 550,
           unit: "bottle",
           emoji: "🫖",
@@ -362,6 +366,7 @@ export const INITIAL_DATA = {
         {
           id: "lb-prod-1",
           name: "Botanical Silk Argan Hair Elixir (100ml)",
+          category: "Haircare",
           price: 1250,
           unit: "bottle",
           emoji: "🧴",
@@ -371,6 +376,7 @@ export const INITIAL_DATA = {
         {
           id: "lb-prod-2",
           name: "Hyaluronic + Niacinamide Dewy Mist",
+          category: "Skincare",
           price: 890,
           unit: "spray",
           emoji: "✨",
