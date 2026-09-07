@@ -80,6 +80,7 @@ export class VCardController {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
 
     const isExpiring = this.isNearingExpiry();
+    const isInstalled = PWAHandler.isVendorInstalled(v.slug || v.id);
 
     this.container.innerHTML = `
       <div class="vcard-app">
@@ -109,10 +110,16 @@ export class VCardController {
           </div>
 
           <!-- Centered Glowing Avatar Ring (Hold 1.5s for Vendor Owner Access) -->
-          <div class="avatar-ring-wrapper" id="vcard-avatar-wrapper">
+          <div class="avatar-ring-wrapper" id="vcard-avatar-wrapper" style="position: relative;">
             <div class="avatar-glowing-ring" id="vcard-avatar-ring">
               ${v.branding.avatarEmoji || (v.branding.businessName ? v.branding.businessName.substring(0, 2).toUpperCase() : "💼")}
             </div>
+            ${isInstalled ? `
+              <div class="pwa-installed-circle-badge" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--theme-primary, #D4FF00), #00E5FF); color: #000; font-size: 0.62rem; font-weight: 800; padding: 2px 9px; border-radius: 12px; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 4px; border: 1.5px solid #000; letter-spacing: 0.5px;">
+                <span>📲</span>
+                <span>INSTALLED APP</span>
+              </div>
+            ` : ""}
           </div>
 
           <!-- Dual Badges: Category + Verified Partner -->
@@ -636,7 +643,7 @@ export class VCardController {
           <div class="service-body">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
               <div class="service-name" style="margin-bottom: 0;">${s.name}</div>
-              <span class="pill-status-pending" style="font-size: 0.68rem; padding: 2px 7px; color: var(--theme-primary); border-color: rgba(212,255,0,0.25); white-space: nowrap;">Quote on Request</span>
+              <span class="tab-grant-badge locked" style="font-size: 0.68rem; padding: 1px 7px; color: var(--theme-primary); border-color: rgba(212,255,0,0.3); font-weight: 700; white-space: nowrap;">${s.category || 'Service'}</span>
             </div>
           </div>
         </div>
@@ -648,32 +655,35 @@ export class VCardController {
     const products = (this.vendor?.products || []).filter(p => {
       if (!p.visible) return false;
       if (this.productFilter === "All") return true;
-      return p.category === this.productFilter;
+      return (p.category || "").toLowerCase() === this.productFilter.toLowerCase();
     });
 
     if (products.length === 0) {
-      return `<div style="text-align: center; padding: 24px; color: var(--theme-text-muted);">No products currently in this category.</div>`;
+      return `<div style="text-align: center; padding: 24px; color: var(--theme-text-muted);">No products found in this category.</div>`;
     }
 
     return products.map(p => {
       const qty = this.cart[p.id] || 0;
       return `
-        <div class="product-list-item">
-          <div class="prod-thumb-badge">${p.emoji || "🛍️"}</div>
-          <div class="prod-info-col">
-            <div class="prod-name-row">
-              <span class="prod-title">${p.name}</span>
-              <span class="prod-unit-tag">${p.unit || 'unit'}</span>
+        <div class="product-item-card">
+          <div class="product-info-left">
+            <span class="product-emoji">${p.emoji || "🛍️"}</span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="product-name">${p.name}</div>
+              <div class="product-subtext">${p.category ? `${p.category} · ` : ""}${p.unit ? `per ${p.unit}` : ""}</div>
+              <div class="product-price-tag">${currency}${Number(p.price).toLocaleString()}</div>
             </div>
-            ${p.category ? `<div style="font-size: 0.7rem; color: var(--theme-text-muted); margin-bottom: 2px;">${p.category}</div>` : ""}
-            <div class="prod-price-text">${currency}${Number(p.price).toLocaleString()}</div>
           </div>
-          <div class="prod-action-col">
-            <div class="qty-counter">
-              <button class="qty-btn" data-cart-action="dec" data-prod-id="${p.id}" title="Decrease">−</button>
-              <span class="qty-val">${qty}</span>
-              <button class="qty-btn" data-cart-action="inc" data-prod-id="${p.id}" title="Increase">+</button>
-            </div>
+          <div class="product-qty-control">
+            ${qty === 0 ? `
+              <button class="btn-qty-add" data-add-cart="${p.id}">
+                <span>+ ADD</span>
+              </button>
+            ` : `
+              <button class="qty-btn" data-cart-minus="${p.id}">−</button>
+              <span class="qty-display">${qty}</span>
+              <button class="qty-btn" data-cart-plus="${p.id}">+</button>
+            `}
           </div>
         </div>
       `;
@@ -749,7 +759,7 @@ export class VCardController {
               <span style="font-weight: 800; color: var(--theme-primary); font-size: 0.88rem; flex-shrink: 0;">${index + 1}.</span>
               <div style="min-width: 0; flex: 1;">
                 <div style="font-size: 0.86rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.name}</div>
-                <div style="font-size: 0.7rem; color: var(--theme-text-muted);">${s.category || 'Service'} · Quote on Request</div>
+                <div style="font-size: 0.7rem; color: var(--theme-text-muted);">${s.category || 'Service'}</div>
               </div>
             </div>
             <button type="button" class="cart-preview-remove-btn" data-modal-remove-service="${s.id}" title="Remove Service">✕</button>

@@ -368,11 +368,6 @@ export class VendorConsoleController {
                       </td>
                       <td><span class="pill-status-pending">${s.category || 'General'}</span></td>
                       <td>
-                        <span class="pill-status-pending" style="color: var(--theme-primary); border-color: rgba(212,255,0,0.25);">
-                          💬 Quote on Request
-                        </span>
-                      </td>
-                      <td>
                         <span class="${s.visible ? 'pill-status-active' : 'pill-status-suspended'}">
                           ${s.visible ? 'Visible' : 'Hidden'}
                         </span>
@@ -555,7 +550,7 @@ export class VendorConsoleController {
       <div class="modal-overlay" id="modal-add-service">
         <div class="modal-card">
           <div class="modal-header">
-            <h3 class="modal-title">Add New Service (Quote on Request)</h3>
+            <h3 class="modal-title">Add New Service</h3>
             <button class="btn-modal-close" data-close-modal="modal-add-service">×</button>
           </div>
           <form id="form-new-service">
@@ -576,7 +571,7 @@ export class VendorConsoleController {
       <div class="modal-overlay" id="modal-edit-service">
         <div class="modal-card">
           <div class="modal-header">
-            <h3 class="modal-title">Edit Service (Quote on Request)</h3>
+            <h3 class="modal-title">Edit Service</h3>
             <button class="btn-modal-close" data-close-modal="modal-edit-service">×</button>
           </div>
           <form id="form-edit-service">

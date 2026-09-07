@@ -38,6 +38,16 @@ export const PWAHandler = {
     window.addEventListener("appinstalled", () => {
       this.deferredPrompt = null;
       console.log("OmniCard PWA installed successfully.");
+      const currentSlug = new URLSearchParams(window.location.search).get("v");
+      if (currentSlug) {
+        try {
+          const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
+          if (!installed.includes(currentSlug)) {
+            installed.push(currentSlug);
+            localStorage.setItem("pwa_installed_cards", JSON.stringify(installed));
+          }
+        } catch (e) {}
+      }
       window.OmniApp?.showToast("App installed to your home screen! 🎉");
       const installBtn = document.getElementById("btn-pwa-install");
       if (installBtn) {
@@ -46,39 +56,80 @@ export const PWAHandler = {
     });
   },
 
-  // Dynamically update manifest so installed app opens THIS vendor's vCard directly
+  // Generates a sleek, high-resolution circular app icon SVG data URL matching the vendor's branding
+  generateCircularAppIcon(emoji = "🏢", primaryColor = "#D4FF00", bgColor = "#07090E") {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+      <defs>
+        <radialGradient id="circGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1E293B"/>
+          <stop offset="75%" stop-color="${bgColor}"/>
+          <stop offset="100%" stop-color="#020408"/>
+        </radialGradient>
+        <filter id="circGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="${primaryColor}" flood-opacity="0.45"/>
+        </filter>
+      </defs>
+      <rect width="512" height="512" rx="128" fill="${bgColor}"/>
+      <circle cx="256" cy="256" r="226" fill="url(#circGrad)" stroke="${primaryColor}" stroke-width="16" filter="url(#circGlow)"/>
+      <circle cx="256" cy="256" r="198" fill="none" stroke="${primaryColor}" stroke-width="3" stroke-opacity="0.4" stroke-dasharray="10 10"/>
+      <text x="256" y="295" font-size="210" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${emoji}</text>
+    </svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  },
+
+  // Check if a specific vendor's card is installed
+  isVendorInstalled(vendorSlug) {
+    if (!vendorSlug) return false;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSlug = urlParams.get("v");
+    // If currently running in standalone mode AND on this vendor's page
+    if (isStandalone && currentSlug === vendorSlug) {
+      return true;
+    }
+    try {
+      const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
+      return installed.includes(vendorSlug);
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Dynamically update manifest so installed app opens THIS vendor's vCard directly with unique ID
   updateManifestForVendor(vendor) {
     if (!vendor) return;
     try {
       const bizName = vendor.branding?.businessName || "Smart vCard";
-      const startUrl = `./?v=${vendor.slug || vendor.id}`;
+      const vendorSlug = vendor.slug || vendor.id;
+      const startUrl = `./?v=${vendorSlug}&pwa=1`;
+      const primaryColor = vendor.branding?.colors?.primary || "#D4FF00";
+      const bgColor = vendor.branding?.colors?.background || "#07090E";
+      const emoji = vendor.branding?.avatarEmoji || "💼";
+      const circularIconDataUrl = this.generateCircularAppIcon(emoji, primaryColor, bgColor);
+
       const dynamicManifest = {
+        id: `vcard-app-${vendorSlug}`,
         name: bizName,
         short_name: bizName.length > 14 ? bizName.substring(0, 14) : bizName,
         description: vendor.about?.description || vendor.branding?.tagline || `${bizName} Smart Business vCard`,
         start_url: startUrl,
-        scope: "./",
+        scope: `./?v=${vendorSlug}`,
         display: "standalone",
-        background_color: vendor.branding?.colors?.background || "#07090E",
-        theme_color: vendor.branding?.colors?.background || "#07090E",
+        background_color: bgColor,
+        theme_color: bgColor,
         icons: [
+          {
+            src: circularIconDataUrl,
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "any maskable"
+          },
           {
             src: "./assets/icons/icon-192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable"
-          },
-          {
-            src: "./assets/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable"
-          },
-          {
-            src: "./assets/icons/icon.svg",
-            sizes: "192x192 512x512",
-            type: "image/svg+xml",
-            purpose: "any maskable"
+            purpose: "any"
           }
         ]
       };
@@ -93,11 +144,19 @@ export const PWAHandler = {
       }
       manifestLink.href = manifestUrl;
 
-      // Update apple touch title and document title
+      // Update apple touch icon & title
       let appleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
       if (appleMeta) {
         appleMeta.content = bizName;
       }
+      let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+      if (!appleIcon) {
+        appleIcon = document.createElement("link");
+        appleIcon.rel = "apple-touch-icon";
+        document.head.appendChild(appleIcon);
+      }
+      appleIcon.href = circularIconDataUrl;
+
       document.title = `${bizName} - Smart Business vCard`;
     } catch (e) {
       console.warn("Could not set dynamic manifest:", e);
@@ -105,11 +164,11 @@ export const PWAHandler = {
   },
 
   autoPromptInstallIfEligible(vendor) {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true ||
-                         document.referrer.includes('android-app://');
-    // Once installed, NEVER ask again
-    if (isStandalone) {
+    if (!vendor) return;
+    const vendorSlug = vendor.slug || vendor.id;
+
+    // Once THIS SPECIFIC vendor is installed, NEVER ask again
+    if (this.isVendorInstalled(vendorSlug)) {
       return;
     }
     if (vendor && vendor.features?.pwaInstall === false) {
@@ -118,10 +177,8 @@ export const PWAHandler = {
 
     // Delay 1.2s after page load for smooth entry
     setTimeout(() => {
-      // Re-verify not standalone and no other modal is currently active
-      const stillStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                              window.navigator.standalone === true;
-      if (stillStandalone) return;
+      // Re-verify not already installed for this vendor
+      if (this.isVendorInstalled(vendorSlug)) return;
       if (document.querySelector(".modal-overlay.active")) return;
 
       const bizName = vendor?.branding?.businessName || "Smart App";
@@ -188,10 +245,9 @@ export const PWAHandler = {
   },
 
   promptInstall(vendorName = "Smart vCard", vendor = null) {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-    if (isStandalone) {
-      window.OmniApp?.showToast(`${vendorName} App is already running as an installed app! 🎉`);
+    const vendorSlug = vendor ? (vendor.slug || vendor.id) : null;
+    if (vendorSlug && this.isVendorInstalled(vendorSlug)) {
+      window.OmniApp?.showToast(`${vendorName} App is already installed! 🎉`);
       return;
     }
 
@@ -200,6 +256,15 @@ export const PWAHandler = {
       this.deferredPrompt.prompt();
       this.deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === "accepted") {
+          if (vendorSlug) {
+            try {
+              const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
+              if (!installed.includes(vendorSlug)) {
+                installed.push(vendorSlug);
+                localStorage.setItem("pwa_installed_cards", JSON.stringify(installed));
+              }
+            } catch (e) {}
+          }
           window.OmniApp?.showToast(`${vendorName} added to your home screen! 🎉`);
         }
         this.deferredPrompt = null;

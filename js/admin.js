@@ -877,7 +877,7 @@ export class AdminConsoleController {
 
             <!-- Admin Inline Add Service Form -->
             <div id="admin-add-srv-panel" style="display: none; background: rgba(255,255,255,0.03); border: 1px solid var(--theme-border); border-radius: 8px; padding: 14px; margin-bottom: 14px;">
-              <h5 style="font-size: 0.88rem; color: var(--theme-primary); margin-bottom: 10px;">Add Service for this Vendor (Quote on Request)</h5>
+              <h5 style="font-size: 0.88rem; color: var(--theme-primary); margin-bottom: 10px;">Add New Service for this Business</h5>
               <div class="bento-grid bento-grid-2">
                 <div class="form-group">
                   <label class="form-label">Service Name</label>
@@ -2563,34 +2563,66 @@ export class AdminConsoleController {
     const container = this.container.querySelector("#admin-services-list-container");
     if (!v || !container) return;
 
-    const currency = db.getPlatformSettings()?.currencySymbol || "₹";
     const services = v.services || [];
 
     if (services.length === 0) {
-      container.innerHTML = `<div style="text-align: center; color: var(--theme-text-muted); padding: 20px; font-size: 0.85rem;">No services listed yet for this vendor. Click "+ Add Service" above to create one.</div>`;
+      container.innerHTML = `<div style="text-align: center; color: var(--theme-text-muted); padding: 24px; font-size: 0.85rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px dashed var(--theme-border);">No services listed yet for this vendor. Click "+ Add Service" above to create one.</div>`;
       return;
     }
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
         ${services.map(s => `
-          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 10px 12px; gap: 10px;">
-            <div style="flex: 1; min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-weight: 700; color: #FFF; font-size: 0.88rem;">${s.name}</span>
-                <span class="pill-status-pending" style="font-size: 0.65rem; padding: 1px 6px;">${s.category || 'General'}</span>
-                <span class="${s.visible ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.65rem; padding: 1px 6px;">
-                  ${s.visible ? 'Visible' : 'Hidden'}
-                </span>
+          <div class="admin-srv-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--theme-border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+            <!-- Header Row: Service Name & Category -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem; line-height: 1.3;">${s.name}</div>
+                <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span style="background: rgba(212,255,0,0.12); color: var(--theme-primary); border: 1px solid rgba(212,255,0,0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                    📁 ${s.category || 'General'}
+                  </span>
+                  <span class="${s.visible ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem; padding: 2px 7px;">
+                    ${s.visible ? 'Visible' : 'Hidden'}
+                  </span>
+                </div>
               </div>
             </div>
-            <div style="font-size: 0.78rem; color: var(--theme-primary); font-weight: 700; white-space: nowrap;">
-              💬 Quote on Request
+
+            <!-- Action Controls Row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; flex-wrap: wrap;">
+              <!-- Toggle ON/OFF -->
+              <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; font-weight: 700; background: ${s.visible ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.1)'}; color: ${s.visible ? '#10B981' : '#94A3B8'}; border-color: ${s.visible ? 'rgba(16,185,129,0.4)' : 'rgba(148,163,184,0.3)'};" data-admin-toggle-srv="${s.id}">
+                ${s.visible ? '🟢 Active (ON)' : '⚪ Hidden (OFF)'}
+              </button>
+
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; color: var(--theme-secondary); border-color: rgba(0,229,255,0.4);" data-admin-edit-toggle-srv="${s.id}">
+                  ✏️ Edit
+                </button>
+                <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; color: #EF4444; border-color: rgba(239,68,68,0.4);" data-admin-del-srv="${s.id}">
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
-            <div style="display: flex; gap: 5px; flex-shrink: 0;">
-              <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem; color: var(--theme-secondary);" data-admin-edit-srv="${s.id}">Edit</button>
-              <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem;" data-admin-toggle-srv="${s.id}">Toggle</button>
-              <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem; color: #EF4444;" data-admin-del-srv="${s.id}">Delete</button>
+
+            <!-- Inline Edit Panel (Accordion) -->
+            <div id="admin-srv-edit-form-${s.id}" style="display: none; background: rgba(0,0,0,0.4); border: 1px dashed var(--theme-border); border-radius: 8px; padding: 12px; margin-top: 4px;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--theme-secondary); margin-bottom: 8px;">✏️ Edit Service Details:</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div>
+                  <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Service Name</label>
+                  <input type="text" class="form-input" id="admin-srv-edit-name-${s.id}" value="${s.name.replace(/"/g, '&quot;')}" style="font-size: 0.85rem;" />
+                </div>
+                <div>
+                  <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Category</label>
+                  <input type="text" class="form-input" id="admin-srv-edit-cat-${s.id}" value="${(s.category || 'General').replace(/"/g, '&quot;')}" style="font-size: 0.85rem;" />
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+                  <button type="button" class="btn-pill" style="font-size: 0.75rem; padding: 4px 10px;" data-admin-cancel-edit-srv="${s.id}">Cancel</button>
+                  <button type="button" class="btn-pill active" style="font-size: 0.75rem; padding: 4px 14px; font-weight: 700;" data-admin-save-srv="${s.id}">💾 Save Changes</button>
+                </div>
+              </div>
             </div>
           </div>
         `).join("")}
@@ -2610,7 +2642,7 @@ export class AdminConsoleController {
     container.querySelectorAll("[data-admin-del-srv]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const sId = btn.getAttribute("data-admin-del-srv");
-        if (confirm("Delete this service for the vendor?")) {
+        if (confirm("Delete this service permanently?")) {
           await db.deleteService(vendorId, sId);
           window.OmniApp.showToast("Service deleted.");
           this.renderAdminServicesList(vendorId);
@@ -2619,22 +2651,46 @@ export class AdminConsoleController {
       });
     });
 
-    container.querySelectorAll("[data-admin-edit-srv]").forEach(btn => {
+    // Toggle Inline Edit Form
+    container.querySelectorAll("[data-admin-edit-toggle-srv]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const sId = btn.getAttribute("data-admin-edit-toggle-srv");
+        const panel = container.querySelector(`#admin-srv-edit-form-${sId}`);
+        if (panel) {
+          panel.style.display = panel.style.display === "none" ? "block" : "none";
+        }
+      });
+    });
+
+    // Cancel Edit
+    container.querySelectorAll("[data-admin-cancel-edit-srv]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const sId = btn.getAttribute("data-admin-cancel-edit-srv");
+        const panel = container.querySelector(`#admin-srv-edit-form-${sId}`);
+        if (panel) panel.style.display = "none";
+      });
+    });
+
+    // Save Edit
+    container.querySelectorAll("[data-admin-save-srv]").forEach(btn => {
       btn.addEventListener("click", async () => {
-        const sId = btn.getAttribute("data-admin-edit-srv");
-        const s = (v.services || []).find(x => x.id === sId);
-        if (!s) return;
-        const newName = prompt("Service Name:", s.name);
-        if (newName === null) return;
-        const newCat = prompt("Category:", s.category || "General");
-        if (newCat === null) return;
+        const sId = btn.getAttribute("data-admin-save-srv");
+        const nameInput = container.querySelector(`#admin-srv-edit-name-${sId}`);
+        const catInput = container.querySelector(`#admin-srv-edit-cat-${sId}`);
+        const newName = nameInput ? nameInput.value.trim() : "";
+        const newCat = catInput ? catInput.value.trim() : "General";
+
+        if (!newName) {
+          window.OmniApp.showToast("Service name cannot be empty!");
+          return;
+        }
 
         await db.updateService(vendorId, sId, {
-          name: newName.trim(),
-          category: newCat.trim(),
+          name: newName,
+          category: newCat || "General",
           description: ""
         });
-        window.OmniApp.showToast("Service updated!");
+        window.OmniApp.showToast("Service updated successfully! 💾");
         this.renderAdminServicesList(vendorId);
         this.refreshVendorsList();
       });
@@ -2650,34 +2706,95 @@ export class AdminConsoleController {
     const products = v.products || [];
 
     if (products.length === 0) {
-      container.innerHTML = `<div style="text-align: center; color: var(--theme-text-muted); padding: 20px; font-size: 0.85rem;">No products listed yet for this vendor. Click "+ Add Product" above to create one.</div>`;
+      container.innerHTML = `<div style="text-align: center; color: var(--theme-text-muted); padding: 24px; font-size: 0.85rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px dashed var(--theme-border);">No products listed yet for this vendor. Click "+ Add Product" above to create one.</div>`;
       return;
     }
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
         ${products.map(p => `
-          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 10px 12px; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-              <span style="font-size: 1.5rem;">${p.emoji || '🛍️'}</span>
-              <div style="flex: 1; min-width: 0;">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <span style="font-weight: 700; color: #FFF; font-size: 0.88rem;">${p.name}</span>
-                  <span class="tab-grant-badge locked" style="font-size: 0.65rem; padding: 1px 6px;">${p.category || 'General'}</span>
-                  <span class="pill-status-pending" style="font-size: 0.65rem; padding: 1px 6px;">${p.unit || 'unit'}</span>
-                  <span class="${p.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.65rem; padding: 1px 6px;">
-                    ${p.visible !== false ? 'In Stock' : 'Hidden'}
-                  </span>
+          <div class="admin-prod-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--theme-border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+            <!-- Top Section: Emoji, Name, Price -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                <span style="font-size: 1.5rem; line-height: 1; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; border: 1px solid var(--theme-border); flex-shrink: 0;">
+                  ${p.emoji || '🛍️'}
+                </span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${p.name}
+                  </div>
+                  <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span style="background: rgba(0,229,255,0.12); color: #00E5FF; border: 1px solid rgba(0,229,255,0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                      📁 ${p.category || 'General'}
+                    </span>
+                    <span style="background: rgba(255,255,255,0.05); color: #94A3B8; font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
+                      ⚖️ ${p.unit || 'unit'}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <div style="text-align: right; flex-shrink: 0;">
+                <div style="font-weight: 800; color: #10B981; font-size: 1.05rem;">
+                  ${currency}${Number(p.price).toLocaleString()}
+                </div>
+                <span class="${p.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.65rem; padding: 1px 6px; display: inline-block; margin-top: 4px;">
+                  ${p.visible !== false ? 'In Stock' : 'Hidden'}
+                </span>
+              </div>
             </div>
-            <div style="font-weight: 800; color: #10B981; font-size: 0.95rem; white-space: nowrap;">
-              ${currency}${Number(p.price).toLocaleString()}
+
+            <!-- Action Controls Row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; flex-wrap: wrap;">
+              <!-- Toggle ON/OFF -->
+              <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; font-weight: 700; background: ${p.visible !== false ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.1)'}; color: ${p.visible !== false ? '#10B981' : '#94A3B8'}; border-color: ${p.visible !== false ? 'rgba(16,185,129,0.4)' : 'rgba(148,163,184,0.3)'};" data-admin-toggle-prod="${p.id}">
+                ${p.visible !== false ? '🟢 Active (ON)' : '⚪ Hidden (OFF)'}
+              </button>
+
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; color: var(--theme-secondary); border-color: rgba(0,229,255,0.4);" data-admin-edit-toggle-prod="${p.id}">
+                  ✏️ Edit
+                </button>
+                <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; color: #EF4444; border-color: rgba(239,68,68,0.4);" data-admin-del-prod="${p.id}">
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
-            <div style="display: flex; gap: 5px; flex-shrink: 0;">
-              <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem; color: var(--theme-secondary);" data-admin-edit-prod="${p.id}">Edit</button>
-              <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem;" data-admin-toggle-prod="${p.id}">Toggle</button>
-              <button class="btn-pill" style="padding: 2px 7px; font-size: 0.7rem; color: #EF4444;" data-admin-del-prod="${p.id}">Delete</button>
+
+            <!-- Inline Edit Panel (Accordion) -->
+            <div id="admin-prod-edit-form-${p.id}" style="display: none; background: rgba(0,0,0,0.4); border: 1px dashed var(--theme-border); border-radius: 8px; padding: 12px; margin-top: 4px;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--theme-secondary); margin-bottom: 8px;">✏️ Edit Product Details:</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+                  <div>
+                    <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Product Name</label>
+                    <input type="text" class="form-input" id="admin-prod-edit-name-${p.id}" value="${p.name.replace(/"/g, '&quot;')}" style="font-size: 0.85rem;" />
+                  </div>
+                  <div>
+                    <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Emoji</label>
+                    <input type="text" class="form-input" id="admin-prod-edit-emoji-${p.id}" value="${p.emoji || '🛍️'}" style="font-size: 0.85rem; text-align: center;" />
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div>
+                    <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Price (${currency})</label>
+                    <input type="number" class="form-input" id="admin-prod-edit-price-${p.id}" value="${p.price}" style="font-size: 0.85rem;" />
+                  </div>
+                  <div>
+                    <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Unit (e.g. pack, kg, plate)</label>
+                    <input type="text" class="form-input" id="admin-prod-edit-unit-${p.id}" value="${(p.unit || 'unit').replace(/"/g, '&quot;')}" style="font-size: 0.85rem;" />
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size: 0.72rem; color: var(--theme-text-muted); display: block; margin-bottom: 3px;">Category</label>
+                  <input type="text" class="form-input" id="admin-prod-edit-cat-${p.id}" value="${(p.category || 'General').replace(/"/g, '&quot;')}" style="font-size: 0.85rem;" />
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+                  <button type="button" class="btn-pill" style="font-size: 0.75rem; padding: 4px 10px;" data-admin-cancel-edit-prod="${p.id}">Cancel</button>
+                  <button type="button" class="btn-pill active" style="font-size: 0.75rem; padding: 4px 14px; font-weight: 700;" data-admin-save-prod="${p.id}">💾 Save Changes</button>
+                </div>
+              </div>
             </div>
           </div>
         `).join("")}
@@ -2706,31 +2823,56 @@ export class AdminConsoleController {
       });
     });
 
-    container.querySelectorAll("[data-admin-edit-prod]").forEach(btn => {
+    // Toggle Inline Edit Form
+    container.querySelectorAll("[data-admin-edit-toggle-prod]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pId = btn.getAttribute("data-admin-edit-toggle-prod");
+        const panel = container.querySelector(`#admin-prod-edit-form-${pId}`);
+        if (panel) {
+          panel.style.display = panel.style.display === "none" ? "block" : "none";
+        }
+      });
+    });
+
+    // Cancel Edit
+    container.querySelectorAll("[data-admin-cancel-edit-prod]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pId = btn.getAttribute("data-admin-cancel-edit-prod");
+        const panel = container.querySelector(`#admin-prod-edit-form-${pId}`);
+        if (panel) panel.style.display = "none";
+      });
+    });
+
+    // Save Edit
+    container.querySelectorAll("[data-admin-save-prod]").forEach(btn => {
       btn.addEventListener("click", async () => {
-        const pId = btn.getAttribute("data-admin-edit-prod");
-        const prod = (v.products || []).find(x => x.id === pId);
-        if (!prod) return;
-        const newName = prompt("Product Name:", prod.name);
-        if (newName === null) return;
-        const newCat = prompt("Product Category (e.g. Starters, Spices, Desserts):", prod.category || "General");
-        if (newCat === null) return;
-        const newEmoji = prompt("Emoji / Icon:", prod.emoji || "🛍️");
-        if (newEmoji === null) return;
-        const newPrice = prompt(`Price (${currency}):`, prod.price);
-        if (newPrice === null) return;
-        const newUnit = prompt("Unit Type (e.g. pack, box, kg, plate):", prod.unit || "unit");
-        if (newUnit === null) return;
+        const pId = btn.getAttribute("data-admin-save-prod");
+        const nameInput = container.querySelector(`#admin-prod-edit-name-${pId}`);
+        const emojiInput = container.querySelector(`#admin-prod-edit-emoji-${pId}`);
+        const priceInput = container.querySelector(`#admin-prod-edit-price-${pId}`);
+        const unitInput = container.querySelector(`#admin-prod-edit-unit-${pId}`);
+        const catInput = container.querySelector(`#admin-prod-edit-cat-${pId}`);
+
+        const newName = nameInput ? nameInput.value.trim() : "";
+        const newEmoji = emojiInput ? emojiInput.value.trim() || "🛍️" : "🛍️";
+        const newPrice = priceInput ? Number(priceInput.value || 0) : 0;
+        const newUnit = unitInput ? unitInput.value.trim() || "unit" : "unit";
+        const newCat = catInput ? catInput.value.trim() || "General" : "General";
+
+        if (!newName) {
+          window.OmniApp.showToast("Product name cannot be empty!");
+          return;
+        }
 
         await db.updateProduct(vendorId, pId, {
-          name: newName.trim(),
-          category: newCat.trim() || "General",
-          emoji: newEmoji.trim() || "🛍️",
-          price: Number(newPrice || 0),
-          unit: newUnit.trim() || "unit",
+          name: newName,
+          category: newCat,
+          emoji: newEmoji,
+          price: newPrice,
+          unit: newUnit,
           description: ""
         });
-        window.OmniApp.showToast("Product updated!");
+        window.OmniApp.showToast("Product updated successfully! 💾");
         this.renderAdminProductsList(vendorId);
         this.refreshVendorsList();
       });
