@@ -104,6 +104,89 @@ export const PWAHandler = {
     }
   },
 
+  autoPromptInstallIfEligible(vendor) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true ||
+                         document.referrer.includes('android-app://');
+    // Once installed, NEVER ask again
+    if (isStandalone) {
+      return;
+    }
+    if (vendor && vendor.features?.pwaInstall === false) {
+      return;
+    }
+
+    // Delay 1.2s after page load for smooth entry
+    setTimeout(() => {
+      // Re-verify not standalone and no other modal is currently active
+      const stillStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                              window.navigator.standalone === true;
+      if (stillStandalone) return;
+      if (document.querySelector(".modal-overlay.active")) return;
+
+      const bizName = vendor?.branding?.businessName || "Smart App";
+      const avatar = vendor?.branding?.avatarEmoji || "📲";
+      const modalsRoot = document.getElementById("app-modals-root") || document.body;
+
+      let promptEl = document.getElementById("modal-pwa-autoprompt");
+      if (!promptEl) {
+        promptEl = document.createElement("div");
+        promptEl.id = "modal-pwa-autoprompt";
+        promptEl.className = "modal-overlay";
+        modalsRoot.appendChild(promptEl);
+      }
+
+      promptEl.innerHTML = `
+        <div class="modal-card" style="max-width: 440px; text-align: center; padding: 22px 20px; border-radius: 24px 24px 0 0; background: #0F131C; border: 1px solid var(--theme-border-highlight); box-shadow: 0 -12px 40px rgba(0,0,0,0.9);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.8rem;">${avatar}</span>
+              <div style="text-align: left;">
+                <div style="font-weight: 800; color: #FFF; font-size: 1rem; line-height: 1.2;">Install ${bizName}</div>
+                <div style="font-size: 0.72rem; color: var(--theme-primary, #D4FF00); font-weight: 600;">Fast 1-Tap Home Screen App</div>
+              </div>
+            </div>
+            <button type="button" class="btn-modal-close" id="btn-close-pwa-autoprompt" style="font-size: 1.2rem; padding: 4px 8px; color: var(--theme-text-muted);">×</button>
+          </div>
+
+          <p style="font-size: 0.78rem; color: var(--theme-text-muted); line-height: 1.4; text-align: left; margin-bottom: 16px;">
+            Add to your phone home screen for full-screen view, faster 1-tap booking, and instant offline access without typing links.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn-submit-primary" id="btn-confirm-pwa-autoprompt" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>📲 Install App (1-Click)</span>
+            </button>
+            <button type="button" class="btn-pill" id="btn-dismiss-pwa-autoprompt" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.76rem; border-color: transparent; color: var(--theme-text-muted);">
+              Continue in Browser
+            </button>
+          </div>
+        </div>
+      `;
+
+      promptEl.classList.add("active");
+      document.body.classList.add("has-modal-open");
+
+      const closeAutoPrompt = () => {
+        promptEl.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
+      };
+
+      promptEl.querySelector("#btn-close-pwa-autoprompt")?.addEventListener("click", closeAutoPrompt);
+      promptEl.querySelector("#btn-dismiss-pwa-autoprompt")?.addEventListener("click", closeAutoPrompt);
+      promptEl.addEventListener("click", (e) => {
+        if (e.target === promptEl) closeAutoPrompt();
+      });
+
+      promptEl.querySelector("#btn-confirm-pwa-autoprompt")?.addEventListener("click", () => {
+        closeAutoPrompt();
+        this.promptInstall(bizName, vendor);
+      });
+    }, 1200);
+  },
+
   promptInstall(vendorName = "Smart vCard", vendor = null) {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;

@@ -1156,6 +1156,8 @@ export class AdminConsoleController {
             </button>
           </div>
         </div>
+      </div>
+
       <!-- Modal: 1-Click Package / Plan Assignment -->
       <div class="modal-overlay" id="modal-admin-assign-plan">
         <div class="modal-card" style="max-width: 560px; max-height: 85vh; overflow-y: auto; padding: 24px 20px;">
@@ -1376,14 +1378,20 @@ export class AdminConsoleController {
 
     await db.saveVendor(v);
     window.OmniApp.showToast(`⚡ Assigned "${plan.name}" (${days}d) to ${v.branding.businessName}! Features updated.`);
-    this.refreshVendorsList();
+    this.renderDashboard();
   }
 
   openAssignPlanModal(vendorId) {
     const v = db.getVendor(vendorId);
-    if (!v) return;
-    const modal = this.container.querySelector("#modal-admin-assign-plan");
-    if (!modal) return;
+    if (!v) {
+      window.OmniApp?.showToast("Vendor not found.");
+      return;
+    }
+    const modal = this.container.querySelector("#modal-admin-assign-plan") || document.getElementById("modal-admin-assign-plan");
+    if (!modal) {
+      console.error("modal-admin-assign-plan element not found");
+      return;
+    }
 
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
     const plans = db.getSubscriptionPlans();
@@ -1442,11 +1450,15 @@ export class AdminConsoleController {
         const pId = btn.getAttribute("data-confirm-assign-plan");
         const vId = btn.getAttribute("data-confirm-vendor");
         modal.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
         await this.assignPlanToVendor(vId, pId);
       });
     });
 
     modal.classList.add("active");
+    document.body.classList.add("has-modal-open");
   }
 
   refreshVendorsList() {
@@ -1499,7 +1511,9 @@ export class AdminConsoleController {
           </td>
           <td>
             <div class="vendor-action-cluster">
+              <button class="btn-pill active" style="padding: 3px 8px; font-size: 0.72rem; background: rgba(212,255,0,0.15); color: var(--theme-primary); border-color: rgba(212,255,0,0.45); font-weight: 700;" data-share-vendor="${v.id}" title="Copy Clean Link / Instagram Bio Link">🔗 Bio Link</button>
               <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;">Preview ↗</a>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #10B981;" data-manage-products="${v.id}">🛍️ Products (${v.products?.length || 0})</button>
@@ -2002,12 +2016,16 @@ export class AdminConsoleController {
     if (editAssignDemoBtn && editPlanSelect) {
       editAssignDemoBtn.addEventListener("click", () => {
         editPlanSelect.value = "plan-demo";
-        const now = new Date();
-        const demoExpiry = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+        const demoPlan = db.getSubscriptionPlans().find(p => p.id === "plan-demo");
+        const days = demoPlan ? demoPlan.durationDays : 3;
+        const targetDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
         if (this.container.querySelector("#edit-v-expiry")) {
-          this.container.querySelector("#edit-v-expiry").value = demoExpiry;
+          this.container.querySelector("#edit-v-expiry").value = targetDate.toISOString().substring(0, 10);
         }
+        const statusSelect = this.container.querySelector("#edit-v-status");
+        if (statusSelect) statusSelect.value = "active";
         applyPlanFeatsBtn?.click();
+        window.OmniApp.showToast(`Applied ${demoPlan?.name || "3-Day Free Demo"}! Expiry set to ${targetDate.toLocaleDateString()}.`);
       });
     }
 
@@ -2120,24 +2138,6 @@ export class AdminConsoleController {
       });
     }
 
-    // Assign 3-Day Demo in Edit Vendor Modal
-    const assignDemoBtn = this.container.querySelector("#btn-edit-assign-demo");
-    if (assignDemoBtn) {
-      assignDemoBtn.addEventListener("click", () => {
-        const planSel = this.container.querySelector("#edit-v-plan");
-        if (planSel) planSel.value = "plan-demo";
-        const demoPlan = db.getSubscriptionPlans().find(p => p.id === "plan-demo");
-        const days = demoPlan ? demoPlan.durationDays : 3;
-        const targetDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-        const expiryInput = this.container.querySelector("#edit-v-expiry");
-        if (expiryInput) {
-          expiryInput.value = targetDate.toISOString().substring(0, 10);
-        }
-        const statusSelect = this.container.querySelector("#edit-v-status");
-        if (statusSelect) statusSelect.value = "active";
-        window.OmniApp.showToast(`Applied ${demoPlan?.name || "3-Day Free Demo"}! Expiry set to ${targetDate.toLocaleDateString()}.`);
-      });
-    }
 
     // Auto-update expiry date when changing plan in Edit Vendor Modal
     if (editPlanSelect) {
@@ -2257,7 +2257,23 @@ export class AdminConsoleController {
     this.container.querySelectorAll("[data-close-modal]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-close-modal");
-        this.container.querySelector(`#${id}`)?.classList.remove("active");
+        const m = this.container.querySelector(`#${id}`) || document.getElementById(id);
+        if (m) m.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
+      });
+    });
+
+    // Close on overlay backdrop click
+    this.container.querySelectorAll(".modal-overlay").forEach(overlay => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove("active");
+          if (!document.querySelector(".modal-overlay.active")) {
+            document.body.classList.remove("has-modal-open");
+          }
+        }
       });
     });
   }
@@ -2306,6 +2322,7 @@ export class AdminConsoleController {
           if (modal.querySelector("#edit-feat-reviews")) modal.querySelector("#edit-feat-reviews").checked = v.features.customerReviews !== false;
           if (modal.querySelector("#edit-feat-pwa")) modal.querySelector("#edit-feat-pwa").checked = v.features.pwaInstall !== false;
           modal.classList.add("active");
+          document.body.classList.add("has-modal-open");
         }
       });
     });
@@ -2323,6 +2340,7 @@ export class AdminConsoleController {
           modal.querySelector("#admin-add-srv-panel").style.display = "none";
           this.renderAdminServicesList(v.id);
           modal.classList.add("active");
+          document.body.classList.add("has-modal-open");
         }
       });
     });
@@ -2340,6 +2358,7 @@ export class AdminConsoleController {
           modal.querySelector("#admin-add-prod-panel").style.display = "none";
           this.renderAdminProductsList(v.id);
           modal.classList.add("active");
+          document.body.classList.add("has-modal-open");
         }
       });
     });
@@ -2356,6 +2375,7 @@ export class AdminConsoleController {
           modal.querySelector("#admin-bkg-vendor-name").textContent = v.branding.businessName;
           this.renderAdminBookingsList(v.id);
           modal.classList.add("active");
+          document.body.classList.add("has-modal-open");
         }
       });
     });
@@ -2373,6 +2393,7 @@ export class AdminConsoleController {
           modal.querySelector("#admin-add-rev-panel").style.display = "none";
           this.renderAdminReviewsList(v.id);
           modal.classList.add("active");
+          document.body.classList.add("has-modal-open");
         }
       });
     });
@@ -2534,6 +2555,7 @@ export class AdminConsoleController {
     };
 
     modal.classList.add("active");
+    document.body.classList.add("has-modal-open");
   }
 
   renderAdminServicesList(vendorId) {

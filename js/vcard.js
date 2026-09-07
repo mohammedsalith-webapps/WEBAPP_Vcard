@@ -38,6 +38,7 @@ export class VCardController {
     this.applyTheme();
     PWAHandler.updateManifestForVendor(v);
     this.render();
+    PWAHandler.autoPromptInstallIfEligible(v);
   }
 
   applyTheme() {
