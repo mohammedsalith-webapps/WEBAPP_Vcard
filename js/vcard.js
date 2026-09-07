@@ -665,25 +665,22 @@ export class VCardController {
     return products.map(p => {
       const qty = this.cart[p.id] || 0;
       return `
-        <div class="product-item-card">
-          <div class="product-info-left">
-            <span class="product-emoji">${p.emoji || "🛍️"}</span>
-            <div style="flex: 1; min-width: 0;">
-              <div class="product-name">${p.name}</div>
-              <div class="product-subtext">${p.category ? `${p.category} · ` : ""}${p.unit ? `per ${p.unit}` : ""}</div>
-              <div class="product-price-tag">${currency}${Number(p.price).toLocaleString()}</div>
+        <div class="product-list-item">
+          <div class="prod-thumb-badge">${p.emoji || "🛍️"}</div>
+          <div class="prod-info-col">
+            <div class="prod-name-row">
+              <span class="prod-title">${p.name}</span>
+              <span class="prod-unit-tag">${p.unit || 'unit'}</span>
             </div>
+            ${p.category ? `<div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-bottom: 2px;">${p.category}</div>` : ""}
+            <div class="prod-price-text">${currency}${Number(p.price).toLocaleString()}</div>
           </div>
-          <div class="product-qty-control">
-            ${qty === 0 ? `
-              <button class="btn-qty-add" data-add-cart="${p.id}">
-                <span>+ ADD</span>
-              </button>
-            ` : `
-              <button class="qty-btn" data-cart-minus="${p.id}">−</button>
-              <span class="qty-display">${qty}</span>
-              <button class="qty-btn" data-cart-plus="${p.id}">+</button>
-            `}
+          <div class="prod-action-col">
+            <div class="qty-counter">
+              <button class="qty-btn" data-cart-action="dec" data-prod-id="${p.id}" title="Decrease">−</button>
+              <span class="qty-val">${qty}</span>
+              <button class="qty-btn" data-cart-action="inc" data-prod-id="${p.id}" title="Increase">+</button>
+            </div>
           </div>
         </div>
       `;
