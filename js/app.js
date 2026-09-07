@@ -193,12 +193,12 @@ class OmniAppManager {
   }
 }
 
-// Global App Instance & Resilient Bootstrap
+// Global App Instance & Resilient Direct Bootstrap
 window.OmniApp = new OmniAppManager();
 
-const bootApp = () => {
+const bootApp = async () => {
   try {
-    window.OmniApp.init();
+    await window.OmniApp.init();
   } catch (err) {
     console.error("OmniApp boot error:", err);
     const root = document.getElementById("app-content-root");
@@ -214,9 +214,4 @@ const bootApp = () => {
   }
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootApp);
-} else {
-  // DOM is already parsed (common with ES modules on fast CDNs)
-  bootApp();
-}
+bootApp();

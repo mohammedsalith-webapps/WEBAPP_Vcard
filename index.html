@@ -61,7 +61,11 @@
     <div class="device-shell" id="app-shell">
       <!-- App Content Screen (Scrollable Body) -->
       <div class="device-screen" id="app-content-root">
-        <!-- Injected via JavaScript Controller -->
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; color: var(--theme-primary, #D4FF00); font-family: sans-serif; gap: 14px; text-align: center; padding: 20px;">
+          <div style="font-size: 2.2rem; animation: pulse 1.5s infinite;">⚡</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em;">OmniCard OS</div>
+          <div style="font-size: 0.8rem; color: #94A3B8;">Loading digital business environment...</div>
+        </div>
       </div>
 
       <!-- App Fixed Dock Root (Permanently pinned at bottom of shell) -->
@@ -72,34 +76,7 @@
   <!-- Toast Message Container -->
   <div class="toast-container" id="toast-root"></div>
 
-  <!-- Local file:// protocol detection helper -->
-  <script>
-    if (window.location.protocol === 'file:') {
-      window.addEventListener('DOMContentLoaded', () => {
-        const root = document.getElementById('app-content-root');
-        if (root) {
-          root.innerHTML = `
-            <div style="padding: 24px; text-align: center; color: #FFF; background: #0F131C; border-radius: 16px; margin: 20px; border: 1px solid rgba(255,255,255,0.1);">
-              <div style="font-size: 2.2rem; margin-bottom: 12px;">⚠️</div>
-              <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: #D4FF00;">Web Server Required for ES Modules</h3>
-              <p style="font-size: 0.82rem; color: #94A3B8; line-height: 1.5; margin-bottom: 16px;">
-                Browsers automatically block JavaScript ES Modules (<code style="color: #00E5FF;">import / export</code>) when double-clicking HTML files via <code style="color: #EF4444;">file:///</code> protocol due to CORS security.
-              </p>
-              <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px; text-align: left; font-size: 0.8rem; margin-bottom: 16px;">
-                <div style="font-weight: 700; margin-bottom: 4px; color: #FFF;">To view locally:</div>
-                <div style="color: #CBD5E1;">Open <a href="http://localhost:8080" style="color: #D4FF00; font-weight: 700; text-decoration: underline;">http://localhost:8080</a> in your browser (Python server is already running).</div>
-              </div>
-              <p style="font-size: 0.78rem; color: #64748B;">
-                Once you push your <code style="color: #FFF;">css/</code>, <code style="color: #FFF;">js/</code>, and <code style="color: #FFF;">assets/</code> folders to GitHub, your Vercel deployment (<code style="color: #FFF;">webapp-vcard.vercel.app</code>) will also work automatically.
-              </p>
-            </div>
-          `;
-        }
-      });
-    }
-  </script>
-
-  <!-- Main Application Bootstrap -->
-  <script type="module" src="js/app.js"></script>
+  <!-- Main Application Bootstrap with Cache-Buster -->
+  <script type="module" src="js/app.js?v=20260907_v3"></script>
 </body>
 </html>
