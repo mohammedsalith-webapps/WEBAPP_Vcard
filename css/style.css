@@ -3470,3 +3470,357 @@ input[type="date"]:valid {
 .pwa-banner-btn:active {
   transform: scale(0.97);
 }
+
+/* ==========================================================================
+   Lead Form & Call Action Styles (Home Page & Popup)
+   ========================================================================== */
+
+/* Call action pill in Business Info item */
+.btn-biz-call-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-biz-call-action:hover {
+  background: var(--theme-primary, #D4FF00);
+  border-color: var(--theme-primary, #D4FF00);
+  color: #000000;
+  transform: translateY(-1px);
+}
+
+/* Home page Lead Form Trigger Button - Matches Theme Colors */
+.biz-lead-form-action-wrap {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-biz-lead-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--theme-primary, #D4FF00);
+  color: #FFFFFF;
+  border-radius: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: left;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-biz-lead-trigger::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--theme-primary, #D4FF00);
+  opacity: 0.08;
+  transition: opacity 0.2s ease;
+}
+
+.btn-biz-lead-trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 16px var(--theme-primary, #D4FF00);
+  border-color: var(--theme-primary, #D4FF00);
+}
+
+.btn-biz-lead-trigger:hover::before {
+  opacity: 0.16;
+}
+
+.btn-biz-lead-trigger:active {
+  transform: scale(0.99);
+}
+
+.btn-lead-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-lead-icon {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-lead-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+
+.btn-lead-arrow {
+  color: var(--theme-primary, #D4FF00);
+  font-size: 1.1rem;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.btn-biz-lead-trigger:hover .btn-lead-arrow {
+  transform: translateX(4px);
+}
+
+/* Green Glowing Submit Button inside the Popup Modal */
+.btn-lead-submit-glowing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  color: #FFFFFF !important;
+  font-family: inherit;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  letter-spacing: -0.01em;
+  padding: 15px 22px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  box-sizing: border-box;
+  margin-top: 14px;
+  user-select: none;
+  position: relative;
+  animation: greenGlowingPulse 2.4s infinite;
+}
+
+@keyframes greenGlowingPulse {
+  0% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.85), 0 0 40px rgba(16, 185, 129, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.btn-lead-submit-glowing:hover {
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.95), 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.btn-lead-submit-glowing:active {
+  transform: scale(0.98);
+}
+
+/* Modal Popup Field Elements */
+.lead-field-group {
+  margin-bottom: 14px;
+}
+
+.lead-field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+}
+
+.lead-field-label .required-star {
+  color: #EF4444;
+  margin-left: 2px;
+}
+
+.lead-field-input,
+.lead-field-select,
+.lead-field-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-size: 0.86rem;
+  font-family: inherit;
+  color: #FFFFFF;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.lead-field-input:focus,
+.lead-field-select:focus,
+.lead-field-textarea:focus {
+  border-color: var(--theme-primary, #D4FF00);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(212, 255, 0, 0.15);
+}
+
+.lead-field-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.lead-field-select option {
+  background: #0F131C;
+  color: #FFFFFF;
+  padding: 8px;
+}
+
+/* Date picker calendar input styling */
+.lead-field-date {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 0.86rem;
+  font-family: inherit;
+  color: #FFFFFF;
+  outline: none;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.lead-field-date:focus {
+  border-color: var(--theme-primary, #D4FF00);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(212, 255, 0, 0.15);
+}
+
+/* Multi-select tag chips */
+.lead-multiselect-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.lead-choice-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lead-choice-chip:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.lead-choice-chip.selected {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10B981;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.lead-choice-chip .chip-check {
+  font-size: 0.75rem;
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.lead-choice-chip.selected .chip-check {
+  opacity: 1;
+  width: auto;
+  color: #10B981;
+}
+
+/* Vendor Lead Form Builder Styles */
+.lead-builder-field-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lead-builder-field-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lead-builder-field-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.lead-builder-field-sub {
+  font-size: 0.72rem;
+  color: #94A3B8;
+}
+
+.lead-builder-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.lead-record-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.lead-record-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}

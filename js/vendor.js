@@ -116,6 +116,7 @@ export class VendorConsoleController {
       if (tab === "shop") return v.features?.ecommerceShop !== false;
       if (tab === "bookings") return v.features?.calendarBooking !== false;
       if (tab === "reviews") return v.features?.customerReviews !== false;
+      if (tab === "leadform") return v.features?.leadForm !== false;
       return true;
     };
     if (!isTabAvailable(this.activeTab)) {
@@ -155,6 +156,11 @@ export class VendorConsoleController {
           <button class="portal-tab-btn ${this.activeTab === 'profile' ? 'active' : ''}" data-vtab="profile">
             🎨 Profile
           </button>
+          ${v.features?.leadForm !== false ? `
+            <button class="portal-tab-btn ${this.activeTab === 'leadform' ? 'active' : ''}" data-vtab="leadform">
+              📝 Lead Form (${v.leads?.length || 0})
+            </button>
+          ` : ""}
           ${v.features?.quoteBuilder !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'services' ? 'active' : ''}" data-vtab="services">
               📋 Services (${v.services?.length || 0})
@@ -544,6 +550,160 @@ export class VendorConsoleController {
             </div>
           </div>
         </div>
+
+        <!-- 6. Lead Form Builder & Captured Leads Pane -->
+        <div class="portal-pane ${this.activeTab === 'leadform' ? 'active' : ''}" id="vpane-leadform">
+          <div class="bento-grid bento-grid-2" style="margin-bottom: 20px;">
+            <!-- Form Branding & Settings -->
+            <div class="bento-card">
+              <h3 style="font-size: 1.05rem; margin-bottom: 12px; color: var(--theme-primary); display: flex; align-items: center; justify-content: space-between;">
+                <span>⚙️ Form Settings & Buttons</span>
+                <span class="pill-status-active" style="font-size: 0.65rem;">POPUP CONFIG</span>
+              </h3>
+              <form id="form-vendor-leadform-settings">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label">Popup Form Title</label>
+                  <input type="text" class="form-input" id="vlead-title" value="${v.leadForm?.title || 'Request a Call Back'}" required />
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label">Popup Subtitle / Instruction</label>
+                  <input type="text" class="form-input" id="vlead-subtitle" value="${v.leadForm?.subtitle || ''}" placeholder="e.g. Fill this form and our team will get back to you immediately." />
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 12px;">
+                  <div class="form-group">
+                    <label class="form-label">Home Page Button Name (Custom)</label>
+                    <input type="text" class="form-input" id="vlead-btn-text" value="${v.leadForm?.buttonText || 'Request Call Back'}" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Button Icon</label>
+                    <input type="text" class="form-input" id="vlead-btn-icon" value="${v.leadForm?.buttonIcon || '⚡'}" style="text-align: center;" />
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label">Submit Button Text (Inside Popup)</label>
+                  <input type="text" class="form-input" id="vlead-submit-btn-text" value="${v.leadForm?.submitButtonText || 'Request Call Back ⚡'}" required />
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label">Target WhatsApp Number (Optional override)</label>
+                  <input type="text" class="form-input" id="vlead-whatsapp" value="${v.leadForm?.whatsappNumber || ''}" placeholder="Defaults to ${v.contacts.whatsapp || v.contacts.phone}" />
+                  <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px;">Leads will be routed directly to this WhatsApp number.</div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label class="switch-label">
+                    <input type="checkbox" class="switch-input" id="vlead-enabled" ${v.leadForm?.enabled !== false ? 'checked' : ''} />
+                    <span class="switch-slider"></span>
+                    <span><strong>Enable Lead Form Button on Home Page</strong></span>
+                  </label>
+                </div>
+                <button type="submit" class="btn-submit-primary" style="padding: 11px;">
+                  <span>Save Form Settings</span>
+                  <span>💾</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Form Fields Manager -->
+            <div class="bento-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div>
+                  <h3 style="font-size: 1.05rem; color: var(--theme-primary); margin-bottom: 2px;">📋 Custom Form Fields</h3>
+                  <div style="font-size: 0.74rem; color: var(--theme-text-muted);">Configure questions for customers in the popup</div>
+                </div>
+                <button type="button" class="btn-pill active" id="btn-add-lead-field" style="padding: 6px 12px; font-size: 0.76rem;">
+                  <span>➕ Add Field</span>
+                </button>
+              </div>
+
+              <div id="vendor-lead-fields-list">
+                ${(v.leadForm?.fields || []).map((f, idx) => `
+                  <div class="lead-builder-field-card" data-fld-id="${f.id}">
+                    <div class="lead-builder-field-info">
+                      <div class="lead-builder-field-title">
+                        <span>${f.label}</span>
+                        ${f.required ? '<span class="pill-status-active" style="font-size: 0.6rem; padding: 1px 5px; background: rgba(239,68,68,0.2); color: #EF4444; border-color: rgba(239,68,68,0.4);">REQUIRED</span>' : ''}
+                      </div>
+                      <div class="lead-builder-field-sub">
+                        Type: <b style="color: var(--theme-primary);">${f.type.toUpperCase()}</b>
+                        ${f.options && f.options.length ? ` • ${f.options.length} options: ${f.options.slice(0, 3).join(', ')}${f.options.length > 3 ? '...' : ''}` : ''}
+                      </div>
+                    </div>
+                    <div class="lead-builder-actions">
+                      <button type="button" class="btn-pill" data-move-fld="up" data-fld-idx="${idx}" title="Move Up" ${idx === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button>
+                      <button type="button" class="btn-pill" data-move-fld="down" data-fld-idx="${idx}" title="Move Down" ${idx === (v.leadForm?.fields || []).length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button>
+                      <button type="button" class="btn-pill" data-edit-fld="${f.id}" title="Edit Field">✏️</button>
+                      <button type="button" class="btn-pill" style="color: #EF4444; border-color: rgba(239,68,68,0.3);" data-del-fld="${f.id}" title="Delete Field">🗑️</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Captured Leads List / Inbox -->
+          <div class="bento-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 style="font-size: 1.1rem; color: #FFFFFF; margin-bottom: 2px;">📥 Captured WhatsApp Leads (${v.leads?.length || 0})</h3>
+                <div style="font-size: 0.74rem; color: var(--theme-text-muted);">Customer inquiries and callback requests submitted via vCard popup</div>
+              </div>
+            </div>
+
+            <div id="vendor-leads-container">
+              ${(!v.leads || v.leads.length === 0) ? `
+                <div style="padding: 24px; text-align: center; color: var(--theme-text-muted); font-size: 0.85rem;">
+                  No leads received yet. When customers click "${v.leadForm?.buttonText || 'Request Call Back'}" and submit the popup form, their inquiries will appear here and route to WhatsApp!
+                </div>
+              ` : `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px;">
+                  ${v.leads.map(lead => {
+                    const cleanPhone = (lead.customerPhone || '').replace(/[^0-9]/g, '');
+                    const replyWaUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hello ${lead.customerName || 'there'}, thank you for contacting ${v.branding.businessName}!`)}` : '#';
+                    return `
+                      <div class="lead-record-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                          <div>
+                            <div style="font-size: 0.95rem; font-weight: 800; color: #FFFFFF;">${lead.customerName || 'Inquiry'}</div>
+                            <div style="font-size: 0.75rem; color: var(--theme-primary); font-weight: 600;">
+                              ${lead.customerPhone ? `<a href="tel:${lead.customerPhone}" style="color: var(--theme-primary); text-decoration: none;">📞 ${lead.customerPhone}</a>` : 'No Phone'}
+                            </div>
+                          </div>
+                          <div style="display: flex; gap: 6px; align-items: center;">
+                            <span class="pill-status-active" style="font-size: 0.65rem; background: ${lead.status === 'Converted' ? 'rgba(16,185,129,0.2)' : (lead.status === 'Contacted' ? 'rgba(0,229,255,0.2)' : 'rgba(255,165,0,0.2)')}; color: ${lead.status === 'Converted' ? '#10B981' : (lead.status === 'Contacted' ? '#00E5FF' : '#FFA500')};">
+                              ${lead.status || 'New'}
+                            </span>
+                            <button type="button" class="btn-pill" style="padding: 2px 6px; font-size: 0.7rem; color: #EF4444;" data-del-lead="${lead.id}" title="Delete Lead">×</button>
+                          </div>
+                        </div>
+
+                        <div style="font-size: 0.76rem; color: #CBD5E1; margin: 8px 0; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 8px 10px; line-height: 1.5;">
+                          ${(lead.fields || []).map(f => `
+                            <div><strong style="color: #94A3B8;">${f.label}:</strong> <span style="color: #FFFFFF;">${Array.isArray(f.value) ? f.value.join(', ') : (f.value || 'N/A')}</span></div>
+                          `).join('')}
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
+                          <span style="font-size: 0.68rem; color: var(--theme-text-muted);">
+                            ${new Date(lead.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn-pill" data-toggle-lead-status="${lead.id}" style="font-size: 0.7rem; padding: 4px 8px;">
+                              Status: ${lead.status === 'Converted' ? 'Mark New' : (lead.status === 'Contacted' ? 'Convert' : 'Contacted')}
+                            </button>
+                            ${cleanPhone ? `
+                              <a href="${replyWaUrl}" target="_blank" rel="noopener" class="btn-pill active" style="font-size: 0.7rem; padding: 4px 10px; background: #25D366; color: #000; font-weight: 700; text-decoration: none;">
+                                <span>💬 WhatsApp</span>
+                              </a>
+                            ` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Modal: Add Service -->
@@ -757,6 +917,99 @@ export class VendorConsoleController {
               <textarea class="form-textarea" id="edit-rev-content" rows="3" placeholder="Review content (optional)"></textarea>
             </div>
             <button type="submit" class="btn-submit-primary">Save Review Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal: Add Lead Form Field -->
+      <div class="modal-overlay" id="modal-vendor-add-lead-field">
+        <div class="modal-card" style="max-width: 440px;">
+          <div class="modal-header">
+            <h3 class="modal-title">Add Custom Form Field</h3>
+            <button class="btn-modal-close" data-close-modal="modal-vendor-add-lead-field">×</button>
+          </div>
+          <form id="form-vendor-new-lead-field">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Field Label / Question</label>
+              <input type="text" class="form-input" id="new-fld-label" placeholder="e.g. Service Interested In, Event Date, Guest Count" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Field Input Type</label>
+              <select class="form-select" id="new-fld-type">
+                <option value="text">Free Text (Single line)</option>
+                <option value="phone">Phone / WhatsApp Number</option>
+                <option value="email">Email Address</option>
+                <option value="number">Number (Quantity / Budget)</option>
+                <option value="textarea">Textarea (Multi-line message)</option>
+                <option value="select">Dropdown (Single Selection)</option>
+                <option value="date">Calendar (Date Selection)</option>
+                <option value="multiselect">Select Multiple Options (Checkboxes)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Placeholder / Hint Text</label>
+              <input type="text" class="form-input" id="new-fld-placeholder" placeholder="e.g. Choose an option, Enter details..." />
+            </div>
+            <div class="form-group" id="new-fld-options-group" style="display: none; margin-bottom: 12px;">
+              <label class="form-label">Options (Comma separated)</label>
+              <textarea class="form-textarea" id="new-fld-options" rows="3" placeholder="Option 1, Option 2, Option 3, Option 4"></textarea>
+              <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px;">Separate choices by commas. These will display in dropdown or as selectable chips.</div>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="switch-label">
+                <input type="checkbox" class="switch-input" id="new-fld-required" checked />
+                <span class="switch-slider"></span>
+                <span>Required Field (Must be filled by customer)</span>
+              </label>
+            </div>
+            <button type="submit" class="btn-submit-primary">Add Field to Popup Form</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal: Edit Lead Form Field -->
+      <div class="modal-overlay" id="modal-vendor-edit-lead-field">
+        <div class="modal-card" style="max-width: 440px;">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit Form Field</h3>
+            <button class="btn-modal-close" data-close-modal="modal-vendor-edit-lead-field">×</button>
+          </div>
+          <form id="form-vendor-edit-lead-field">
+            <input type="hidden" id="edit-fld-id" />
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Field Label / Question</label>
+              <input type="text" class="form-input" id="edit-fld-label" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Field Input Type</label>
+              <select class="form-select" id="edit-fld-type">
+                <option value="text">Free Text (Single line)</option>
+                <option value="phone">Phone / WhatsApp Number</option>
+                <option value="email">Email Address</option>
+                <option value="number">Number (Quantity / Budget)</option>
+                <option value="textarea">Textarea (Multi-line message)</option>
+                <option value="select">Dropdown (Single Selection)</option>
+                <option value="date">Calendar (Date Selection)</option>
+                <option value="multiselect">Select Multiple Options (Checkboxes)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">Placeholder / Hint Text</label>
+              <input type="text" class="form-input" id="edit-fld-placeholder" />
+            </div>
+            <div class="form-group" id="edit-fld-options-group" style="display: none; margin-bottom: 12px;">
+              <label class="form-label">Options (Comma separated)</label>
+              <textarea class="form-textarea" id="edit-fld-options" rows="3"></textarea>
+              <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px;">Separate choices by commas.</div>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="switch-label">
+                <input type="checkbox" class="switch-input" id="edit-fld-required" />
+                <span class="switch-slider"></span>
+                <span>Required Field</span>
+              </label>
+            </div>
+            <button type="submit" class="btn-submit-primary">Save Field Changes</button>
           </form>
         </div>
       </div>
@@ -1156,6 +1409,233 @@ export class VendorConsoleController {
         v.reviewTags = (v.reviewTags || []).filter(t => t !== tag);
         await db.saveVendor(v);
         this.renderDashboard();
+      });
+    });
+
+    // --- Lead Form & Leads Management Event Handlers ---
+
+    // 1. Save Lead Form Settings
+    const leadSettingsForm = this.container.querySelector("#form-vendor-leadform-settings");
+    if (leadSettingsForm) {
+      leadSettingsForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const updatedConfig = {
+          title: this.container.querySelector("#vlead-title").value.trim(),
+          subtitle: this.container.querySelector("#vlead-subtitle").value.trim(),
+          buttonText: this.container.querySelector("#vlead-btn-text").value.trim(),
+          buttonIcon: this.container.querySelector("#vlead-btn-icon").value.trim() || "⚡",
+          submitButtonText: this.container.querySelector("#vlead-submit-btn-text").value.trim() || "Request Call Back ⚡",
+          whatsappNumber: this.container.querySelector("#vlead-whatsapp").value.trim(),
+          enabled: this.container.querySelector("#vlead-enabled").checked
+        };
+
+        await db.saveLeadFormConfig(v.id, updatedConfig);
+        v.leadForm = { ...v.leadForm, ...updatedConfig };
+        window.OmniApp.showToast("Lead Form settings saved successfully!");
+      });
+    }
+
+    // 2. Add New Field Modal Opener & Type Dynamic Toggle
+    const btnAddLeadField = this.container.querySelector("#btn-add-lead-field");
+    const modalAddLeadField = this.container.querySelector("#modal-vendor-add-lead-field");
+    const newFldTypeSelect = this.container.querySelector("#new-fld-type");
+    const newFldOptionsGroup = this.container.querySelector("#new-fld-options-group");
+
+    if (btnAddLeadField && modalAddLeadField) {
+      btnAddLeadField.addEventListener("click", () => {
+        modalAddLeadField.classList.add("active");
+        document.body.classList.add("has-modal-open");
+      });
+    }
+
+    if (newFldTypeSelect && newFldOptionsGroup) {
+      newFldTypeSelect.addEventListener("change", () => {
+        const val = newFldTypeSelect.value;
+        newFldOptionsGroup.style.display = (val === "select" || val === "multiselect") ? "block" : "none";
+      });
+    }
+
+    // 3. Add New Field Form Submit
+    const formNewLeadField = this.container.querySelector("#form-vendor-new-lead-field");
+    if (formNewLeadField) {
+      formNewLeadField.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const label = this.container.querySelector("#new-fld-label").value.trim();
+        const type = this.container.querySelector("#new-fld-type").value;
+        const placeholder = this.container.querySelector("#new-fld-placeholder").value.trim();
+        const required = this.container.querySelector("#new-fld-required").checked;
+        const rawOptions = this.container.querySelector("#new-fld-options")?.value.trim() || "";
+
+        let options = [];
+        if (type === "select" || type === "multiselect") {
+          options = rawOptions.split(",").map(o => o.trim()).filter(Boolean);
+          if (options.length === 0) {
+            window.OmniApp.showToast("Please provide at least 1 option (comma-separated) for dropdown/multiselect.");
+            return;
+          }
+        }
+
+        const newField = {
+          id: `fld-${Date.now()}`,
+          type,
+          label,
+          placeholder,
+          required,
+          options
+        };
+
+        if (!v.leadForm) v.leadForm = {};
+        if (!Array.isArray(v.leadForm.fields)) v.leadForm.fields = [];
+        v.leadForm.fields.push(newField);
+
+        await db.saveLeadFormConfig(v.id, v.leadForm);
+        modalAddLeadField?.classList.remove("active");
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
+
+        formNewLeadField.reset();
+        if (newFldOptionsGroup) newFldOptionsGroup.style.display = "none";
+        window.OmniApp.showToast(`Added field "${label}" to popup form!`);
+        this.renderDashboard();
+      });
+    }
+
+    // 4. Edit Field Modal Opener & Dynamic Toggle
+    const modalEditLeadField = this.container.querySelector("#modal-vendor-edit-lead-field");
+    const editFldTypeSelect = this.container.querySelector("#edit-fld-type");
+    const editFldOptionsGroup = this.container.querySelector("#edit-fld-options-group");
+
+    if (editFldTypeSelect && editFldOptionsGroup) {
+      editFldTypeSelect.addEventListener("change", () => {
+        const val = editFldTypeSelect.value;
+        editFldOptionsGroup.style.display = (val === "select" || val === "multiselect") ? "block" : "none";
+      });
+    }
+
+    this.container.querySelectorAll("[data-edit-fld]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const fldId = btn.getAttribute("data-edit-fld");
+        const fld = (v.leadForm?.fields || []).find(f => f.id === fldId);
+        if (!fld || !modalEditLeadField) return;
+
+        modalEditLeadField.querySelector("#edit-fld-id").value = fld.id;
+        modalEditLeadField.querySelector("#edit-fld-label").value = fld.label;
+        modalEditLeadField.querySelector("#edit-fld-type").value = fld.type;
+        modalEditLeadField.querySelector("#edit-fld-placeholder").value = fld.placeholder || "";
+        modalEditLeadField.querySelector("#edit-fld-options").value = (fld.options || []).join(", ");
+        modalEditLeadField.querySelector("#edit-fld-required").checked = !!fld.required;
+
+        if (editFldOptionsGroup) {
+          editFldOptionsGroup.style.display = (fld.type === "select" || fld.type === "multiselect") ? "block" : "none";
+        }
+
+        modalEditLeadField.classList.add("active");
+        document.body.classList.add("has-modal-open");
+      });
+    });
+
+    // 5. Edit Field Form Submit
+    const formEditLeadField = this.container.querySelector("#form-vendor-edit-lead-field");
+    if (formEditLeadField) {
+      formEditLeadField.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fldId = modalEditLeadField.querySelector("#edit-fld-id").value;
+        const label = modalEditLeadField.querySelector("#edit-fld-label").value.trim();
+        const type = modalEditLeadField.querySelector("#edit-fld-type").value;
+        const placeholder = modalEditLeadField.querySelector("#edit-fld-placeholder").value.trim();
+        const required = modalEditLeadField.querySelector("#edit-fld-required").checked;
+        const rawOptions = modalEditLeadField.querySelector("#edit-fld-options").value.trim();
+
+        let options = [];
+        if (type === "select" || type === "multiselect") {
+          options = rawOptions.split(",").map(o => o.trim()).filter(Boolean);
+        }
+
+        const idx = (v.leadForm?.fields || []).findIndex(f => f.id === fldId);
+        if (idx >= 0) {
+          v.leadForm.fields[idx] = {
+            ...v.leadForm.fields[idx],
+            label,
+            type,
+            placeholder,
+            required,
+            options
+          };
+
+          await db.saveLeadFormConfig(v.id, v.leadForm);
+          modalEditLeadField?.classList.remove("active");
+          if (!document.querySelector(".modal-overlay.active")) {
+            document.body.classList.remove("has-modal-open");
+          }
+
+          window.OmniApp.showToast(`Updated field "${label}"!`);
+          this.renderDashboard();
+        }
+      });
+    }
+
+    // 6. Delete Field
+    this.container.querySelectorAll("[data-del-fld]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const fldId = btn.getAttribute("data-del-fld");
+        if (confirm("Delete this question from your popup form?")) {
+          v.leadForm.fields = (v.leadForm?.fields || []).filter(f => f.id !== fldId);
+          await db.saveLeadFormConfig(v.id, v.leadForm);
+          window.OmniApp.showToast("Field removed from popup form.");
+          this.renderDashboard();
+        }
+      });
+    });
+
+    // 7. Move Field Up / Down
+    this.container.querySelectorAll("[data-move-fld]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const direction = btn.getAttribute("data-move-fld");
+        const idx = Number(btn.getAttribute("data-fld-idx"));
+        const fields = v.leadForm?.fields || [];
+
+        if (direction === "up" && idx > 0) {
+          const temp = fields[idx];
+          fields[idx] = fields[idx - 1];
+          fields[idx - 1] = temp;
+          await db.saveLeadFormConfig(v.id, v.leadForm);
+          this.renderDashboard();
+        } else if (direction === "down" && idx < fields.length - 1) {
+          const temp = fields[idx];
+          fields[idx] = fields[idx + 1];
+          fields[idx + 1] = temp;
+          await db.saveLeadFormConfig(v.id, v.leadForm);
+          this.renderDashboard();
+        }
+      });
+    });
+
+    // 8. Toggle Lead Status (New -> Contacted -> Converted -> New)
+    this.container.querySelectorAll("[data-toggle-lead-status]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const leadId = btn.getAttribute("data-toggle-lead-status");
+        const lead = (v.leads || []).find(l => l.id === leadId);
+        if (!lead) return;
+
+        const nextStatus = lead.status === "New" ? "Contacted" : (lead.status === "Contacted" ? "Converted" : "New");
+        await db.updateLeadStatus(v.id, leadId, nextStatus);
+        lead.status = nextStatus;
+        window.OmniApp.showToast(`Lead marked as ${nextStatus}!`);
+        this.renderDashboard();
+      });
+    });
+
+    // 9. Delete Lead
+    this.container.querySelectorAll("[data-del-lead]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const leadId = btn.getAttribute("data-del-lead");
+        if (confirm("Delete this captured lead record permanently?")) {
+          await db.deleteLead(v.id, leadId);
+          v.leads = (v.leads || []).filter(l => l.id !== leadId);
+          window.OmniApp.showToast("Lead record deleted.");
+          this.renderDashboard();
+        }
       });
     });
   }

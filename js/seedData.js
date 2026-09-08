@@ -30,7 +30,8 @@ export const INITIAL_DATA = {
         calendarBooking: true,
         customerReviews: true,
         promoBanner: true,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       }
     },
     {
@@ -45,7 +46,8 @@ export const INITIAL_DATA = {
         calendarBooking: false,
         customerReviews: true,
         promoBanner: false,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       }
     },
     {
@@ -60,7 +62,8 @@ export const INITIAL_DATA = {
         calendarBooking: true,
         customerReviews: true,
         promoBanner: true,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       }
     },
     {
@@ -75,7 +78,8 @@ export const INITIAL_DATA = {
         calendarBooking: true,
         customerReviews: true,
         promoBanner: true,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       }
     }
   ],
@@ -142,8 +146,84 @@ export const INITIAL_DATA = {
         calendarBooking: true,
         customerReviews: true,
         promoBanner: true,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       },
+      leadForm: {
+        enabled: true,
+        title: "Request a Call Back & Free Quote",
+        subtitle: "Submit your details below. Chef Rajesh's team will connect with you on WhatsApp right away.",
+        buttonText: "Request Call Back",
+        submitButtonText: "Request Call Back ⚡",
+        buttonIcon: "⚡",
+        fields: [
+          {
+            id: "fld-name",
+            type: "text",
+            label: "Your Full Name",
+            placeholder: "e.g. Vikram Sharma",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-phone",
+            type: "phone",
+            label: "WhatsApp / Contact Number",
+            placeholder: "e.g. 9876543210",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-service",
+            type: "select",
+            label: "Event & Catering Type",
+            placeholder: "Choose event category",
+            required: true,
+            options: ["Royal Wedding Gala", "Corporate Executive Lunch", "Private Cocktail Party", "Live Artisanal Chaat Counter", "Family Gathering & Birthday"]
+          },
+          {
+            id: "fld-date",
+            type: "date",
+            label: "Event / Function Date",
+            placeholder: "Select event date",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-addons",
+            type: "multiselect",
+            label: "Additional Counters Required",
+            placeholder: "Select all that apply",
+            required: false,
+            options: ["Molecular Mixology Bar", "Live Dessert & Baklava Studio", "VIP Uniformed Service Crew", "Tasting Session at Venue", "Floral Dining Decor"]
+          },
+          {
+            id: "fld-notes",
+            type: "textarea",
+            label: "Guest Count & Special Requests",
+            placeholder: "e.g. ~250 guests, strictly vegetarian counter needed...",
+            required: false,
+            options: []
+          }
+        ]
+      },
+      leads: [
+        {
+          id: "lead-201",
+          createdAt: "2026-09-06T11:20:00.000Z",
+          customerName: "Sameer Singhania",
+          customerPhone: "9820112233",
+          status: "New",
+          fields: [
+            { label: "Your Full Name", value: "Sameer Singhania" },
+            { label: "WhatsApp / Contact Number", value: "9820112233" },
+            { label: "Event & Catering Type", value: "Royal Wedding Gala" },
+            { label: "Event / Function Date", value: "2026-11-20" },
+            { label: "Additional Counters Required", value: ["Molecular Mixology Bar", "Live Dessert & Baklava Studio"] },
+            { label: "Guest Count & Special Requests", value: "Approx 450 guests for destination wedding in Udaipur." }
+          ]
+        }
+      ],
       services: [
         {
           id: "srv-1",
@@ -337,8 +417,84 @@ export const INITIAL_DATA = {
         calendarBooking: true,
         customerReviews: true,
         promoBanner: true,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       },
+      leadForm: {
+        enabled: true,
+        title: "Request Aesthetic Consultation Call",
+        subtitle: "Schedule a personalized consultation with Dr. Ananya Sharma's dermatology crew.",
+        buttonText: "Request Consultation Call",
+        submitButtonText: "Request Call Back ⚡",
+        buttonIcon: "💇‍♀️",
+        fields: [
+          {
+            id: "fld-lb-1",
+            type: "text",
+            label: "Your Full Name",
+            placeholder: "e.g. Priya Nair",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-lb-2",
+            type: "phone",
+            label: "WhatsApp / Phone",
+            placeholder: "e.g. 9811002233",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-lb-3",
+            type: "select",
+            label: "Service of Interest",
+            placeholder: "Select aesthetic treatment",
+            required: true,
+            options: ["Korean Hydra-Infusion Facial", "Caviar & Keratin Gloss Reconstruction", "Couture Airbrush Bridal Artistry", "Scalp Detox & Micro-needling"]
+          },
+          {
+            id: "fld-lb-4",
+            type: "date",
+            label: "Preferred Consultation Date",
+            placeholder: "Select date",
+            required: false,
+            options: []
+          },
+          {
+            id: "fld-lb-5",
+            type: "multiselect",
+            label: "Hair / Skin Concerns",
+            placeholder: "Select all that apply",
+            required: false,
+            options: ["Dry & Frizzy Hair", "Acne & Pigmentation", "Bridal Glow Trial", "Sensitive Skin", "Anti-Aging & Peptides"]
+          },
+          {
+            id: "fld-lb-6",
+            type: "textarea",
+            label: "Specific Concerns / Goals",
+            placeholder: "Any ongoing treatments or allergies we should note?",
+            required: false,
+            options: []
+          }
+        ]
+      },
+      leads: [
+        {
+          id: "lead-202",
+          createdAt: "2026-09-07T14:15:00.000Z",
+          customerName: "Rhea Sen",
+          customerPhone: "9944001122",
+          status: "New",
+          fields: [
+            { label: "Your Full Name", value: "Rhea Sen" },
+            { label: "WhatsApp / Phone", value: "9944001122" },
+            { label: "Service of Interest", value: "Couture Airbrush Bridal Artistry" },
+            { label: "Preferred Consultation Date", value: "2026-10-15" },
+            { label: "Hair / Skin Concerns", value: ["Bridal Glow Trial", "Sensitive Skin"] },
+            { label: "Specific Concerns / Goals", value: "Need bridal hair and makeup package for 3 ceremonies." }
+          ]
+        }
+      ],
       services: [
         {
           id: "lb-srv-1",
@@ -477,8 +633,84 @@ export const INITIAL_DATA = {
         calendarBooking: true,
         customerReviews: true,
         promoBanner: true,
-        pwaInstall: true
+        pwaInstall: true,
+        leadForm: true
       },
+      leadForm: {
+        enabled: true,
+        title: "Request Physician Consultation Call",
+        subtitle: "Dr. Vikram Rao's clinical team will get in touch with you to understand your medical needs.",
+        buttonText: "Request Doctor Call Back",
+        submitButtonText: "Request Call Back ⚡",
+        buttonIcon: "🩺",
+        fields: [
+          {
+            id: "fld-am-1",
+            type: "text",
+            label: "Patient Full Name",
+            placeholder: "e.g. Ramesh Chandra",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-am-2",
+            type: "phone",
+            label: "WhatsApp / Phone Number",
+            placeholder: "e.g. 9443322110",
+            required: true,
+            options: []
+          },
+          {
+            id: "fld-am-3",
+            type: "select",
+            label: "Consultation Requirement",
+            placeholder: "Select health specialty",
+            required: true,
+            options: ["Comprehensive Cardiologist Consultation", "24-Hour Holter ECG Analysis", "Cardiac Stress Treadmill Test (TMT)", "Preventive Heart & Lipid Screening", "Post-Operative Recovery Follow-up"]
+          },
+          {
+            id: "fld-am-4",
+            type: "date",
+            label: "Preferred Appointment Date",
+            placeholder: "Select date",
+            required: false,
+            options: []
+          },
+          {
+            id: "fld-am-5",
+            type: "multiselect",
+            label: "Symptoms / Prior Conditions",
+            placeholder: "Select any symptoms",
+            required: false,
+            options: ["Hypertension / High BP", "Chest Discomfort", "Palpitations", "Shortness of Breath", "Family History of Heart Disease"]
+          },
+          {
+            id: "fld-am-6",
+            type: "textarea",
+            label: "Health Background & Notes",
+            placeholder: "Describe existing medications or doctor recommendations...",
+            required: false,
+            options: []
+          }
+        ]
+      },
+      leads: [
+        {
+          id: "lead-203",
+          createdAt: "2026-09-07T16:40:00.000Z",
+          customerName: "Kishore Advani",
+          customerPhone: "9820011223",
+          status: "New",
+          fields: [
+            { label: "Patient Full Name", value: "Kishore Advani" },
+            { label: "WhatsApp / Phone Number", value: "9820011223" },
+            { label: "Consultation Requirement", value: "Comprehensive Cardiologist Consultation" },
+            { label: "Preferred Appointment Date", value: "2026-09-15" },
+            { label: "Symptoms / Prior Conditions", value: ["Hypertension / High BP", "Palpitations"] },
+            { label: "Health Background & Notes", value: "Looking for second opinion on quarterly stress test." }
+          ]
+        }
+      ],
       services: [
         {
           id: "am-srv-1",

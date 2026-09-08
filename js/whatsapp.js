@@ -138,5 +138,29 @@ export const WhatsAppEngine = {
   // 6. Vendor Direct Reply to Client
   buildVendorReply(vendor, clientName, message) {
     return `Hello ${clientName || "there"}, this is *${vendor.branding.businessName}*:\n\n${message}`;
+  },
+
+  // 7. Lead Form Submission
+  buildLeadMessage(vendor, leadData = {}) {
+    const now = new Date().toLocaleString();
+    const title = vendor.leadForm?.title || "New Lead / Callback Request";
+    let fieldsText = "";
+    if (Array.isArray(leadData.fields) && leadData.fields.length > 0) {
+      fieldsText = leadData.fields.map(f => {
+        const val = Array.isArray(f.value) ? f.value.join(", ") : (f.value !== undefined && f.value !== null && f.value !== "" ? f.value : "N/A");
+        return `*${f.label}:* ${val}`;
+      }).join("\n\n");
+    }
+
+    return `*📝 ${title.toUpperCase()}*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*Business:* ${vendor.branding.businessName}\n` +
+      (leadData.customerName ? `*Customer Name:* ${leadData.customerName}\n` : "") +
+      (leadData.customerPhone ? `*Contact Phone:* ${leadData.customerPhone}\n` : "") +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*FORM DETAILS:*\n\n${fieldsText}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `_Sent via ${vendor.branding.businessName} Smart vCard on ${now}_\n` +
+      `_Awaiting your prompt callback._`;
   }
 };

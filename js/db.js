@@ -91,6 +91,55 @@ class DatabaseService {
       }
     }
 
+    // Ensure leadForm feature and default settings exist across plans and vendors
+    if (this.data && Array.isArray(this.data.subscriptionPlans)) {
+      this.data.subscriptionPlans.forEach(p => {
+        if (!p.features) p.features = {};
+        if (p.features.leadForm === undefined) p.features.leadForm = true;
+      });
+    }
+    if (this.data && Array.isArray(this.data.vendors)) {
+      let leadUpdated = false;
+      this.data.vendors.forEach(v => {
+        if (!v.features) v.features = {};
+        if (v.features.leadForm === undefined) {
+          v.features.leadForm = true;
+          leadUpdated = true;
+        }
+        if (!v.leadForm) {
+          const initV = INITIAL_DATA.vendors && INITIAL_DATA.vendors.find(iv => iv.id === v.id);
+          if (initV && initV.leadForm) {
+            v.leadForm = JSON.parse(JSON.stringify(initV.leadForm));
+          } else {
+            v.leadForm = {
+              enabled: true,
+              title: "Request a Call Back",
+              subtitle: "Fill this quick form and our team will get in touch with you right away.",
+              buttonText: "Request Call Back",
+              submitButtonText: "Request Call Back ⚡",
+              buttonIcon: "⚡",
+              fields: [
+                { id: "fld-name", type: "text", label: "Full Name", placeholder: "Enter your full name", required: true, options: [] },
+                { id: "fld-phone", type: "phone", label: "Phone / WhatsApp", placeholder: "Your 10-digit number", required: true, options: [] },
+                { id: "fld-service", type: "select", label: "Service / Requirement", placeholder: "Select an option", required: false, options: ["General Inquiry", "Pricing & Quotation", "Support"] },
+                { id: "fld-date", type: "date", label: "Preferred Date", placeholder: "Select date", required: false, options: [] },
+                { id: "fld-notes", type: "textarea", label: "Message / Query", placeholder: "Tell us how we can help you...", required: false, options: [] }
+              ]
+            };
+          }
+          leadUpdated = true;
+        }
+        if (!Array.isArray(v.leads)) {
+          const initV = INITIAL_DATA.vendors && INITIAL_DATA.vendors.find(iv => iv.id === v.id);
+          v.leads = (initV && initV.leads) ? JSON.parse(JSON.stringify(initV.leads)) : [];
+          leadUpdated = true;
+        }
+      });
+      if (leadUpdated) {
+        this.saveLocal();
+      }
+    }
+
     // Try initializing Firebase if config exists in settings
     await this.tryInitFirebase();
 
@@ -443,6 +492,55 @@ class DatabaseService {
     vendor.reviews = vendor.reviews.filter((r) => r.id !== reviewId);
     await this.saveVendor(vendor);
     return true;
+  }
+
+  // Leads & Lead Form Management
+  async addLead(vendorId, leadData) {
+    const vendor = this.getVendor(vendorId);
+    if (!vendor) return null;
+    if (!vendor.leads) vendor.leads = [];
+
+    const newLead = {
+      id: "lead-" + Date.now(),
+      createdAt: new Date().toISOString(),
+      status: "New", // New, Contacted, Converted
+      ...leadData
+    };
+
+    vendor.leads.unshift(newLead);
+    await this.saveVendor(vendor);
+    return newLead;
+  }
+
+  async updateLeadStatus(vendorId, leadId, newStatus) {
+    const vendor = this.getVendor(vendorId);
+    if (!vendor || !vendor.leads) return null;
+
+    const lead = vendor.leads.find((l) => l.id === leadId);
+    if (lead) {
+      lead.status = newStatus;
+      await this.saveVendor(vendor);
+    }
+    return lead;
+  }
+
+  async deleteLead(vendorId, leadId) {
+    const vendor = this.getVendor(vendorId);
+    if (!vendor || !vendor.leads) return false;
+    vendor.leads = vendor.leads.filter((l) => l.id !== leadId);
+    await this.saveVendor(vendor);
+    return true;
+  }
+
+  async saveLeadFormConfig(vendorId, leadFormConfig) {
+    const vendor = this.getVendor(vendorId);
+    if (!vendor) return null;
+    vendor.leadForm = {
+      ...vendor.leadForm,
+      ...leadFormConfig
+    };
+    await this.saveVendor(vendor);
+    return vendor.leadForm;
   }
 
   // Product Management (Usable by both Admin and Vendor)

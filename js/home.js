@@ -137,6 +137,17 @@ export class HomeController {
             </div>
 
             <div class="highlight-item">
+              <span class="highlight-icon">📝</span>
+              <div class="highlight-info">
+                <div class="highlight-title">
+                  <span>Custom Lead Form</span>
+                  <span class="package-tab-tag active" style="font-size: 0.62rem; padding: 1px 6px;">ADMIN GRANTED</span>
+                </div>
+                <div class="highlight-sub">Dynamic Popup Form, Dropdowns, Calendar & WhatsApp Routing</div>
+              </div>
+            </div>
+
+            <div class="highlight-item">
               <span class="highlight-icon">📱</span>
               <div class="highlight-info">
                 <div class="highlight-title">
@@ -208,6 +219,9 @@ export class HomeController {
                     </span>
                     <span class="package-tab-tag ${plan.features?.pwaInstall !== false ? 'active' : ''}">
                       ${plan.features?.pwaInstall !== false ? '✓' : '✗'} 📱 PWA
+                    </span>
+                    <span class="package-tab-tag ${plan.features?.leadForm !== false ? 'active' : ''}">
+                      ${plan.features?.leadForm !== false ? '✓' : '✗'} 📝 Lead Form
                     </span>
                   </div>
 

@@ -409,6 +409,12 @@ export class AdminConsoleController {
                       <span class="switch-slider"></span>
                       <span>PWA Web App Installation</span>
                     </label>
+
+                    <label class="switch-label">
+                      <input type="checkbox" class="switch-input" id="toggle-feat-leadform" checked />
+                      <span class="switch-slider"></span>
+                      <span><strong>Lead Form Builder</strong> (Custom Popup & WhatsApp Leads)</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -463,6 +469,7 @@ export class AdminConsoleController {
                   <div style="padding: 2px 0;">${plan.features?.customerReviews !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} ⭐ Customer Reviews & Rating</div>
                   <div style="padding: 2px 0;">${plan.features?.promoBanner !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 🏷️ Promo Offer Banner</div>
                   <div style="padding: 2px 0;">${plan.features?.pwaInstall !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 📱 PWA Web App Installation</div>
+                  <div style="padding: 2px 0;">${plan.features?.leadForm !== false ? '<span style="color: #10B981;">✓</span>' : '<span style="color: #EF4444;">✗</span>'} 📝 Lead Form Builder</div>
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -853,6 +860,12 @@ export class AdminConsoleController {
                   <span class="switch-slider"></span>
                   <span><strong>PWA Web App Installation</strong></span>
                 </label>
+
+                <label class="switch-label">
+                  <input type="checkbox" class="switch-input" id="edit-feat-leadform" />
+                  <span class="switch-slider"></span>
+                  <span><strong>Lead Form Builder</strong> (Custom Popup & WhatsApp Leads)</span>
+                </label>
               </div>
             </div>
 
@@ -1091,6 +1104,11 @@ export class AdminConsoleController {
                   <input type="checkbox" class="switch-input" id="plan-feat-pwa" checked />
                   <span class="switch-slider"></span>
                   <span>📱 PWA Web App Installation</span>
+                </label>
+                <label class="switch-label" style="font-size: 0.78rem;">
+                  <input type="checkbox" class="switch-input" id="plan-feat-leadform" checked />
+                  <span class="switch-slider"></span>
+                  <span>📝 Lead Form Builder</span>
                 </label>
               </div>
             </div>
@@ -1335,6 +1353,9 @@ export class AdminConsoleController {
               <button type="button" class="tab-grant-badge ${v.features?.pwaInstall !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="pwaInstall" data-v-id="${v.id}" title="Click to Grant/Revoke PWA Web App Installation">
                 📱 PWA: ${v.features?.pwaInstall !== false ? 'ON' : 'OFF'}
               </button>
+              <button type="button" class="tab-grant-badge ${v.features?.leadForm !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="leadForm" data-v-id="${v.id}" title="Click to Grant/Revoke Lead Form Builder">
+                📝 Lead Form: ${v.features?.leadForm !== false ? 'ON' : 'OFF'}
+              </button>
             </div>
           </div>
 
@@ -1343,6 +1364,7 @@ export class AdminConsoleController {
             <a href="?v=${v.slug}" target="_blank" rel="noopener" class="btn-pill" style="text-decoration: none;">Preview ↗</a>
             <button class="btn-pill" style="color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
             <button class="btn-pill" style="color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
+            <button class="btn-pill" style="color: #34D399; border-color: rgba(52,211,153,0.4);" data-manage-leads="${v.id}" title="View Leads & Edit Lead Form">📝 Leads (${v.leads?.length || 0})</button>
             <button class="btn-pill" style="color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>
             <button class="btn-pill" style="color: #10B981;" data-manage-products="${v.id}">🛍️ Products (${v.products?.length || 0})</button>
             <button class="btn-pill" style="color: #00E5FF;" data-manage-bookings="${v.id}">📅 Bookings (${v.bookings?.length || 0})</button>
@@ -1377,6 +1399,7 @@ export class AdminConsoleController {
         customerReviews: plan.features.customerReviews !== false,
         promoBanner: plan.features.promoBanner !== false,
         pwaInstall: plan.features.pwaInstall !== false,
+        leadForm: plan.features.leadForm !== false
       };
     }
 
@@ -1438,6 +1461,7 @@ export class AdminConsoleController {
               ${plan.features?.calendarBooking !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Booking</span>' : ''}
               ${plan.features?.customerReviews !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Reviews</span>' : ''}
               ${plan.features?.pwaInstall !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ PWA</span>' : ''}
+              ${plan.features?.leadForm !== false ? '<span style="font-size: 0.68rem; color: #10B981;">✓ Lead Form</span>' : ''}
             </div>
           </div>
           <div>
@@ -1635,6 +1659,7 @@ export class AdminConsoleController {
           if (this.container.querySelector("#toggle-feat-reviews")) this.container.querySelector("#toggle-feat-reviews").checked = plan.features.customerReviews !== false;
           if (this.container.querySelector("#toggle-feat-promo")) this.container.querySelector("#toggle-feat-promo").checked = plan.features.promoBanner !== false;
           if (this.container.querySelector("#toggle-feat-pwa")) this.container.querySelector("#toggle-feat-pwa").checked = plan.features.pwaInstall !== false;
+          if (this.container.querySelector("#toggle-feat-leadform")) this.container.querySelector("#toggle-feat-leadform").checked = plan.features.leadForm !== false;
           window.OmniApp.showToast(`Applied features from '${plan.name}' (override anytime below)`);
         }
       });
@@ -1730,8 +1755,26 @@ export class AdminConsoleController {
             calendarBooking: this.container.querySelector("#toggle-feat-booking").checked,
             customerReviews: this.container.querySelector("#toggle-feat-reviews").checked,
             promoBanner: this.container.querySelector("#toggle-feat-promo").checked,
-            pwaInstall: this.container.querySelector("#toggle-feat-pwa").checked
+            pwaInstall: this.container.querySelector("#toggle-feat-pwa").checked,
+            leadForm: this.container.querySelector("#toggle-feat-leadform") ? this.container.querySelector("#toggle-feat-leadform").checked : true
           },
+          leadForm: {
+            enabled: true,
+            title: "Request a Call Back",
+            subtitle: "Fill this quick form and our team will get in touch with you right away.",
+            buttonText: "Request Call Back",
+            submitButtonText: "Request Call Back ⚡",
+            buttonIcon: "⚡",
+            fields: [
+              { id: "fld-1", type: "text", label: "Full Name", placeholder: "Enter your full name", required: true, options: [] },
+              { id: "fld-2", type: "phone", label: "Phone / WhatsApp", placeholder: "Your 10-digit number", required: true, options: [] },
+              { id: "fld-3", type: "select", label: "Service / Requirement", placeholder: "Choose an option", required: false, options: ["Standard Consultation & Assessment", "Comprehensive Turnkey Package", "General Inquiry"] },
+              { id: "fld-4", type: "date", label: "Preferred Date", placeholder: "Select date", required: false, options: [] },
+              { id: "fld-5", type: "multiselect", label: "Preferences", placeholder: "Select options", required: false, options: ["Urgent Callback Needed", "Send Quotation First", "On-site Visit"] },
+              { id: "fld-6", type: "textarea", label: "Message / Specific Requirements", placeholder: "Tell us more about what you need...", required: false, options: [] }
+            ]
+          },
+          leads: [],
           services: [
             {
               id: "srv-demo-1",
@@ -1987,11 +2030,13 @@ export class AdminConsoleController {
         const editBkgEl = this.container.querySelector("#edit-feat-booking");
         const editRevEl = this.container.querySelector("#edit-feat-reviews");
         const editPwaEl = this.container.querySelector("#edit-feat-pwa");
+        const editLeadEl = this.container.querySelector("#edit-feat-leadform");
         if (editQuoteEl) v.features.quoteBuilder = editQuoteEl.checked;
         if (editShopEl) v.features.ecommerceShop = editShopEl.checked;
         if (editBkgEl) v.features.calendarBooking = editBkgEl.checked;
         if (editRevEl) v.features.customerReviews = editRevEl.checked;
         if (editPwaEl) v.features.pwaInstall = editPwaEl.checked;
+        if (editLeadEl) v.features.leadForm = editLeadEl.checked;
 
         await db.saveVendor(v);
         this.container.querySelector("#modal-admin-edit-vendor")?.classList.remove("active");
@@ -2012,6 +2057,7 @@ export class AdminConsoleController {
           if (this.container.querySelector("#edit-feat-booking")) this.container.querySelector("#edit-feat-booking").checked = plan.features.calendarBooking !== false;
           if (this.container.querySelector("#edit-feat-reviews")) this.container.querySelector("#edit-feat-reviews").checked = plan.features.customerReviews !== false;
           if (this.container.querySelector("#edit-feat-pwa")) this.container.querySelector("#edit-feat-pwa").checked = plan.features.pwaInstall !== false;
+          if (this.container.querySelector("#edit-feat-leadform")) this.container.querySelector("#edit-feat-leadform").checked = plan.features.leadForm !== false;
           window.OmniApp.showToast(`Synced feature toggles to '${plan.name}' defaults (custom overrides preserved on save)`);
         }
       });
@@ -2177,6 +2223,7 @@ export class AdminConsoleController {
         modal.querySelector("#plan-feat-review").checked = true;
         modal.querySelector("#plan-feat-promo").checked = true;
         modal.querySelector("#plan-feat-pwa").checked = true;
+        if (modal.querySelector("#plan-feat-leadform")) modal.querySelector("#plan-feat-leadform").checked = true;
         modal.querySelector("#btn-plan-submit-text").textContent = "Create Plan";
         modal.classList.add("active");
       });
@@ -2202,6 +2249,7 @@ export class AdminConsoleController {
         modal.querySelector("#plan-feat-review").checked = plan.features?.customerReviews !== false;
         modal.querySelector("#plan-feat-promo").checked = plan.features?.promoBanner !== false;
         modal.querySelector("#plan-feat-pwa").checked = plan.features?.pwaInstall !== false;
+        if (modal.querySelector("#plan-feat-leadform")) modal.querySelector("#plan-feat-leadform").checked = plan.features?.leadForm !== false;
         modal.querySelector("#btn-plan-submit-text").textContent = "Save Package Changes";
         modal.classList.add("active");
       });
@@ -2239,7 +2287,8 @@ export class AdminConsoleController {
           calendarBooking: this.container.querySelector("#plan-feat-cal").checked,
           customerReviews: this.container.querySelector("#plan-feat-review").checked,
           promoBanner: this.container.querySelector("#plan-feat-promo").checked,
-          pwaInstall: this.container.querySelector("#plan-feat-pwa").checked
+          pwaInstall: this.container.querySelector("#plan-feat-pwa").checked,
+          leadForm: this.container.querySelector("#plan-feat-leadform") ? this.container.querySelector("#plan-feat-leadform").checked : true
         };
 
         const planId = id || `plan-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${Date.now().toString().slice(-4)}`;
@@ -2326,6 +2375,7 @@ export class AdminConsoleController {
           if (modal.querySelector("#edit-feat-booking")) modal.querySelector("#edit-feat-booking").checked = v.features.calendarBooking !== false;
           if (modal.querySelector("#edit-feat-reviews")) modal.querySelector("#edit-feat-reviews").checked = v.features.customerReviews !== false;
           if (modal.querySelector("#edit-feat-pwa")) modal.querySelector("#edit-feat-pwa").checked = v.features.pwaInstall !== false;
+          if (modal.querySelector("#edit-feat-leadform")) modal.querySelector("#edit-feat-leadform").checked = v.features.leadForm !== false;
           modal.classList.add("active");
           document.body.classList.add("has-modal-open");
         }
@@ -2489,9 +2539,20 @@ export class AdminConsoleController {
         const currentVal = v.features[tabKey] !== false;
         v.features[tabKey] = !currentVal;
         await db.saveVendor(v);
-        const tabName = tabKey === 'quoteBuilder' ? 'Services' : tabKey === 'ecommerceShop' ? 'Shop' : tabKey === 'calendarBooking' ? 'Book Appointment' : tabKey === 'customerReviews' ? 'Reviews' : 'PWA Web App';
+        const tabName = tabKey === 'quoteBuilder' ? 'Services' : tabKey === 'ecommerceShop' ? 'Shop' : tabKey === 'calendarBooking' ? 'Book Appointment' : tabKey === 'customerReviews' ? 'Reviews' : tabKey === 'leadForm' ? 'Lead Form Builder' : 'PWA Web App';
         window.OmniApp.showToast(`${tabName} ${!currentVal ? 'GRANTED' : 'REVOKED'} for ${v.branding.businessName}`);
         this.refreshVendorsList();
+      });
+    });
+
+    // Manage Leads for Vendor -> 1-Click navigate to vendor console on leadform tab
+    this.container.querySelectorAll("[data-manage-leads]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-manage-leads");
+        window.OmniApp.setView("vendor", id);
+        window.OmniApp.vendorCtrl.loginVendorDirect(id);
+        window.OmniApp.vendorCtrl.activeTab = "leadform";
+        window.OmniApp.vendorCtrl.render();
       });
     });
 

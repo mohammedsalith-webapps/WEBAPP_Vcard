@@ -226,11 +226,28 @@ export class VCardController {
               <span class="biz-info-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
               </span>
-              <div>
+              <div style="flex: 1;">
                 <div class="biz-info-val"><a href="tel:${v.contacts.phone}">${v.contacts.phone}</a></div>
                 <div class="biz-info-lbl">Phone</div>
               </div>
+              <a href="tel:${v.contacts.phone}" class="btn-biz-call-action" title="Call Now">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <span>Call</span>
+              </a>
             </div>
+
+            <!-- Customized Lead Form Button - Below Call Button in Business Information Section -->
+            ${(v.features?.leadForm !== false && v.leadForm?.enabled !== false) ? `
+              <div class="biz-lead-form-action-wrap">
+                <button type="button" class="btn-biz-lead-trigger" id="btn-open-lead-form">
+                  <div class="btn-lead-left">
+                    <span class="btn-lead-icon">${v.leadForm?.buttonIcon || '⚡'}</span>
+                    <span class="btn-lead-label">${v.leadForm?.buttonText || 'Request Call Back'}</span>
+                  </div>
+                  <span class="btn-lead-arrow">→</span>
+                </button>
+              </div>
+            ` : ""}
 
             <div class="biz-info-item">
               <span class="biz-info-icon">
@@ -971,6 +988,34 @@ export class VCardController {
         </div>
       </div>
 
+      <!-- Modal: Customized Lead Form Popup -->
+      ${(v.features?.leadForm !== false && v.leadForm?.enabled !== false) ? `
+      <div class="modal-overlay" id="modal-lead-form">
+        <div class="modal-card" style="max-width: 480px;">
+          <div class="modal-header">
+            <div>
+              <h3 class="modal-title">
+                <span>${v.leadForm?.buttonIcon || '⚡'}</span>
+                <span>${v.leadForm?.title || 'Request a Call Back'}</span>
+              </h3>
+              ${v.leadForm?.subtitle ? `<p style="font-size: 0.76rem; color: var(--theme-text-muted); margin: 3px 0 0 0;">${v.leadForm.subtitle}</p>` : ''}
+            </div>
+            <button class="btn-modal-close" data-close-modal="modal-lead-form">×</button>
+          </div>
+
+          <form id="form-customer-lead" style="margin-top: 14px;">
+            <div id="lead-form-fields-container">
+              ${(v.leadForm?.fields && v.leadForm.fields.length > 0 ? v.leadForm.fields : this.getDefaultLeadFields()).map(f => this.renderLeadFormField(f)).join("")}
+            </div>
+
+            <button type="submit" class="btn-lead-submit-glowing" id="btn-submit-lead-form">
+              <span>${v.leadForm?.submitButtonText || 'Request Call Back ⚡'}</span>
+            </button>
+          </form>
+        </div>
+      </div>
+      ` : ''}
+
       <!-- Modal: Secret Vendor Owner Authentication (Activated via Logo Long-Press) -->
       <div class="modal-overlay" id="modal-owner-pin">
         <div class="modal-card" style="max-width: 380px; text-align: center;">
@@ -994,6 +1039,111 @@ export class VCardController {
             🔒 Confidential Owner Login. Customers cannot access this panel.
           </div>
         </div>
+      </div>
+    `;
+  }
+
+  getDefaultLeadFields() {
+    return [
+      { id: "fld-name", type: "text", label: "Full Name", placeholder: "Enter your full name", required: true, options: [] },
+      { id: "fld-phone", type: "phone", label: "Phone / WhatsApp", placeholder: "Your 10-digit number", required: true, options: [] },
+      { id: "fld-notes", type: "textarea", label: "Message / Requirement", placeholder: "Tell us how we can help you...", required: false, options: [] }
+    ];
+  }
+
+  renderLeadFormField(field) {
+    if (!field) return "";
+    const reqStar = field.required ? '<span class="required-star">*</span>' : '';
+    const reqAttr = field.required ? 'required' : '';
+
+    if (field.type === "select") {
+      const options = Array.isArray(field.options) ? field.options : [];
+      return `
+        <div class="lead-field-group">
+          <label class="lead-field-label">
+            ${field.label} ${reqStar}
+          </label>
+          <select class="lead-field-select" data-lead-id="${field.id}" data-lead-type="select" data-lead-label="${field.label}" ${reqAttr}>
+            <option value="">${field.placeholder || '-- Select an option --'}</option>
+            ${options.map(opt => `<option value="${opt}">${opt}</option>`).join("")}
+          </select>
+        </div>
+      `;
+    }
+
+    if (field.type === "date") {
+      return `
+        <div class="lead-field-group">
+          <label class="lead-field-label">
+            ${field.label} ${reqStar}
+          </label>
+          <input
+            type="date"
+            class="lead-field-date"
+            data-lead-id="${field.id}"
+            data-lead-type="date"
+            data-lead-label="${field.label}"
+            ${reqAttr}
+          />
+        </div>
+      `;
+    }
+
+    if (field.type === "multiselect") {
+      const options = Array.isArray(field.options) ? field.options : [];
+      return `
+        <div class="lead-field-group">
+          <label class="lead-field-label">
+            ${field.label} ${reqStar}
+            <span style="font-size: 0.72rem; color: var(--theme-text-muted); font-weight: normal; margin-left: 4px;">(Select multiple)</span>
+          </label>
+          <div class="lead-multiselect-group" data-lead-id="${field.id}" data-lead-type="multiselect" data-lead-label="${field.label}" data-required="${field.required ? 'true' : 'false'}">
+            ${options.map(opt => `
+              <button type="button" class="lead-choice-chip" data-choice-val="${opt}">
+                <span class="chip-check">✓</span>
+                <span>${opt}</span>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    if (field.type === "textarea") {
+      return `
+        <div class="lead-field-group">
+          <label class="lead-field-label">
+            ${field.label} ${reqStar}
+          </label>
+          <textarea
+            class="lead-field-textarea"
+            rows="3"
+            data-lead-id="${field.id}"
+            data-lead-type="textarea"
+            data-lead-label="${field.label}"
+            placeholder="${field.placeholder || ''}"
+            ${reqAttr}
+          ></textarea>
+        </div>
+      `;
+    }
+
+    // Default: text, phone, email, number
+    const inputType = field.type === "phone" ? "tel" : (field.type === "number" ? "number" : (field.type === "email" ? "email" : "text"));
+    return `
+      <div class="lead-field-group">
+        <label class="lead-field-label">
+          ${field.label} ${reqStar}
+        </label>
+        <input
+          type="${inputType}"
+          class="lead-field-input"
+          data-lead-id="${field.id}"
+          data-lead-type="${field.type}"
+          data-lead-label="${field.label}"
+          placeholder="${field.placeholder || ''}"
+          ${reqAttr}
+        />
       </div>
     `;
   }
@@ -1572,6 +1722,124 @@ export class VCardController {
         }
       });
     });
+
+    // Open Lead Form Popup Modal
+    const leadBtn = this.container.querySelector("#btn-open-lead-form");
+    if (leadBtn) {
+      leadBtn.addEventListener("click", () => {
+        document.getElementById("modal-lead-form")?.classList.add("active");
+        document.body.classList.add("has-modal-open");
+      });
+    }
+
+    // Multi-select Choice Chips in Lead Form
+    modalsRoot.querySelectorAll("#modal-lead-form .lead-choice-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        chip.classList.toggle("selected");
+      });
+    });
+
+    // Calendar Picker opener on date input click
+    modalsRoot.querySelectorAll("#modal-lead-form input[type='date']").forEach(dateInp => {
+      dateInp.addEventListener("click", () => {
+        if (typeof dateInp.showPicker === "function") {
+          try { dateInp.showPicker(); } catch (err) {}
+        }
+      });
+    });
+
+    // Submit Lead Form
+    const leadForm = modalsRoot.querySelector("#form-customer-lead");
+    if (leadForm) {
+      leadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const fieldElements = leadForm.querySelectorAll("[data-lead-id]");
+        const collectedFields = [];
+        let customerName = "";
+        let customerPhone = "";
+        let validationError = null;
+
+        fieldElements.forEach(el => {
+          if (validationError) return;
+          const id = el.getAttribute("data-lead-id");
+          const type = el.getAttribute("data-lead-type");
+          const label = el.getAttribute("data-lead-label") || "Field";
+          const isReq = el.hasAttribute("required") || el.getAttribute("data-required") === "true";
+
+          let value = "";
+          if (type === "multiselect") {
+            const selectedChips = el.querySelectorAll(".lead-choice-chip.selected");
+            value = Array.from(selectedChips).map(c => c.getAttribute("data-choice-val"));
+            if (isReq && value.length === 0) {
+              validationError = `Please select at least one option for "${label}".`;
+              return;
+            }
+          } else {
+            value = (el.value || "").trim();
+            if (isReq && !value) {
+              validationError = `Please fill out "${label}".`;
+              el.focus();
+              return;
+            }
+          }
+
+          if (type === "phone" || label.toLowerCase().includes("phone") || label.toLowerCase().includes("whatsapp") || label.toLowerCase().includes("mobile")) {
+            if (!customerPhone && typeof value === "string") customerPhone = value;
+          }
+          if (type === "text" && (label.toLowerCase().includes("name") || label.toLowerCase().includes("customer") || label.toLowerCase().includes("client"))) {
+            if (!customerName && typeof value === "string") customerName = value;
+          }
+
+          collectedFields.push({ id, label, type, value });
+        });
+
+        if (validationError) {
+          window.OmniApp.showToast(validationError);
+          return;
+        }
+
+        const submitBtn = leadForm.querySelector("#btn-submit-lead-form");
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.style.opacity = "0.7";
+        }
+
+        try {
+          const leadRecord = {
+            customerName: customerName || "Prospective Client",
+            customerPhone: customerPhone || "",
+            fields: collectedFields
+          };
+
+          // Format WhatsApp message & trigger WhatsApp immediately to avoid popup blockers
+          const waText = WhatsAppEngine.buildLeadMessage(v, leadRecord);
+          const targetNumber = v.leadForm?.whatsappNumber || v.contacts?.whatsapp || v.contacts?.phone;
+          WhatsAppEngine.openChat(targetNumber, waText);
+
+          // Save to Database
+          await db.addLead(v.id, leadRecord);
+
+          // Close modal
+          document.getElementById("modal-lead-form")?.classList.remove("active");
+          if (!document.querySelector(".modal-overlay.active")) {
+            document.body.classList.remove("has-modal-open");
+          }
+
+          window.OmniApp.showToast("Callback Request Submitted! Redirecting to WhatsApp...");
+          leadForm.reset();
+          leadForm.querySelectorAll(".lead-choice-chip.selected").forEach(c => c.classList.remove("selected"));
+        } catch (err) {
+          console.error("Lead submission error:", err);
+          window.OmniApp.showToast("Error submitting request. Please try again.");
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = "1";
+          }
+        }
+      });
+    }
 
     // Open Review Modal
     const reviewBtn = this.container.querySelector("#btn-open-review-modal");
