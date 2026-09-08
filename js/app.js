@@ -20,11 +20,11 @@ class OmniAppManager {
   }
 
   async init() {
-    // 1. Initialize Database
-    await db.init();
-
-    // 2. Initialize PWA Service Worker & Install Listener
+    // 1. Initialize PWA Service Worker & Install Listener immediately
     PWAHandler.init();
+
+    // 2. Initialize Database
+    await db.init();
 
     // 3. Setup Controllers
     const rootEl = document.getElementById("app-content-root");
@@ -96,6 +96,19 @@ class OmniAppManager {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get("view");
     const vendorParam = params.get("v");
+    const isPwa = params.get("pwa") === "1";
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+
+    // If launched as standalone PWA app without explicit vendor param, load last saved vendor vCard
+    if ((isStandalone || isPwa) && !vendorParam && !viewParam) {
+      const lastSlug = localStorage.getItem("omnicard_last_active_vcard");
+      if (lastSlug && db.getVendor(lastSlug)) {
+        this.currentVendorSlug = lastSlug;
+        this.setView("card", lastSlug);
+        return;
+      }
+    }
 
     if (vendorParam && !viewParam) {
       // Direct customer vendor card link (e.g. from Instagram Bio / WhatsApp share)

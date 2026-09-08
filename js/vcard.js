@@ -351,6 +351,8 @@ export class VCardController {
     const currency = db.getPlatformSettings()?.currencySymbol || "₹";
 
     const isExpiring = this.isNearingExpiry();
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
     const isInstalled = PWAHandler.isVendorInstalled(v.slug || v.id);
 
     this.container.innerHTML = `
@@ -473,7 +475,7 @@ export class VCardController {
           ` : ""}
 
           <!-- PWA Web App Installation Banner (Granted by Admin) -->
-          ${v.features?.pwaInstall !== false ? `
+          ${!isStandalone && v.features?.pwaInstall !== false ? `
             <div class="vcard-pwa-banner" id="vcard-pwa-install-banner">
               <div class="pwa-banner-content">
                 <div class="pwa-banner-icon">📲</div>

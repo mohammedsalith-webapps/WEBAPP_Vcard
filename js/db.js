@@ -149,6 +149,27 @@ class DatabaseService {
       }
     }
 
+    // Ensure pwaInstall feature exists across all plans and vendors
+    if (this.data && Array.isArray(this.data.subscriptionPlans)) {
+      this.data.subscriptionPlans.forEach(p => {
+        if (!p.features) p.features = {};
+        if (p.features.pwaInstall === undefined) p.features.pwaInstall = true;
+      });
+    }
+    if (this.data && Array.isArray(this.data.vendors)) {
+      let pwaUpdated = false;
+      this.data.vendors.forEach(v => {
+        if (!v.features) v.features = {};
+        if (v.features.pwaInstall === undefined) {
+          v.features.pwaInstall = true;
+          pwaUpdated = true;
+        }
+      });
+      if (pwaUpdated) {
+        this.saveLocal();
+      }
+    }
+
     // Try initializing Firebase if config exists in settings
     await this.tryInitFirebase();
 

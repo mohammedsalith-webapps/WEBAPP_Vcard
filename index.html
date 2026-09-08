@@ -8,12 +8,41 @@
   <meta name="theme-color" content="#07090E" />
 
   <!-- PWA & Mobile Web App Meta -->
-  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="manifest" id="app-manifest-link" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="OmniCard" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="OmniCard" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg" />
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+
+  <script>
+    // Early PWA Install Prompt Capture: Capture beforeinstallprompt at millisecond 0
+    window.deferredPWAPrompt = null;
+    window.addEventListener("beforeinstallprompt", function(e) {
+      e.preventDefault();
+      window.deferredPWAPrompt = e;
+      console.log("⚡ [OmniCard PWA] Early beforeinstallprompt event captured.");
+      window.dispatchEvent(new CustomEvent("pwa-prompt-ready", { detail: e }));
+    });
+
+    // If page is loaded directly with a vendor slug, pre-sync the manifest link
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var vSlug = params.get("v");
+        if (vSlug) {
+          var mLink = document.getElementById("app-manifest-link");
+          if (mLink) {
+            mLink.href = "manifest.webmanifest?v=" + encodeURIComponent(vSlug);
+          }
+          localStorage.setItem("omnicard_last_active_vcard", vSlug);
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -85,6 +114,6 @@
   <div class="toast-container" id="toast-root"></div>
 
   <!-- Main Application Bootstrap with Cache-Buster -->
-  <script type="module" src="js/app.js?v=20260908_renewal"></script>
+  <script type="module" src="js/app.js?v=20260909_pwa_fix"></script>
 </body>
 </html>
