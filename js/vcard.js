@@ -476,7 +476,7 @@ export class VCardController {
 
           <!-- PWA Web App Installation Banner (Granted by Admin) -->
           ${!isStandalone && v.features?.pwaInstall !== false ? `
-            <div class="vcard-pwa-banner" id="vcard-pwa-install-banner">
+            <div class="vcard-pwa-banner" id="vcard-pwa-install-banner" style="cursor: pointer;">
               <div class="pwa-banner-content">
                 <div class="pwa-banner-icon">📲</div>
                 <div class="pwa-banner-text">
@@ -1487,13 +1487,15 @@ export class VCardController {
       });
     }
 
-    // PWA Install Web App Button
+    // PWA Install Web App Button & Banner
     const pwaBtn = this.container.querySelector("#btn-vcard-install-pwa");
-    if (pwaBtn) {
-      pwaBtn.addEventListener("click", () => {
-        PWAHandler.promptInstall(v.branding.businessName, v);
-      });
-    }
+    const pwaBanner = this.container.querySelector("#vcard-pwa-install-banner");
+    const handleInstallClick = (e) => {
+      if (e) e.stopPropagation();
+      PWAHandler.showInstallModal(v.branding.businessName, v);
+    };
+    if (pwaBtn) pwaBtn.addEventListener("click", handleInstallClick);
+    if (pwaBanner) pwaBanner.addEventListener("click", handleInstallClick);
 
     // Category filter chips
     this.container.querySelectorAll(".filter-chip[data-category]").forEach(chip => {

@@ -103,23 +103,14 @@ export const PWAHandler = {
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   },
 
-  // Check if a specific vendor's card is installed
+  // Check if a specific vendor's card is currently running in standalone mode
   isVendorInstalled(vendorSlug) {
     if (!vendorSlug) return false;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;
     const urlParams = new URLSearchParams(window.location.search);
     const currentSlug = urlParams.get("v");
-    // If currently running in standalone mode AND on this vendor's page
-    if (isStandalone && currentSlug === vendorSlug) {
-      return true;
-    }
-    try {
-      const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
-      return installed.includes(vendorSlug);
-    } catch (e) {
-      return false;
-    }
+    return isStandalone && currentSlug === vendorSlug;
   },
 
   // Dynamically update manifest URL and meta tags so installed app opens THIS vendor's vCard directly
@@ -182,190 +173,110 @@ export const PWAHandler = {
     if (!vendor) return;
     const vendorSlug = vendor.slug || vendor.id;
 
-    // Once THIS SPECIFIC vendor is installed, NEVER ask again
-    if (this.isVendorInstalled(vendorSlug)) {
-      return;
-    }
+    // If already running in installed standalone mode, do not show
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    if (isStandalone) return;
+
     if (vendor && vendor.features?.pwaInstall === false) {
       return;
     }
 
+    // Check if dismissed during current browser session
+    try {
+      if (sessionStorage.getItem(`pwa_dismissed_${vendorSlug}`)) return;
+    } catch (e) {}
+
     // Delay 1.2s after page load for smooth entry
     setTimeout(() => {
-      // Re-verify not already installed for this vendor
-      if (this.isVendorInstalled(vendorSlug)) return;
+      const stillStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                              window.navigator.standalone === true;
+      if (stillStandalone) return;
       if (document.querySelector(".modal-overlay.active")) return;
 
-      const bizName = vendor?.branding?.businessName || "Smart App";
-      const avatar = vendor?.branding?.avatarEmoji || "📲";
-      const modalsRoot = document.getElementById("app-modals-root") || document.body;
-
-      let promptEl = document.getElementById("modal-pwa-autoprompt");
-      if (!promptEl) {
-        promptEl = document.createElement("div");
-        promptEl.id = "modal-pwa-autoprompt";
-        promptEl.className = "modal-overlay";
-        modalsRoot.appendChild(promptEl);
-      }
-
-      promptEl.innerHTML = `
-        <div class="modal-card" style="max-width: 440px; text-align: center; padding: 22px 20px; border-radius: 24px 24px 0 0; background: #0F131C; border: 1px solid var(--theme-border-highlight); box-shadow: 0 -12px 40px rgba(0,0,0,0.9);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.8rem;">${avatar}</span>
-              <div style="text-align: left;">
-                <div style="font-weight: 800; color: #FFF; font-size: 1rem; line-height: 1.2;">Install ${bizName}</div>
-                <div style="font-size: 0.72rem; color: var(--theme-primary, #D4FF00); font-weight: 600;">Fast 1-Tap Home Screen App</div>
-              </div>
-            </div>
-            <button type="button" class="btn-modal-close" id="btn-close-pwa-autoprompt" style="font-size: 1.2rem; padding: 4px 8px; color: var(--theme-text-muted);">×</button>
-          </div>
-
-          <p style="font-size: 0.78rem; color: var(--theme-text-muted); line-height: 1.4; text-align: left; margin-bottom: 16px;">
-            Add to your phone home screen for full-screen view, faster 1-tap booking, and instant offline access without typing links.
-          </p>
-
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button type="button" class="btn-submit-primary" id="btn-confirm-pwa-autoprompt" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>📲 Install App (1-Click)</span>
-            </button>
-            <button type="button" class="btn-pill" id="btn-dismiss-pwa-autoprompt" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.76rem; border-color: transparent; color: var(--theme-text-muted);">
-              Continue in Browser
-            </button>
-          </div>
-        </div>
-      `;
-
-      promptEl.classList.add("active");
-      document.body.classList.add("has-modal-open");
-
-      const closeAutoPrompt = () => {
-        promptEl.classList.remove("active");
-        if (!document.querySelector(".modal-overlay.active")) {
-          document.body.classList.remove("has-modal-open");
-        }
-      };
-
-      promptEl.querySelector("#btn-close-pwa-autoprompt")?.addEventListener("click", closeAutoPrompt);
-      promptEl.querySelector("#btn-dismiss-pwa-autoprompt")?.addEventListener("click", closeAutoPrompt);
-      promptEl.addEventListener("click", (e) => {
-        if (e.target === promptEl) closeAutoPrompt();
-      });
-
-      promptEl.querySelector("#btn-confirm-pwa-autoprompt")?.addEventListener("click", () => {
-        closeAutoPrompt();
-        this.promptInstall(bizName, vendor);
-      });
+      this.showInstallModal(vendor?.branding?.businessName, vendor);
     }, 1200);
   },
 
-  async promptInstall(vendorName = "Smart vCard", vendor = null) {
-    const vendorSlug = vendor ? (vendor.slug || vendor.id) : null;
+  promptInstall(vendorName = "Smart vCard", vendor = null) {
+    this.showInstallModal(vendorName, vendor);
+  },
+
+  showInstallModal(vendorName = "Smart vCard", vendor = null) {
+    const v = vendor || {};
+    const bizName = vendorName || v.branding?.businessName || "Smart vCard";
+    const vendorSlug = v.slug || v.id || new URLSearchParams(window.location.search).get("v") || "";
+    const avatar = v.branding?.avatarEmoji || "📲";
+    const primaryColor = v.branding?.colors?.primary || "#D4FF00";
+
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;
-
     if (isStandalone) {
-      window.OmniApp?.showToast(`${vendorName} is already running as an installed app! 🎉`);
+      window.OmniApp?.showToast(`${bizName} is already running as an installed app! 🎉`);
       return;
     }
 
-    // Refresh prompt reference if available on window
+    // Sync prompt references
     if (!this.deferredPrompt && window.deferredPWAPrompt) {
       this.deferredPrompt = window.deferredPWAPrompt;
     }
 
-    // If prompt is not yet ready, give it a quick 350ms window before falling back
-    if (!this.deferredPrompt && !(/iPad|iPhone|iPod/.test(navigator.userAgent))) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-      if (window.deferredPWAPrompt) {
-        this.deferredPrompt = window.deferredPWAPrompt;
-      }
-    }
-
-    // 1. Android Chrome / Chromium 1-Click Native Installation
-    if (this.deferredPrompt) {
-      try {
-        this.deferredPrompt.prompt();
-        this.deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult && choiceResult.outcome === "accepted") {
-            if (vendorSlug) {
-              try {
-                const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
-                if (!installed.includes(vendorSlug)) {
-                  installed.push(vendorSlug);
-                  localStorage.setItem("pwa_installed_cards", JSON.stringify(installed));
-                }
-              } catch (e) {}
-            }
-            window.OmniApp?.showToast(`${vendorName} added to your home screen! 🎉`);
-          }
-          this.deferredPrompt = null;
-          window.deferredPWAPrompt = null;
-        }).catch((err) => {
-          console.warn("[PWA] Prompt outcome error:", err);
-          this.showInstallGuide(vendorName, vendor);
-        });
-        return;
-      } catch (err) {
-        console.warn("[PWA] Prompt trigger error:", err);
-      }
-    }
-
-    // 2. Browser without automated prompt (iOS Safari, In-App browser, or fallback):
-    this.showInstallGuide(vendorName, vendor);
-  },
-
-  showInstallGuide(vendorName = "Smart vCard", vendor = null) {
     const modalsRoot = document.getElementById("app-modals-root") || document.body;
-    let guideModal = document.getElementById("modal-pwa-guide");
-    if (!guideModal) {
-      guideModal = document.createElement("div");
-      guideModal.id = "modal-pwa-guide";
-      guideModal.className = "modal-overlay";
-      modalsRoot.appendChild(guideModal);
+    let modalEl = document.getElementById("modal-pwa-install-sheet");
+    if (!modalEl) {
+      modalEl = document.createElement("div");
+      modalEl.id = "modal-pwa-install-sheet";
+      modalEl.className = "modal-overlay";
+      modalsRoot.appendChild(modalEl);
     }
 
     const ua = navigator.userAgent || "";
-    // Check if running inside WhatsApp, Instagram, FB, or other in-app webview
     const isInAppBrowser = /FBAN|FBAV|Instagram|WhatsApp|Line|MicroMessenger|Snapchat|BytedanceWebview/i.test(ua);
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isAndroid = /Android/i.test(ua) || (ua.includes("Linux") && navigator.maxTouchPoints > 0);
-    const isTouchDevice = navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
-    const v = vendor || {};
-    const avatar = v.branding?.avatarEmoji || "📲";
+    const hasNativePrompt = !!(this.deferredPrompt || window.deferredPWAPrompt);
 
-    // Build current clean URL
     const currentUrl = window.location.href;
-    // Android Chrome Intent URL to break out of in-app browsers directly into real Google Chrome
     const chromeIntentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`;
 
-    guideModal.innerHTML = `
-      <div class="modal-card" style="max-width: 440px; text-align: center; padding: 22px 18px;">
-        <div style="font-size: 2.2rem; margin-bottom: 6px;">${avatar}</div>
-        <h3 style="font-size: 1.15rem; font-weight: 800; color: #FFF; margin-bottom: 4px;">
-          Install ${vendorName} App
-        </h3>
-        <p style="font-size: 0.78rem; color: var(--theme-text-muted); line-height: 1.4; margin-bottom: 16px;">
-          Save directly to your phone home screen for instant 1-tap access and offline viewing.
+    modalEl.innerHTML = `
+      <div class="modal-card" style="max-width: 440px; text-align: center; padding: 22px 20px; border-radius: 24px 24px 0 0; background: #0F131C; border: 1px solid var(--theme-border-highlight); box-shadow: 0 -12px 40px rgba(0,0,0,0.95);">
+        <!-- Top Bar -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
+            <span style="font-size: 2rem; background: rgba(255,255,255,0.06); border-radius: 14px; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center;">${avatar}</span>
+            <div>
+              <div style="font-weight: 800; color: #FFF; font-size: 1.05rem; line-height: 1.2;">Install ${bizName}</div>
+              <div style="font-size: 0.74rem; color: ${primaryColor}; font-weight: 700;">Fast 1-Tap Home Screen App</div>
+            </div>
+          </div>
+          <button type="button" class="btn-modal-close" id="btn-close-pwa-sheet" style="font-size: 1.4rem; padding: 4px 10px; color: var(--theme-text-muted); cursor: pointer; background: transparent; border: none;">×</button>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--theme-text-muted); line-height: 1.45; text-align: left; margin-bottom: 16px;">
+          Add to your phone home screen for full-screen view, faster 1-tap bookings, and instant offline access without typing web links.
         </p>
 
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px; text-align: left; margin-bottom: 16px;">
-          ${isInAppBrowser ? `
-            <div style="font-weight: 800; color: #FFB703; font-size: 0.85rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-              <span>⚠️</span> In-App Browser Detected
+        <!-- Contextual Content -->
+        ${isInAppBrowser ? `
+          <div style="background: rgba(255,183,3,0.08); border: 1px solid rgba(255,183,3,0.3); border-radius: 14px; padding: 14px; text-align: left; margin-bottom: 16px;">
+            <div style="font-weight: 800; color: #FFB703; font-size: 0.85rem; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>⚠️</span> WhatsApp / In-App Browser Detected
             </div>
-            <p style="font-size: 0.76rem; color: var(--theme-text-muted); margin-bottom: 12px; line-height: 1.35;">
-              WhatsApp & Social App browsers do not support direct app installation. Open in Google Chrome for 1-tap install:
+            <p style="font-size: 0.76rem; color: #E2E8F0; margin-bottom: 12px; line-height: 1.4;">
+              In-app browsers block direct app installation. Open in Google Chrome for 1-tap install:
             </p>
             ${isAndroid ? `
-              <a href="${chromeIntentUrl}" class="btn-submit-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 10px; font-size: 0.82rem; font-weight: 800; margin-bottom: 10px; width: 100%;">
+              <a href="${chromeIntentUrl}" class="btn-submit-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 12px; font-size: 0.88rem; font-weight: 800; margin-bottom: 10px; width: 100%;">
                 <span>🚀 Open in Chrome App</span>
               </a>
             ` : ""}
-            <div style="font-size: 0.76rem; color: #F1F5F9; line-height: 1.4;">
-              Or tap the <strong>three dots ( ⋮ )</strong> or <strong>Share ( ⎋ )</strong> at the top/bottom corner and choose <strong>"Open in Chrome"</strong> or <strong>"Open in Safari"</strong>.
+            <div style="font-size: 0.74rem; color: var(--theme-text-muted); line-height: 1.4;">
+              Or tap the <strong>three dots ( ⋮ )</strong> or <strong>Share ( ⎋ )</strong> at the corner and choose <strong>"Open in Chrome"</strong> or <strong>"Open in Safari"</strong>.
             </div>
-          ` : isIOS ? `
+          </div>
+        ` : isIOS ? `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px; text-align: left; margin-bottom: 16px;">
             <div style="font-weight: 800; color: var(--theme-primary, #D4FF00); font-size: 0.85rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
               <span>🍏</span> iPhone & iPad Quick Install:
             </div>
@@ -383,67 +294,92 @@ export const PWAHandler = {
                 <span>Tap <strong>Add</strong> in the top right to complete!</span>
               </div>
             </div>
-          ` : (isAndroid || isTouchDevice) ? `
+          </div>
+        ` : hasNativePrompt ? `
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+            <button type="button" class="btn-submit-primary" id="btn-trigger-native-pwa" style="width: 100%; padding: 13px; font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>📲 Install App (1-Click)</span>
+            </button>
+          </div>
+        ` : `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px; text-align: left; margin-bottom: 16px;">
             <div style="font-weight: 800; color: var(--theme-primary, #D4FF00); font-size: 0.85rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-              <span>🤖</span> Android Phone 1-Tap Install:
+              <span>🤖</span> Android / Browser Quick Install:
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.82rem; color: #F1F5F9;">
               <div style="display: flex; gap: 10px; align-items: center;">
                 <span style="background: var(--theme-primary, #D4FF00); color: #000; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 800; flex-shrink: 0;">1</span>
-                <span>Tap <strong>Menu</strong> ( <strong style="color: #00E5FF; font-size: 1.1rem;">⋮</strong> ) in your browser top bar.</span>
+                <span>Tap <strong>Menu ( ⋮ )</strong> in your browser top bar.</span>
               </div>
               <div style="display: flex; gap: 10px; align-items: center;">
                 <span style="background: var(--theme-primary, #D4FF00); color: #000; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 800; flex-shrink: 0;">2</span>
                 <span>Tap <strong>Install App</strong> or <strong>Add to Home screen</strong>.</span>
               </div>
             </div>
-            <div style="margin-top: 12px; text-align: center;">
-              <button type="button" class="btn-pill" id="btn-retry-pwa-prompt" style="font-size: 0.74rem; padding: 6px 14px; width: 100%; justify-content: center; border-color: var(--theme-primary, #D4FF00); color: var(--theme-primary, #D4FF00);">
-                <span>🔄 Try 1-Tap Install Now</span>
+            <div style="margin-top: 12px;">
+              <button type="button" class="btn-submit-primary" id="btn-trigger-native-pwa" style="width: 100%; padding: 11px; font-size: 0.85rem; font-weight: 800;">
+                <span>📲 Tap to Install Now</span>
               </button>
             </div>
-          ` : `
-            <div style="font-weight: 800; color: var(--theme-primary, #D4FF00); font-size: 0.85rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-              <span>💻</span> Desktop / Chrome Install:
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: #F1F5F9;">
-              <span>Click the <strong>Install Icon ( ⊕ )</strong> in your Chrome address bar to install as a standalone desktop app.</span>
-            </div>
-          `}
-        </div>
+          </div>
+        `}
 
+        <!-- Action Buttons -->
         <div style="display: flex; gap: 8px;">
-          <button type="button" class="btn-submit-primary" id="btn-copy-pwa-link" style="flex: 1; padding: 11px 14px; font-size: 0.82rem; background: rgba(255,255,255,0.08); color: #FFF; border: 1px solid rgba(255,255,255,0.12);">
+          <button type="button" class="btn-submit-primary" id="btn-sheet-copy-link" style="flex: 1; padding: 10px 14px; font-size: 0.8rem; background: rgba(255,255,255,0.08); color: #FFF; border: 1px solid rgba(255,255,255,0.12);">
             <span>📋 Copy Link</span>
           </button>
-          <button type="button" class="btn-submit-primary" id="btn-close-pwa-guide" style="flex: 1; padding: 11px 14px; font-size: 0.82rem;">
-            <span>Got It 👍</span>
+          <button type="button" class="btn-pill" id="btn-sheet-dismiss" style="flex: 1; justify-content: center; padding: 10px 14px; font-size: 0.8rem; border-color: transparent; color: var(--theme-text-muted);">
+            <span>Continue in Browser</span>
           </button>
         </div>
       </div>
     `;
 
-    guideModal.classList.add("active");
+    modalEl.classList.add("active");
     document.body.classList.add("has-modal-open");
 
     const closeModal = () => {
-      guideModal.classList.remove("active");
-      if (!document.querySelector(".modal-overlay.active")) {
+      modalEl.classList.remove("active");
+      if (!document.querySelector(".modal-overlay.active:not(#modal-pwa-install-sheet)")) {
         document.body.classList.remove("has-modal-open");
       }
     };
 
-    guideModal.querySelector("#btn-close-pwa-guide")?.addEventListener("click", closeModal);
-    guideModal.querySelector("#btn-retry-pwa-prompt")?.addEventListener("click", () => {
+    modalEl.querySelector("#btn-close-pwa-sheet")?.addEventListener("click", closeModal);
+    modalEl.querySelector("#btn-sheet-dismiss")?.addEventListener("click", () => {
       closeModal();
-      if (window.deferredPWAPrompt || this.deferredPrompt) {
-        this.promptInstall(vendorName, vendor);
-      } else {
-        window.OmniApp?.showToast("Tap browser menu (⋮) -> 'Install App'");
+      if (vendorSlug) {
+        try {
+          sessionStorage.setItem(`pwa_dismissed_${vendorSlug}`, "1");
+        } catch (e) {}
       }
     });
 
-    guideModal.querySelector("#btn-copy-pwa-link")?.addEventListener("click", async () => {
+    modalEl.querySelector("#btn-trigger-native-pwa")?.addEventListener("click", () => {
+      const prompt = this.deferredPrompt || window.deferredPWAPrompt;
+      if (prompt) {
+        try {
+          prompt.prompt();
+          prompt.userChoice.then((choiceResult) => {
+            if (choiceResult && choiceResult.outcome === "accepted") {
+              window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
+            }
+            this.deferredPrompt = null;
+            window.deferredPWAPrompt = null;
+          }).catch((err) => {
+            console.warn("[PWA] Prompt outcome error:", err);
+          });
+        } catch (e) {
+          console.warn("[PWA] Prompt trigger error:", e);
+        }
+        closeModal();
+      } else {
+        window.OmniApp?.showToast("Tap browser menu (⋮) -> 'Install App' or 'Add to Home screen'");
+      }
+    });
+
+    modalEl.querySelector("#btn-sheet-copy-link")?.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(currentUrl);
         window.OmniApp?.showToast("vCard link copied to clipboard!");
@@ -453,8 +389,8 @@ export const PWAHandler = {
       closeModal();
     });
 
-    guideModal.addEventListener("click", (e) => {
-      if (e.target === guideModal) closeModal();
+    modalEl.addEventListener("click", (e) => {
+      if (e.target === modalEl) closeModal();
     });
   }
 };
