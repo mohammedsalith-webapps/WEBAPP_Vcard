@@ -504,6 +504,13 @@ export class AdminConsoleController {
                   <label class="form-label">Platform Support WhatsApp</label>
                   <input type="text" class="form-input" id="set-supportWa" value="${settings.supportWhatsApp || ''}" />
                 </div>
+                <div class="form-group">
+                  <label class="form-label">Platform Admin UPI ID / Number</label>
+                  <input type="text" class="form-input" id="set-adminUpi" value="${settings.adminUpi || '9876543210@upi'}" placeholder="e.g. 9876543210@upi or +919876543210" />
+                  <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 3px;">
+                    Displayed on vCard renewal popup for prepaid subscription renewals.
+                  </div>
+                </div>
                 <button type="submit" class="btn-submit-primary" style="max-width: 240px;">Save Global Settings</button>
               </form>
             </div>
@@ -1287,9 +1294,19 @@ export class AdminConsoleController {
                   ⏳ EXPIRING SOON
                 </span>
               ` : ''}
-              <span class="${v.status === 'active' ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem;">
-                ${v.status.toUpperCase()}
-              </span>
+              ${v.status === 'suspended' ? `
+                <span class="pill-status-suspended" style="background: rgba(239,68,68,0.2); color: #EF4444; border: 1px solid rgba(239,68,68,0.4); font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">
+                  ⏸️ SUSPENDED
+                </span>
+              ` : (isExpired ? `
+                <span class="pill-status-suspended" style="background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">
+                  ⚠️ EXPIRED
+                </span>
+              ` : `
+                <span class="pill-status-active" style="font-size: 0.68rem; padding: 2px 8px;">
+                  ✓ ACTIVE
+                </span>
+              `)}
             </div>
           </div>
 
@@ -1371,7 +1388,7 @@ export class AdminConsoleController {
             <button class="btn-pill" style="color: #F59E0B;" data-manage-reviews="${v.id}">★ Reviews (${v.reviews?.length || 0})</button>
             <button class="btn-pill active" data-manage-vendor="${v.id}">🔐 Console</button>
             <button class="btn-pill" style="color: var(--theme-primary); border-color: rgba(212,255,0,0.3);" data-assign-demo="${v.id}" title="Assign 3-Day Free Demo">🎁 3d Demo</button>
-            <button class="btn-pill" data-toggle-suspend="${v.id}">${v.status === 'active' ? 'Suspend' : 'Activate'}</button>
+            <button class="btn-pill" style="${v.status === 'suspended' ? 'background: rgba(16,185,129,0.15); color: #10B981; border-color: rgba(16,185,129,0.45); font-weight: 700;' : 'color: #F87171; border-color: rgba(248,113,113,0.4);'}" data-toggle-suspend="${v.id}">${v.status === 'suspended' ? '▶️ Activate' : '⏸️ Suspend'}</button>
             <button class="btn-pill" data-extend-expiry="${v.id}">+30d</button>
             <button class="btn-pill" style="color: #EF4444; border-color: rgba(239,68,68,0.3);" data-del-vendor="${v.id}">🗑️ Delete</button>
           </div>
@@ -1533,9 +1550,19 @@ export class AdminConsoleController {
             </div>
           </td>
           <td>
-            <span class="${v.status === 'active' ? 'pill-status-active' : 'pill-status-suspended'}">
-              ${v.status.toUpperCase()}
-            </span>
+            ${v.status === 'suspended' ? `
+              <span class="pill-status-suspended" style="background: rgba(239,68,68,0.2); color: #EF4444; border: 1px solid rgba(239,68,68,0.4); font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 4px;">
+                ⏸️ SUSPENDED
+              </span>
+            ` : (isExpired ? `
+              <span class="pill-status-suspended" style="background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 4px;">
+                ⚠️ EXPIRED
+              </span>
+            ` : `
+              <span class="pill-status-active" style="font-size: 0.68rem; padding: 2px 7px;">
+                ✓ ACTIVE
+              </span>
+            `)}
           </td>
           <td>
             <div class="vendor-action-cluster">
@@ -1549,8 +1576,8 @@ export class AdminConsoleController {
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #F59E0B;" data-manage-reviews="${v.id}">★ Reviews (${v.reviews?.length || 0})</button>
               <button class="btn-pill active" style="padding: 3px 8px; font-size: 0.72rem;" data-manage-vendor="${v.id}">🔐 Manage Console</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-primary); border-color: rgba(212,255,0,0.3);" data-assign-demo="${v.id}" title="Assign 3-Day Free Demo (Sets expiry to +3 days from today)">🎁 3d Demo</button>
-              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;" data-toggle-suspend="${v.id}">
-                ${v.status === 'active' ? 'Suspend' : 'Activate'}
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.status === 'suspended' ? 'color: #10B981; border-color: rgba(16,185,129,0.4); font-weight: 700;' : 'color: #F87171; border-color: rgba(248,113,113,0.4);'}" data-toggle-suspend="${v.id}">
+                ${v.status === 'suspended' ? '▶️ Activate' : '⏸️ Suspend'}
               </button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;" data-extend-expiry="${v.id}">+30d</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #EF4444;" data-del-vendor="${v.id}">Delete</button>
@@ -1824,7 +1851,8 @@ export class AdminConsoleController {
           platformName: this.container.querySelector("#set-platformName").value.trim(),
           currencySymbol: this.container.querySelector("#set-currency").value.trim(),
           adminPin: this.container.querySelector("#set-adminPin").value.trim(),
-          supportWhatsApp: this.container.querySelector("#set-supportWa").value.trim()
+          supportWhatsApp: this.container.querySelector("#set-supportWa").value.trim(),
+          adminUpi: this.container.querySelector("#set-adminUpi")?.value.trim() || "9876543210@upi"
         });
         window.OmniApp.showToast("Platform settings saved!");
         this.renderDashboard();
@@ -2492,9 +2520,18 @@ export class AdminConsoleController {
         const id = btn.getAttribute("data-toggle-suspend");
         const v = db.getVendor(id);
         if (v) {
-          v.status = v.status === "active" ? "suspended" : "active";
+          if (v.status === "suspended") {
+            v.status = "active";
+            // If expiry date has passed, automatically extend validity by 30 days so activating restores the card
+            if (v.expiresAt && new Date(v.expiresAt) < new Date()) {
+              v.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+            }
+            window.OmniApp.showToast(`Vendor ${v.branding.businessName} activated successfully.`);
+          } else {
+            v.status = "suspended";
+            window.OmniApp.showToast(`Vendor ${v.branding.businessName} suspended.`);
+          }
           await db.saveVendor(v);
-          window.OmniApp.showToast(`Vendor ${v.branding.businessName} marked as ${v.status}.`);
           this.renderDashboard();
         }
       });

@@ -39,6 +39,15 @@ class DatabaseService {
       }
     }
 
+    // Ensure platformSettings has adminUpi
+    if (this.data) {
+      if (!this.data.platformSettings) this.data.platformSettings = {};
+      if (!this.data.platformSettings.adminUpi) {
+        this.data.platformSettings.adminUpi = INITIAL_DATA.platformSettings?.adminUpi || "9876543210@upi";
+        this.saveLocal();
+      }
+    }
+
     // Ensure 3-Day Free Demo plan exists even for existing local storage data
     if (this.data && Array.isArray(this.data.subscriptionPlans)) {
       if (!this.data.subscriptionPlans.some(p => p.id === "plan-demo")) {

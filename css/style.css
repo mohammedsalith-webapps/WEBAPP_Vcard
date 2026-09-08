@@ -3824,3 +3824,355 @@ input[type="date"]:valid {
 .lead-record-card:hover {
   border-color: rgba(255, 255, 255, 0.18);
 }
+
+/* ==========================================================================
+   OmniCard OS - Expiry & Suspension Enforcement & Renewal Popup Styles
+   ========================================================================== */
+
+/* Disabled vCard Background Canvas */
+.vcard-disabled-backdrop {
+  filter: blur(3px) grayscale(0.65) brightness(0.7) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0.55 !important;
+  transition: all 0.3s ease;
+}
+
+/* Suspended / Expired Persistent Overlay Modal */
+.renewal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999 !important;
+  background: rgba(4, 7, 13, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.renewal-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #0D111A;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 20px;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(239, 68, 68, 0.15);
+  position: relative;
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.renewal-card.state-expired {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.15);
+}
+
+.renewal-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.badge-suspended {
+  background: rgba(239, 68, 68, 0.18);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.badge-expired {
+  background: rgba(245, 158, 11, 0.18);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.renewal-main-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.35;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.renewal-meta-info {
+  font-size: 0.8rem;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.renewal-packages-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #E2E8F0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.renewal-packages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+.renewal-pkg-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.renewal-pkg-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.renewal-pkg-item.selected {
+  background: rgba(212, 255, 0, 0.06) !important;
+  border-color: var(--theme-primary, #D4FF00) !important;
+  box-shadow: 0 0 14px rgba(212, 255, 0, 0.18);
+}
+
+.renewal-radio-disc {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.renewal-pkg-item.selected .renewal-radio-disc {
+  border-color: var(--theme-primary, #D4FF00);
+  background: var(--theme-primary, #D4FF00);
+}
+
+.renewal-radio-disc::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.renewal-pkg-item.selected .renewal-radio-disc::after {
+  opacity: 1;
+}
+
+.renewal-pkg-info {
+  flex: 1;
+}
+
+.renewal-pkg-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.renewal-pkg-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #FFFFFF;
+}
+
+.renewal-pkg-duration {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #CBD5E1;
+}
+
+.renewal-pkg-features-summary {
+  font-size: 0.72rem;
+  color: #94A3B8;
+}
+
+.renewal-pkg-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--theme-primary, #D4FF00);
+  white-space: nowrap;
+}
+
+.renewal-upi-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.renewal-upi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  color: #94A3B8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.renewal-upi-val-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.renewal-upi-id {
+  font-family: monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #38BDF8;
+}
+
+.renewal-condition-box {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+  transition: all 0.25s ease;
+}
+
+.renewal-condition-box.checked {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.renewal-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.renewal-checkbox {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: #25D366;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.renewal-condition-text {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #F1F5F9;
+}
+
+.bold-red-agree {
+  color: #EF4444;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+/* Submit Renewal Button State */
+.btn-submit-renewal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-align: center;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+/* Disabled & Greyed out by default until ticked */
+.btn-submit-renewal:disabled,
+.btn-submit-renewal.is-disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #64748B !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+  filter: grayscale(1) !important;
+}
+
+/* Enabled vibrant WhatsApp official green when condition ticked */
+.btn-submit-renewal:not(:disabled):not(.is-disabled) {
+  background: #25D366 !important;
+  color: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.45) !important;
+  filter: none !important;
+}
+
+.btn-submit-renewal:not(:disabled):not(.is-disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(37, 211, 102, 0.6) !important;
+}
+
+.renewal-sub-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.76rem;
+}
+
+.renewal-sub-link {
+  color: #94A3B8;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.renewal-sub-link:hover {
+  color: #FFFFFF;
+}
+

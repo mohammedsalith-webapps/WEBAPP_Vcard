@@ -37,8 +37,279 @@ export class VCardController {
     this.cart = {};
     this.applyTheme();
     PWAHandler.updateManifestForVendor(v);
+
+    // Check if vCard is Suspended or Expired
+    const isSuspended = v.status === "suspended";
+    const now = new Date();
+    const isExpired = v.status === "expired" || (v.expiresAt && new Date(v.expiresAt) < now);
+
+    if (isSuspended || isExpired) {
+      this.renderDisabledVCard(isSuspended, isExpired);
+      return;
+    }
+
+    // Normal active card: restore body modal status if needed
+    document.body.classList.remove("has-modal-open");
     this.render();
     PWAHandler.autoPromptInstallIfEligible(v);
+  }
+
+  renderDisabledVCard(isSuspended, isExpired) {
+    const v = this.vendor;
+    const settings = db.getPlatformSettings() || {};
+    const currency = settings.currencySymbol || "₹";
+    const adminWhatsApp = settings.supportWhatsApp || "+919876543210";
+    const adminPhoneClean = WhatsAppEngine.cleanPhone(adminWhatsApp);
+    const adminUpi = settings.adminUpi || (adminPhoneClean ? `${adminPhoneClean}@upi` : "9876543210@upi");
+
+    // Hide bottom dock permanently while suspended or expired
+    const dockRoot = document.getElementById("app-dock-root");
+    if (dockRoot) {
+      dockRoot.innerHTML = "";
+      dockRoot.style.display = "none";
+    }
+    document.body.classList.add("has-modal-open");
+
+    // Render underlying blurred card preview
+    this.container.innerHTML = `
+      <div class="vcard-app vcard-disabled-backdrop">
+        <div class="tab-pane active" id="pane-home" style="pointer-events: none;">
+          <div class="avatar-ring-wrapper" style="margin-top: 30px;">
+            <div class="avatar-glowing-ring">
+              ${v.branding?.avatarEmoji || "💼"}
+            </div>
+          </div>
+          <div class="vcard-badges-row">
+            <span class="vcard-tier-pill">👑 ${(v.branding?.category || "BUSINESS").toUpperCase()}</span>
+            <span class="vcard-verified-pill" style="background: rgba(239,68,68,0.2); color: #EF4444; border-color: rgba(239,68,68,0.4);">
+              ${isSuspended ? "⏸️ SUSPENDED" : "⚠️ EXPIRED"}
+            </span>
+          </div>
+          <h1 class="vcard-hero-name">${v.branding?.businessName || "Business"}</h1>
+          <div class="vcard-hero-subtitle">${v.branding?.ownerName || ""} · ${v.branding?.category || ""}</div>
+          <div class="about-business-card" style="margin: 20px 16px;">
+            <div style="flex: 1;">
+              <div class="about-text-desc" style="color: #94A3B8;">
+                ${v.about?.description || v.branding?.tagline || "Digital Business Card WebApp"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Retrieve plans and identify initial selection
+    const plans = db.getSubscriptionPlans() || [];
+    let selectedPlanId = v.planId && plans.some(p => p.id === v.planId) ? v.planId : (plans.find(p => p.id === "plan-pro")?.id || plans[0]?.id);
+    let selectedPlan = plans.find(p => p.id === selectedPlanId) || plans[0] || { name: "Growth Plan", price: 2499, durationDays: 90 };
+
+    const statusBadgeHtml = isSuspended ? `
+      <div class="renewal-header-badge badge-suspended">
+        <span>⏸️</span>
+        <span>Account Suspended</span>
+      </div>
+    ` : `
+      <div class="renewal-header-badge badge-expired">
+        <span>🕒</span>
+        <span>Subscription Expired</span>
+      </div>
+    `;
+
+    const headlineText = `Your webapp is ${isSuspended ? 'suspended' : 'expired'} please contact admin to renew.`;
+
+    const expiryInfoHtml = isExpired && v.expiresAt ? `
+      <div style="font-size: 0.74rem; color: #F59E0B; margin-top: 4px; font-weight: 600;">
+        ⚠️ Subscription ended on: ${new Date(v.expiresAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+      </div>
+    ` : (isSuspended ? `
+      <div style="font-size: 0.74rem; color: #EF4444; margin-top: 4px; font-weight: 600;">
+        🔒 Webapp access is currently suspended by system administration.
+      </div>
+    ` : "");
+
+    const packagesListHtml = plans.map(p => {
+      const isSel = p.id === selectedPlanId;
+      const priceStr = Number(p.price) === 0 ? "FREE TRIAL" : `${currency}${Number(p.price).toLocaleString()}`;
+      return `
+        <div class="renewal-pkg-item ${isSel ? 'selected' : ''}" data-renewal-plan-id="${p.id}">
+          <div class="renewal-radio-disc"></div>
+          <div class="renewal-pkg-info">
+            <div class="renewal-pkg-name-row">
+              <span class="renewal-pkg-name">${p.name}</span>
+              <span class="renewal-pkg-duration">${p.durationDays} Days</span>
+            </div>
+            <div class="renewal-pkg-features-summary">${p.description || "Quote builder, Shop, Bookings, Reviews, PWA"}</div>
+          </div>
+          <div class="renewal-pkg-price">${priceStr}</div>
+        </div>
+      `;
+    }).join("");
+
+    const initialPriceDisplay = Number(selectedPlan.price) === 0 ? "FREE TRIAL" : `${currency}${Number(selectedPlan.price).toLocaleString()}`;
+
+    const renewalPopupHtml = `
+      <div class="renewal-overlay" id="popup-renewal-overlay">
+        <div class="renewal-card ${isExpired ? 'state-expired' : ''}">
+          ${statusBadgeHtml}
+          <h2 class="renewal-main-title">${headlineText}</h2>
+          
+          <div class="renewal-meta-info">
+            <div style="color: #FFFFFF; font-weight: 700; margin-bottom: 2px;">🏢 ${v.branding?.businessName || "Business"}</div>
+            <div>Owner: ${v.branding?.ownerName || "Business Owner"} · Slug: <code>${v.slug || v.id}</code></div>
+            ${expiryInfoHtml}
+          </div>
+
+          <div class="renewal-packages-title">
+            <span>📦 Select Package to Renew:</span>
+            <span style="font-size: 0.7rem; color: #94A3B8; font-weight: normal;">1-Tap Choice</span>
+          </div>
+
+          <div class="renewal-packages-list" id="renewal-plans-container">
+            ${packagesListHtml}
+          </div>
+
+          <!-- UPI Details Box -->
+          <div class="renewal-upi-card">
+            <div class="renewal-upi-header">
+              <span>💳 Admin Prepaid Payment Details</span>
+              <span style="color: var(--theme-primary, #D4FF00); font-weight: 800;">PREPAID UPI</span>
+            </div>
+            <div class="renewal-upi-val-row">
+              <div>
+                <div style="font-size: 0.7rem; color: #94A3B8;">Admin UPI ID:</div>
+                <div class="renewal-upi-id" id="val-admin-upi-id">${adminUpi}</div>
+              </div>
+              <button type="button" class="btn-pill" id="btn-copy-renewal-upi" style="font-size: 0.72rem; padding: 4px 10px;">
+                📋 Copy UPI
+              </button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.72rem; color: #94A3B8;">
+              <span>📱 Admin WhatsApp: <b>+${adminPhoneClean}</b></span>
+              <span>🔒 100% Verified Support</span>
+            </div>
+          </div>
+
+          <!-- Mandatory Agreement Condition Box -->
+          <div class="renewal-condition-box" id="renewal-condition-box">
+            <label class="renewal-checkbox-label">
+              <input type="checkbox" class="renewal-checkbox" id="chk-renew-agree-prepay" />
+              <span class="renewal-condition-text">
+                I <strong class="bold-red-agree">AGREE TO PAY</strong> the prepaid amount of <strong id="renew-price-text" style="color: var(--theme-primary, #D4FF00); font-weight: 800;">${initialPriceDisplay}</strong> via UPI to Admin number (<span id="renew-admin-upi-label">${adminUpi}</span>) to renew our business webapp.
+              </span>
+            </label>
+          </div>
+
+          <!-- Submit to Renew via WhatsApp Button (Disabled / Greyed out by default) -->
+          <button type="button" id="btn-submit-renewal-wa" class="btn-submit-renewal is-disabled" disabled>
+            <span>💬 Submit to Renew (WhatsApp)</span>
+          </button>
+
+          <div class="renewal-sub-actions">
+            <a href="tel:${adminWhatsApp}" class="renewal-sub-link">📞 Call Admin Directly</a>
+            <button type="button" class="renewal-sub-link" id="btn-renewal-auth-login" style="background: none; border: none; font-size: inherit;">🔐 Owner / Admin Login</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const modalsRoot = document.getElementById("app-modals-root") || this.container;
+    modalsRoot.innerHTML = renewalPopupHtml;
+
+    // Bind Interactive Events for Renewal Modal
+    this.bindDisabledVCardEvents(v, plans, selectedPlan, settings);
+  }
+
+  bindDisabledVCardEvents(vendor, plans, initialSelectedPlan, settings) {
+    let currentPlan = initialSelectedPlan;
+    const currency = settings.currencySymbol || "₹";
+    const adminWhatsApp = settings.supportWhatsApp || "+919876543210";
+    const adminPhoneClean = WhatsAppEngine.cleanPhone(adminWhatsApp);
+    const adminUpi = settings.adminUpi || (adminPhoneClean ? `${adminPhoneClean}@upi` : "9876543210@upi");
+
+    const modalsRoot = document.getElementById("app-modals-root") || this.container;
+    const conditionBox = modalsRoot.querySelector("#renewal-condition-box");
+    const checkbox = modalsRoot.querySelector("#chk-renew-agree-prepay");
+    const submitBtn = modalsRoot.querySelector("#btn-submit-renewal-wa");
+    const priceText = modalsRoot.querySelector("#renew-price-text");
+
+    // 1. Package Selection
+    modalsRoot.querySelectorAll("[data-renewal-plan-id]").forEach(item => {
+      item.addEventListener("click", () => {
+        const planId = item.getAttribute("data-renewal-plan-id");
+        const found = plans.find(p => p.id === planId);
+        if (found) {
+          currentPlan = found;
+          modalsRoot.querySelectorAll("[data-renewal-plan-id]").forEach(el => el.classList.remove("selected"));
+          item.classList.add("selected");
+          const priceFormatted = Number(currentPlan.price) === 0 ? "FREE TRIAL" : `${currency}${Number(currentPlan.price).toLocaleString()}`;
+          if (priceText) priceText.textContent = priceFormatted;
+        }
+      });
+    });
+
+    // 2. Checkbox Ticking enables/greys out submit button
+    if (checkbox && submitBtn) {
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-disabled");
+          if (conditionBox) conditionBox.classList.add("checked");
+        } else {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-disabled");
+          if (conditionBox) conditionBox.classList.remove("checked");
+        }
+      });
+    }
+
+    // 3. Submit to Admin via WhatsApp
+    if (submitBtn) {
+      submitBtn.addEventListener("click", () => {
+        if (!checkbox || !checkbox.checked) {
+          window.OmniApp?.showToast("⚠️ Please tick the agreement condition before submitting.");
+          return;
+        }
+        const message = WhatsAppEngine.buildRenewalMessage(vendor, currentPlan, settings);
+        WhatsAppEngine.openChat(adminWhatsApp, message);
+        window.OmniApp?.showToast("Opening WhatsApp to confirm payment number with Admin...");
+      });
+    }
+
+    // 4. Copy UPI Button
+    const copyBtn = modalsRoot.querySelector("#btn-copy-renewal-upi");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(adminUpi).then(() => {
+            window.OmniApp?.showToast("Admin UPI copied to clipboard!");
+          }).catch(() => {
+            window.OmniApp?.showToast(`UPI: ${adminUpi}`);
+          });
+        } else {
+          window.OmniApp?.showToast(`UPI: ${adminUpi}`);
+        }
+      });
+    }
+
+    // 5. Owner / Admin Login Access
+    const ownerLoginBtn = modalsRoot.querySelector("#btn-renewal-auth-login");
+    if (ownerLoginBtn) {
+      ownerLoginBtn.addEventListener("click", () => {
+        const entered = prompt(`Enter Owner PIN for ${vendor.branding?.businessName || 'this card'} or Admin Master PIN:`);
+        if (!entered) return;
+        const validPassword = vendor.password || vendor.pin || "2026";
+        const adminPin = settings.adminPin || "1234";
+        if (entered.trim() === validPassword || entered.trim() === vendor.pin) {
+          window.OmniApp?.showToast("Owner Authenticated");
+          window.OmniApp?.adminManageVendor(vendor.id);
+        } else if (entered.trim() === adminPin) {
+          window.OmniApp?.showToast("Super Admin Authenticated");
+          window.OmniApp?.navigate("admin");
+        } else {
+          window.OmniApp?.showToast("Invalid Security PIN");
+        }
+      });
+    }
   }
 
   applyTheme() {

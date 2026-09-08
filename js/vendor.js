@@ -123,6 +123,10 @@ export class VendorConsoleController {
       this.activeTab = "profile";
     }
 
+    const isSuspended = v.status === "suspended";
+    const now = new Date();
+    const isExpired = v.status === "expired" || (v.expiresAt && new Date(v.expiresAt) < now);
+
     this.container.innerHTML = `
       <div class="portal-container">
         <!-- Vendor Header Bar -->
@@ -133,7 +137,13 @@ export class VendorConsoleController {
               <div>
                 <h2 style="font-size: 1.3rem;">${v.branding.businessName}</h2>
                 <div style="font-size: 0.78rem; color: var(--theme-text-muted);">
-                  ${v.branding.category} • Status: <span style="color: #10B981; font-weight: 700;">${v.status.toUpperCase()}</span>
+                  ${v.branding.category} • Status: ${isSuspended ? `
+                    <span style="color: #EF4444; font-weight: 800; background: rgba(239,68,68,0.15); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.3);">⏸️ SUSPENDED</span>
+                  ` : (isExpired ? `
+                    <span style="color: #F59E0B; font-weight: 800; background: rgba(245,158,11,0.15); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(245,158,11,0.3);">⚠️ EXPIRED</span>
+                  ` : `
+                    <span style="color: #10B981; font-weight: 700; background: rgba(16,185,129,0.15); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.3);">✓ ACTIVE</span>
+                  `)}
                 </div>
               </div>
             </div>
@@ -150,6 +160,27 @@ export class VendorConsoleController {
             <button class="btn-pill" id="btn-vendor-logout" title="Sign Out">Logout</button>
           </div>
         </div>
+
+        ${(isSuspended || isExpired) ? `
+          <!-- Suspension & Expiry Notice Alert Banner -->
+          <div style="background: ${isSuspended ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)'}; border: 1.5px solid ${isSuspended ? 'rgba(239, 68, 68, 0.4)' : 'rgba(245, 158, 11, 0.4)'}; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.6rem;">${isSuspended ? '⏸️' : '🕒'}</span>
+              <div>
+                <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem;">
+                  Your digital webapp is ${isSuspended ? 'SUSPENDED' : 'EXPIRED'}
+                </div>
+                <div style="font-size: 0.78rem; color: #CBD5E1; margin-top: 2px;">
+                  Public visitors cannot access your services, shop, or booking calendar until the webapp is renewed.
+                </div>
+              </div>
+            </div>
+            <a href="?v=${v.slug}" target="_blank" class="btn-pill active" style="background: #25D366; color: #000; font-weight: 800; padding: 7px 14px; text-decoration: none; border-color: rgba(255,255,255,0.2);">
+              <span>🔄 Open Renewal Popup</span>
+              <span>↗</span>
+            </a>
+          </div>
+        ` : ""}
 
         <!-- Portal Tabs Navigation -->
         <div class="portal-nav-tabs">

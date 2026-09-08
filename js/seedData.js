@@ -7,6 +7,7 @@ export const INITIAL_DATA = {
     supportWhatsApp: "+919876543210",
     supportEmail: "support@omnicard.io",
     adminPin: "1234",
+    adminUpi: "9876543210@upi",
     firebaseConfig: {
       apiKey: "AIzaSyC1F2gHzKlIiyGDEF8hMT8L2Dc1eO1YUYk",
       authDomain: "flavours-catering-3b122.firebaseapp.com",

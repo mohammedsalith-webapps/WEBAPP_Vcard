@@ -162,5 +162,38 @@ export const WhatsAppEngine = {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `_Sent via ${vendor.branding.businessName} Smart vCard on ${now}_\n` +
       `_Awaiting your prompt callback._`;
+  },
+
+  // 8. Renewal & Reactivation Request with Prepaid Agreement & Payment Confirmation
+  buildRenewalMessage(vendor, plan, adminSettings = {}) {
+    const currency = adminSettings.currencySymbol || "₹";
+    const adminUpi = adminSettings.adminUpi || adminSettings.supportWhatsApp || "Platform Admin UPI";
+    const now = new Date().toLocaleString();
+    const statusText = vendor.status === "suspended" ? "⏸️ SUSPENDED" : "⚠️ EXPIRED";
+    const priceFormatted = Number(plan.price) === 0 ? "FREE TRIAL" : `${currency}${Number(plan.price).toLocaleString()}`;
+    const cardUrl = (typeof window !== "undefined" && window.location?.origin) ? `${window.location.origin}/?v=${vendor.slug || vendor.id}` : `?v=${vendor.slug || vendor.id}`;
+
+    return `*🔄 WEBAPP RENEWAL & PAYMENT NUMBER CONFIRMATION REQUEST*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*Business Name:* ${vendor.branding?.businessName || 'Business'}\n` +
+      `*Owner Name:* ${vendor.branding?.ownerName || 'Owner'}\n` +
+      `*Category:* ${vendor.branding?.category || 'General'}\n` +
+      `*Card Link:* ${cardUrl}\n` +
+      `*Current Status:* ${statusText}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*SELECTED RENEWAL PACKAGE:*\n` +
+      `📦 *Package:* ${plan.name}\n` +
+      `⏳ *Validity Duration:* ${plan.durationDays} Days\n` +
+      `💰 *Prepaid Renewal Fee:* *${priceFormatted}*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `*PREPAID PAYMENT COMMITMENT:*\n` +
+      `✅ *I AGREE TO PAY* the prepaid amount of *${priceFormatted}* via UPI to Admin number / UPI (*${adminUpi}*).\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💬 *ACTION REQUIRED FROM ADMIN:*\n` +
+      `Dear Admin, please confirm your *UPI / Payment Number* and share payment details/QR code so we can make the prepayment immediately and renew our business webapp.\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `_Submitted via OmniCard OS on ${now}_\n` +
+      `_Awaiting your payment number confirmation to renew._`;
   }
 };
+
