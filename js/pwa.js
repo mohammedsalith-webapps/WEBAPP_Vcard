@@ -16,7 +16,7 @@ export const PWAHandler = {
     if (!("serviceWorker" in navigator)) return;
 
     const doRegister = () => {
-      navigator.serviceWorker.register("./sw.js?v=20260910_v15")
+      navigator.serviceWorker.register("./sw.js?v=20260910_v17")
         .then((reg) => {
           console.log("[PWA] ServiceWorker registered with scope:", reg.scope);
           reg.update().catch(() => {});
@@ -70,9 +70,10 @@ export const PWAHandler = {
       this.deferredPrompt = null;
       window.deferredPWAPrompt = null;
       console.log("[PWA] App installed successfully.");
-      const currentSlug = new URLSearchParams(window.location.search).get("v");
+      const currentSlug = new URLSearchParams(window.location.search).get("v") || window.OmniApp?.currentVendorSlug;
       if (currentSlug) {
         try {
+          localStorage.setItem(`vcard_installed_${currentSlug}`, "true");
           const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
           if (!installed.includes(currentSlug)) {
             installed.push(currentSlug);
@@ -80,11 +81,18 @@ export const PWAHandler = {
           }
         } catch (e) {}
       }
+      try {
+        localStorage.setItem("omnicard_installed", "true");
+      } catch (e) {}
       window.OmniApp?.showToast("App installed to your phone home screen! 🎉");
-      const installBtn = document.getElementById("btn-pwa-install");
-      if (installBtn) {
-        installBtn.style.display = "none";
-      }
+      // Hide all install buttons and banners immediately
+      document.querySelectorAll("#btn-vcard-top-install, #vcard-pwa-install-banner, .vcard-top-install-btn, #btn-pwa-install").forEach((el) => {
+        el.style.display = "none";
+      });
+      // Remove any open install modals
+      document.getElementById("modal-vcard-install-popup")?.remove();
+      document.getElementById("modal-pwa-install-sheet")?.remove();
+      document.body.classList.remove("has-modal-open");
     });
   },
 
@@ -109,14 +117,26 @@ export const PWAHandler = {
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   },
 
-  // Check if a specific vendor's card is currently running in standalone mode
+  // Check if a specific vendor's card is installed
   isVendorInstalled(vendorSlug) {
     if (!vendorSlug) return false;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
     const urlParams = new URLSearchParams(window.location.search);
-    const currentSlug = urlParams.get("v");
-    return isStandalone && currentSlug === vendorSlug;
+    // 1. True installed PWA app opened via home screen shortcut with ?pwa=1
+    if (urlParams.get("pwa") === "1") return true;
+
+    // 2. Persistent storage indicators
+    try {
+      if (localStorage.getItem(`vcard_installed_${vendorSlug}`) === "true") return true;
+      if (localStorage.getItem("omnicard_installed") === "true") return true;
+      const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
+      if (installed.includes(vendorSlug)) return true;
+    } catch (e) {}
+
+    return false;
+  },
+
+  isAppInstalled(vendorSlug) {
+    return this.isVendorInstalled(vendorSlug);
   },
 
   // Dynamically update manifest URL and meta tags so installed app opens THIS vendor's vCard directly
@@ -175,84 +195,136 @@ export const PWAHandler = {
     }
   },
 
-  autoPromptInstallIfEligible(vendor) {
+  showFirstVisitInstallPopup(vendor) {
     if (!vendor) return;
     const vendorSlug = vendor.slug || vendor.id;
     if (!vendorSlug) return;
     if (vendor.features?.pwaInstall === false) return;
 
-    // Do not prompt if already running in standalone mode (installed)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-    if (isStandalone || this.isVendorInstalled(vendorSlug)) return;
+    // 1. Once installed, never popup again!
+    if (this.isVendorInstalled(vendorSlug)) return;
 
-    // Session storage check: don't re-prompt if dismissed in this browser session
-    const dismissKey = `pwa_prompt_dismissed_${vendorSlug}`;
+    // 2. Session check: if dismissed or chose "Continue in browser", do not re-prompt in this session
+    const dismissKey = `pwa_popup_dismissed_${vendorSlug}`;
     if (sessionStorage.getItem(dismissKey)) return;
 
-    // Remove any existing floating prompt banner
-    const existing = document.getElementById("pwa-floating-prompt");
+    // Remove any previous instance if exists
+    const existing = document.getElementById("modal-vcard-install-popup");
     if (existing) existing.remove();
 
-    // After a smooth delay of 2.8s (allowing fast initial paint and fluid first interaction), show floating prompt
+    const bizName = vendor.branding?.businessName || "Business";
+    const emoji = vendor.branding?.avatarEmoji || "📲";
+    const primaryColor = vendor.branding?.colors?.primary || "#D4FF00";
+
+    // Show popup smoothly after 450ms for seamless entrance
     setTimeout(() => {
-      const isStandaloneNow = window.matchMedia('(display-mode: standalone)').matches || 
-                              window.navigator.standalone === true;
-      if (isStandaloneNow || this.isVendorInstalled(vendorSlug)) return;
+      if (this.isVendorInstalled(vendorSlug)) return;
       if (sessionStorage.getItem(dismissKey)) return;
-      if (document.getElementById("pwa-floating-prompt")) return;
+      if (document.getElementById("modal-vcard-install-popup")) return;
 
-      const bizName = vendor.branding?.businessName || "Business";
-      const emoji = vendor.branding?.avatarEmoji || "📲";
-
-      const promptDiv = document.createElement("div");
-      promptDiv.id = "pwa-floating-prompt";
-      promptDiv.className = "pwa-floating-prompt-banner";
-      promptDiv.innerHTML = `
-        <div class="pwa-floating-content">
-          <div class="pwa-floating-icon">${emoji}</div>
-          <div class="pwa-floating-text">
-            <div class="pwa-floating-title">Install ${bizName}</div>
-            <div class="pwa-floating-sub">Save to home screen for 1-tap fast access</div>
+      const modalEl = document.createElement("div");
+      modalEl.id = "modal-vcard-install-popup";
+      modalEl.className = "modal-overlay pwa-install-overlay";
+      modalEl.innerHTML = `
+        <div class="modal-card pwa-install-modal-card">
+          <button type="button" class="pwa-popup-close" id="btn-popup-close-x" aria-label="Close">✕</button>
+          
+          <div class="pwa-popup-avatar-wrap">
+            <div class="pwa-popup-avatar-ring" style="--ring-color: ${primaryColor};">
+              <span class="pwa-popup-avatar">${emoji}</span>
+            </div>
+            <div class="pwa-popup-status-chip">
+              <span class="pwa-pulse-dot" style="background: ${primaryColor};"></span>
+              <span>Official Web App</span>
+            </div>
           </div>
-        </div>
-        <div class="pwa-floating-actions">
-          <button type="button" class="btn-pwa-floating-action" id="btn-pwa-floating-action">
-            <span>Install</span>
-            <span>⬇</span>
-          </button>
-          <button type="button" class="btn-pwa-floating-close" id="btn-pwa-floating-close" title="Dismiss">
-            ×
-          </button>
+
+          <h3 class="pwa-popup-title">Install ${bizName}</h3>
+          <p class="pwa-popup-desc">
+            Install this Web App on your phone or laptop for fast 1-tap access and offline viewing.
+          </p>
+
+          <div class="pwa-popup-perks">
+            <div class="pwa-perk-item">
+              <span class="pwa-perk-icon">⚡</span>
+              <span>Instant 1-Tap Home Screen Access</span>
+            </div>
+            <div class="pwa-perk-item">
+              <span class="pwa-perk-icon">📴</span>
+              <span>Works Offline & Loads Faster</span>
+            </div>
+            <div class="pwa-perk-item">
+              <span class="pwa-perk-icon">✨</span>
+              <span>Full-Screen Native App Experience</span>
+            </div>
+          </div>
+
+          <div class="pwa-popup-actions">
+            <button type="button" class="btn-submit-primary pwa-btn-install" id="btn-initial-popup-install">
+              <span>📲 Install App</span>
+            </button>
+            <button type="button" class="btn-pill pwa-btn-cancel" id="btn-initial-popup-cancel">
+              <span>🌐 Continue in Browser</span>
+            </button>
+          </div>
         </div>
       `;
 
-      document.body.appendChild(promptDiv);
+      document.body.appendChild(modalEl);
+      document.body.classList.add("has-modal-open");
 
-      const dismissPrompt = () => {
+      // Smooth entrance
+      requestAnimationFrame(() => {
+        modalEl.classList.add("active");
+      });
+
+      const dismissPopup = () => {
         sessionStorage.setItem(dismissKey, "1");
-        promptDiv.classList.add("dismissing");
-        setTimeout(() => promptDiv.remove(), 250);
+        modalEl.classList.remove("active");
+        modalEl.style.opacity = "0";
+        modalEl.style.pointerEvents = "none";
+        setTimeout(() => {
+          if (modalEl.parentNode) modalEl.remove();
+          if (!document.querySelector(".modal-overlay.active:not(#modal-vcard-install-popup)")) {
+            document.body.classList.remove("has-modal-open");
+          }
+        }, 250);
       };
 
-      promptDiv.querySelector("#btn-pwa-floating-close")?.addEventListener("click", (e) => {
+      // Cancel button & close X: continue in browser
+      modalEl.querySelector("#btn-initial-popup-cancel")?.addEventListener("click", (e) => {
         e.stopPropagation();
-        dismissPrompt();
+        dismissPopup();
+      });
+      modalEl.querySelector("#btn-popup-close-x")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dismissPopup();
       });
 
-      promptDiv.querySelector("#btn-pwa-floating-action")?.addEventListener("click", (e) => {
+      // Install button: trigger install flow
+      modalEl.querySelector("#btn-initial-popup-install")?.addEventListener("click", (e) => {
         e.stopPropagation();
-        dismissPrompt();
+        dismissPopup();
         this.promptInstall(bizName, vendor);
       });
-    }, 1500);
+
+      // Tap backdrop to dismiss / continue in browser
+      modalEl.addEventListener("click", (e) => {
+        if (e.target === modalEl) dismissPopup();
+      });
+    }, 450);
+  },
+
+  autoPromptInstallIfEligible(vendor) {
+    this.showFirstVisitInstallPopup(vendor);
   },
 
   promptInstall(vendorName = "Smart vCard", vendor = null) {
     const v = vendor || {};
     const bizName = vendorName || v.branding?.businessName || "Smart vCard";
+    const vendorSlug = v.slug || v.id || new URLSearchParams(window.location.search).get("v") || "";
 
-    // 1. Direct 1-Tap native prompt if ready on phone (Chrome Android, Edge)
+    // 1. Direct 1-Tap native prompt if ready on phone (Chrome Android, Edge, Desktop Chrome)
     const prompt = this.deferredPrompt || window.deferredPWAPrompt;
     if (prompt) {
       try {
@@ -266,7 +338,24 @@ export const PWAHandler = {
         if (prompt.userChoice && typeof prompt.userChoice.then === "function") {
           prompt.userChoice.then((choiceResult) => {
             if (choiceResult && choiceResult.outcome === "accepted") {
+              const currentSlug = vendorSlug || new URLSearchParams(window.location.search).get("v") || window.OmniApp?.currentVendorSlug;
+              if (currentSlug) {
+                try {
+                  localStorage.setItem(`vcard_installed_${currentSlug}`, "true");
+                  const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
+                  if (!installed.includes(currentSlug)) {
+                    installed.push(currentSlug);
+                    localStorage.setItem("pwa_installed_cards", JSON.stringify(installed));
+                  }
+                } catch (e) {}
+              }
+              try {
+                localStorage.setItem("omnicard_installed", "true");
+              } catch (e) {}
               window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
+              document.querySelectorAll("#btn-vcard-top-install, #vcard-pwa-install-banner, .vcard-top-install-btn, #btn-pwa-install").forEach((el) => {
+                el.style.display = "none";
+              });
             }
             this.deferredPrompt = null;
             window.deferredPWAPrompt = null;
@@ -278,7 +367,7 @@ export const PWAHandler = {
       }
     }
 
-    // 2. If native prompt not ready (iOS Safari, in-app browser, or desktop): show the bottom sheet!
+    // 2. If native prompt not ready (iOS Safari, in-app browser, or desktop): show the guide sheet!
     this.showInstallModal(vendorName, vendor);
   },
 
@@ -292,13 +381,6 @@ export const PWAHandler = {
     const vendorSlug = v.slug || v.id || new URLSearchParams(window.location.search).get("v") || "";
     const avatar = v.branding?.avatarEmoji || "📲";
     const primaryColor = v.branding?.colors?.primary || "#D4FF00";
-
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-    if (isStandalone) {
-      window.OmniApp?.showToast(`${bizName} is already running as an installed app! 🎉`);
-      return;
-    }
 
     // Sync prompt references
     if (!this.deferredPrompt && window.deferredPWAPrompt) {
@@ -458,7 +540,24 @@ export const PWAHandler = {
           if (prompt.userChoice && typeof prompt.userChoice.then === "function") {
             prompt.userChoice.then((choiceResult) => {
               if (choiceResult && choiceResult.outcome === "accepted") {
+                const currentSlug = vendorSlug || new URLSearchParams(window.location.search).get("v") || window.OmniApp?.currentVendorSlug;
+                if (currentSlug) {
+                  try {
+                    localStorage.setItem(`vcard_installed_${currentSlug}`, "true");
+                    const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
+                    if (!installed.includes(currentSlug)) {
+                      installed.push(currentSlug);
+                      localStorage.setItem("pwa_installed_cards", JSON.stringify(installed));
+                    }
+                  } catch (e) {}
+                }
+                try {
+                  localStorage.setItem("omnicard_installed", "true");
+                } catch (e) {}
                 window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
+                document.querySelectorAll("#btn-vcard-top-install, #vcard-pwa-install-banner, .vcard-top-install-btn, #btn-pwa-install").forEach((el) => {
+                  el.style.display = "none";
+                });
               }
               this.deferredPrompt = null;
               window.deferredPWAPrompt = null;
