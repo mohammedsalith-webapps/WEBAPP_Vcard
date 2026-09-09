@@ -112,8 +112,10 @@ export class VendorConsoleController {
     const waMsg = encodeURIComponent(`Hello Admin, I need assistance regarding my vendor account: ${v.branding.businessName} (${v.id}).`);
     const adminWhatsAppLink = `https://wa.me/${supportWa}?text=${waMsg}`;
 
-    // Ensure activeTab is valid for granted features
+    // Ensure activeTab is valid for granted features (Admins managing vendors have access to all tabs)
+    const isAdmin = !!(sessionStorage.getItem("admin_auth") === "true" || window.OmniApp?.isAdminManaging);
     const isTabAvailable = (tab) => {
+      if (isAdmin) return true;
       if (tab === "profile") return true;
       if (tab === "services") return v.features?.quoteBuilder !== false;
       if (tab === "shop") return v.features?.ecommerceShop !== false;
@@ -152,6 +154,12 @@ export class VendorConsoleController {
             </div>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            ${isAdmin ? `
+              <button type="button" class="btn-pill" id="btn-back-to-admin" style="background: rgba(212,255,0,0.18); border-color: rgba(212,255,0,0.5); color: var(--theme-primary); font-weight: 800; gap: 6px; cursor: pointer;" title="Return directly to Super Admin Console">
+                <span>←</span>
+                <span>Back to Super Admin</span>
+              </button>
+            ` : ""}
             <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" class="btn-pill" style="background: rgba(37, 211, 102, 0.15); border-color: rgba(37, 211, 102, 0.4); color: #25D366; font-weight: 700; gap: 6px;" title="Chat directly with Platform Admin on WhatsApp">
               <span>💬</span>
               <span>Admin WhatsApp Support</span>
@@ -190,29 +198,29 @@ export class VendorConsoleController {
           <button class="portal-tab-btn ${this.activeTab === 'profile' ? 'active' : ''}" data-vtab="profile">
             🎨 Profile
           </button>
-          ${v.features?.leadForm !== false ? `
+          ${(isAdmin || v.features?.leadForm !== false) ? `
             <button class="portal-tab-btn ${this.activeTab === 'leadform' ? 'active' : ''}" data-vtab="leadform">
-              📝 Lead Form (${v.leads?.length || 0})
+              📝 Lead Form (${v.leads?.length || 0}) ${v.features?.leadForm === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
             </button>
           ` : ""}
-          ${v.features?.quoteBuilder !== false ? `
+          ${(isAdmin || v.features?.quoteBuilder !== false) ? `
             <button class="portal-tab-btn ${this.activeTab === 'services' ? 'active' : ''}" data-vtab="services">
-              📋 Services (${v.services?.length || 0})
+              📋 Services (${v.services?.length || 0}) ${v.features?.quoteBuilder === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
             </button>
           ` : ""}
-          ${v.features?.ecommerceShop !== false ? `
+          ${(isAdmin || v.features?.ecommerceShop !== false) ? `
             <button class="portal-tab-btn ${this.activeTab === 'shop' ? 'active' : ''}" data-vtab="shop">
-              🛍️ Shop (${v.products?.length || 0})
+              🛍️ Shop (${v.products?.length || 0}) ${v.features?.ecommerceShop === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
             </button>
           ` : ""}
-          ${v.features?.calendarBooking !== false ? `
+          ${(isAdmin || v.features?.calendarBooking !== false) ? `
             <button class="portal-tab-btn ${this.activeTab === 'bookings' ? 'active' : ''}" data-vtab="bookings">
-              📅 Bookings (${v.bookings?.length || 0})
+              📅 Bookings (${v.bookings?.length || 0}) ${v.features?.calendarBooking === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
             </button>
           ` : ""}
-          ${v.features?.customerReviews !== false ? `
+          ${(isAdmin || v.features?.customerReviews !== false) ? `
             <button class="portal-tab-btn ${this.activeTab === 'reviews' ? 'active' : ''}" data-vtab="reviews">
-              ★ Reviews (${v.reviews?.length || 0})
+              ★ Reviews (${v.reviews?.length || 0}) ${v.features?.customerReviews === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
             </button>
           ` : ""}
         </div>
@@ -1068,6 +1076,14 @@ export class VendorConsoleController {
       logoutBtn.addEventListener("click", () => {
         this.currentVendor = null;
         this.renderLoginForm();
+      });
+    }
+
+    // Back to Super Admin Console
+    const backBtn = this.container.querySelector("#btn-back-to-admin");
+    if (backBtn) {
+      backBtn.addEventListener("click", () => {
+        window.OmniApp.setView("admin");
       });
     }
 

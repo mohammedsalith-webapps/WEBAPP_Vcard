@@ -1394,27 +1394,27 @@ export class AdminConsoleController {
 
           <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 8px 12px; margin: 10px 0;">
             <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">
-              vCard Tabs & Granted Features:
+              vCard Tabs & Granted Features (Click to enter & manage section):
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
               <span class="tab-grant-badge locked" title="Home is always active">🏠 Home: Default</span>
-              <button type="button" class="tab-grant-badge ${v.features?.quoteBuilder !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="quoteBuilder" data-v-id="${v.id}" title="Click to Grant/Revoke Services Tab">
-                📋 Services: ${v.features?.quoteBuilder !== false ? 'ON' : 'OFF'}
+              <button type="button" class="tab-grant-badge ${v.features?.quoteBuilder !== false ? 'granted' : 'revoked'}" data-nav-feature="services" data-v-id="${v.id}" title="Enter Services section to make changes">
+                📋 Services: ${v.features?.quoteBuilder !== false ? 'ON ↗' : 'OFF ↗'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.ecommerceShop !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="ecommerceShop" data-v-id="${v.id}" title="Click to Grant/Revoke Shop Tab">
-                🛍️ Shop: ${v.features?.ecommerceShop !== false ? 'ON' : 'OFF'}
+              <button type="button" class="tab-grant-badge ${v.features?.ecommerceShop !== false ? 'granted' : 'revoked'}" data-nav-feature="shop" data-v-id="${v.id}" title="Enter Shop / Products section to make changes">
+                🛍️ Shop: ${v.features?.ecommerceShop !== false ? 'ON ↗' : 'OFF ↗'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.calendarBooking !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="calendarBooking" data-v-id="${v.id}" title="Click to Grant/Revoke Book Appointment Tab">
-                📅 Book: ${v.features?.calendarBooking !== false ? 'ON' : 'OFF'}
+              <button type="button" class="tab-grant-badge ${v.features?.calendarBooking !== false ? 'granted' : 'revoked'}" data-nav-feature="bookings" data-v-id="${v.id}" title="Enter Bookings section to make changes">
+                📅 Book: ${v.features?.calendarBooking !== false ? 'ON ↗' : 'OFF ↗'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.customerReviews !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="customerReviews" data-v-id="${v.id}" title="Click to Grant/Revoke Reviews Tab">
-                ⭐ Reviews: ${v.features?.customerReviews !== false ? 'ON' : 'OFF'}
+              <button type="button" class="tab-grant-badge ${v.features?.customerReviews !== false ? 'granted' : 'revoked'}" data-nav-feature="reviews" data-v-id="${v.id}" title="Enter Reviews section to make changes">
+                ⭐ Reviews: ${v.features?.customerReviews !== false ? 'ON ↗' : 'OFF ↗'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.pwaInstall !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="pwaInstall" data-v-id="${v.id}" title="Click to Grant/Revoke PWA Web App Installation">
-                📱 PWA: ${v.features?.pwaInstall !== false ? 'ON' : 'OFF'}
+              <button type="button" class="tab-grant-badge ${v.features?.pwaInstall !== false ? 'granted' : 'revoked'}" data-nav-feature="profile" data-v-id="${v.id}" title="Enter PWA section to make changes">
+                📱 PWA: ${v.features?.pwaInstall !== false ? 'ON ↗' : 'OFF ↗'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.leadForm !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="leadForm" data-v-id="${v.id}" title="Click to Grant/Revoke Lead Form Builder">
-                📝 Lead Form: ${v.features?.leadForm !== false ? 'ON' : 'OFF'}
+              <button type="button" class="tab-grant-badge ${v.features?.leadForm !== false ? 'granted' : 'revoked'}" data-nav-feature="leadform" data-v-id="${v.id}" title="Enter Lead Form section to make changes">
+                📝 Lead Form: ${v.features?.leadForm !== false ? 'ON ↗' : 'OFF ↗'}
               </button>
             </div>
           </div>
@@ -2491,74 +2491,52 @@ export class AdminConsoleController {
       });
     });
 
-    // Manage Services Modal for Vendor
+    // Navigate Directly Inside Services Section (No Popups!)
     this.container.querySelectorAll("[data-manage-services]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-manage-services");
-        const v = db.getVendor(id);
-        if (!v) return;
-        const modal = this.container.querySelector("#modal-admin-services");
-        if (modal) {
-          modal.querySelector("#admin-srv-vendor-id").value = v.id;
-          modal.querySelector("#admin-srv-vendor-name").textContent = v.branding.businessName;
-          modal.querySelector("#admin-add-srv-panel").style.display = "none";
-          this.renderAdminServicesList(v.id);
-          modal.classList.add("active");
-          document.body.classList.add("has-modal-open");
-        }
+        window.OmniApp.adminManageVendor(id, "services");
       });
     });
 
-    // Manage Products Modal for Vendor
+    // Navigate Directly Inside Products / Shop Section (No Popups!)
     this.container.querySelectorAll("[data-manage-products]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-manage-products");
-        const v = db.getVendor(id);
-        if (!v) return;
-        const modal = this.container.querySelector("#modal-admin-products");
-        if (modal) {
-          modal.querySelector("#admin-prod-vendor-id").value = v.id;
-          modal.querySelector("#admin-prod-vendor-name").textContent = v.branding.businessName;
-          modal.querySelector("#admin-add-prod-panel").style.display = "none";
-          this.renderAdminProductsList(v.id);
-          modal.classList.add("active");
-          document.body.classList.add("has-modal-open");
-        }
+        window.OmniApp.adminManageVendor(id, "shop");
       });
     });
 
-    // Manage Bookings Modal for Vendor
+    // Navigate Directly Inside Bookings Section (No Popups!)
     this.container.querySelectorAll("[data-manage-bookings]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-manage-bookings");
-        const v = db.getVendor(id);
-        if (!v) return;
-        const modal = this.container.querySelector("#modal-admin-bookings");
-        if (modal) {
-          modal.querySelector("#admin-bkg-vendor-id").value = v.id;
-          modal.querySelector("#admin-bkg-vendor-name").textContent = v.branding.businessName;
-          this.renderAdminBookingsList(v.id);
-          modal.classList.add("active");
-          document.body.classList.add("has-modal-open");
-        }
+        window.OmniApp.adminManageVendor(id, "bookings");
       });
     });
 
-    // Manage Reviews Modal for Vendor
+    // Navigate Directly Inside Reviews Section (No Popups!)
     this.container.querySelectorAll("[data-manage-reviews]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-manage-reviews");
-        const v = db.getVendor(id);
-        if (!v) return;
-        const modal = this.container.querySelector("#modal-admin-reviews");
-        if (modal) {
-          modal.querySelector("#admin-rev-vendor-id").value = v.id;
-          modal.querySelector("#admin-rev-vendor-name").textContent = v.branding.businessName;
-          modal.querySelector("#admin-add-rev-panel").style.display = "none";
-          this.renderAdminReviewsList(v.id);
-          modal.classList.add("active");
-          document.body.classList.add("has-modal-open");
-        }
+        window.OmniApp.adminManageVendor(id, "reviews");
+      });
+    });
+
+    // Navigate Directly Inside Profile & Plan Section (No Popups!)
+    this.container.querySelectorAll("[data-open-plan-modal]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-open-plan-modal");
+        window.OmniApp.adminManageVendor(id, "profile");
+      });
+    });
+
+    // Direct Navigation from Granted Feature Badges (No Popups!)
+    this.container.querySelectorAll("[data-nav-feature]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-v-id");
+        const tab = btn.getAttribute("data-nav-feature");
+        window.OmniApp.adminManageVendor(id, tab);
       });
     });
 
@@ -2566,7 +2544,7 @@ export class AdminConsoleController {
     this.container.querySelectorAll("[data-manage-vendor]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-manage-vendor");
-        window.OmniApp.adminManageVendor(id);
+        window.OmniApp.adminManageVendor(id, "profile");
       });
     });
 
@@ -2576,14 +2554,6 @@ export class AdminConsoleController {
         const vId = sel.getAttribute("data-assign-plan-vendor");
         const pId = e.target.value;
         await this.assignPlanToVendor(vId, pId);
-      });
-    });
-
-    // 1-Click Package Assign Modal Trigger
-    this.container.querySelectorAll("[data-open-plan-modal]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-open-plan-modal");
-        this.openAssignPlanModal(id);
       });
     });
 

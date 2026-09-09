@@ -16,7 +16,7 @@ export const PWAHandler = {
     if (!("serviceWorker" in navigator)) return;
 
     const doRegister = () => {
-      navigator.serviceWorker.register("./sw.js?v=20260910_v17")
+      navigator.serviceWorker.register("./sw.js?v=20260910_v18")
         .then((reg) => {
           console.log("[PWA] ServiceWorker registered with scope:", reg.scope);
           reg.update().catch(() => {});
@@ -264,7 +264,7 @@ export const PWAHandler = {
               <span>📲 Install App</span>
             </button>
             <button type="button" class="btn-pill pwa-btn-cancel" id="btn-initial-popup-cancel">
-              <span>🌐 Continue in Browser</span>
+              <span>✕ Browse Web Version</span>
             </button>
           </div>
         </div>
@@ -312,20 +312,79 @@ export const PWAHandler = {
       modalEl.addEventListener("click", (e) => {
         if (e.target === modalEl) dismissPopup();
       });
-    }, 450);
+    }, 800);
   },
 
   autoPromptInstallIfEligible(vendor) {
     this.showFirstVisitInstallPopup(vendor);
   },
 
-  promptInstall(vendorName = "Smart vCard", vendor = null) {
+  async waitForInstallPrompt(timeoutMs = 2500) {
+    if (this.deferredPrompt || window.deferredPWAPrompt) {
+      return this.deferredPrompt || window.deferredPWAPrompt;
+    }
+    return new Promise((resolve) => {
+      let resolved = false;
+      const onReady = (e) => {
+        if (!resolved) {
+          resolved = true;
+          cleanup();
+          resolve(e.detail || window.deferredPWAPrompt || this.deferredPrompt);
+        }
+      };
+      const onBeforeInstall = (e) => {
+        if (!resolved) {
+          resolved = true;
+          cleanup();
+          resolve(e);
+        }
+      };
+      const timer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          cleanup();
+          resolve(this.deferredPrompt || window.deferredPWAPrompt || null);
+        }
+      }, timeoutMs);
+
+      const cleanup = () => {
+        clearTimeout(timer);
+        window.removeEventListener("pwa-prompt-ready", onReady);
+        window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      };
+
+      window.addEventListener("pwa-prompt-ready", onReady, { once: true });
+      window.addEventListener("beforeinstallprompt", onBeforeInstall, { once: true });
+    });
+  },
+
+  async promptInstall(vendorName = "Smart vCard", vendor = null) {
     const v = vendor || {};
     const bizName = vendorName || v.branding?.businessName || "Smart vCard";
     const vendorSlug = v.slug || v.id || new URLSearchParams(window.location.search).get("v") || "";
 
-    // 1. Direct 1-Tap native prompt if ready on phone (Chrome Android, Edge, Desktop Chrome)
-    const prompt = this.deferredPrompt || window.deferredPWAPrompt;
+    const ua = navigator.userAgent || "";
+    const isInAppBrowser = /FBAN|FBAV|Instagram|WhatsApp|Line|MicroMessenger|Snapchat|BytedanceWebview/i.test(ua);
+    const isAndroid = /Android/i.test(ua) || (ua.includes("Linux") && navigator.maxTouchPoints > 0);
+
+    // 1. If inside WhatsApp / in-app browser on Android: automatically open in Google Chrome for 1-tap install!
+    if (isInAppBrowser && isAndroid) {
+      window.OmniApp?.showToast("Launching Google Chrome for 1-Tap App Install... 🚀");
+      const chromeIntentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+      try {
+        window.location.href = chromeIntentUrl;
+      } catch (e) {
+        window.open(chromeIntentUrl, "_system");
+      }
+      return;
+    }
+
+    // 2. Direct 1-Tap native prompt if ready on phone (Chrome Android, Edge, Desktop Chrome)
+    let prompt = this.deferredPrompt || window.deferredPWAPrompt;
+    if (!prompt && !isInAppBrowser) {
+      prompt = await this.waitForInstallPrompt(2000);
+    }
+
     if (prompt) {
       try {
         const promptPromise = prompt.prompt();
@@ -367,7 +426,7 @@ export const PWAHandler = {
       }
     }
 
-    // 2. If native prompt not ready (iOS Safari, in-app browser, or desktop): show the guide sheet!
+    // 3. If native prompt not ready (iOS Safari, in-app browser, or desktop): show the guide sheet!
     this.showInstallModal(vendorName, vendor);
   },
 
@@ -499,7 +558,7 @@ export const PWAHandler = {
             <span>📋 Copy Link</span>
           </button>
           <button type="button" class="btn-pill" id="btn-sheet-dismiss" style="flex: 1; justify-content: center; padding: 10px 14px; font-size: 0.8rem; border-color: transparent; color: var(--theme-text-muted);">
-            <span>Continue in Browser</span>
+            <span>Close</span>
           </button>
         </div>
       </div>
