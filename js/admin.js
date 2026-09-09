@@ -1381,11 +1381,21 @@ export class AdminConsoleController {
             <a href="?v=${v.slug}" target="_blank" rel="noopener" class="btn-pill" style="text-decoration: none;">Preview ↗</a>
             <button class="btn-pill" style="color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
             <button class="btn-pill" style="color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
-            <button class="btn-pill" style="color: #34D399; border-color: rgba(52,211,153,0.4);" data-manage-leads="${v.id}" title="View Leads & Edit Lead Form">📝 Leads (${v.leads?.length || 0})</button>
-            <button class="btn-pill" style="color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>
-            <button class="btn-pill" style="color: #10B981;" data-manage-products="${v.id}">🛍️ Products (${v.products?.length || 0})</button>
-            <button class="btn-pill" style="color: #00E5FF;" data-manage-bookings="${v.id}">📅 Bookings (${v.bookings?.length || 0})</button>
-            <button class="btn-pill" style="color: #F59E0B;" data-manage-reviews="${v.id}">★ Reviews (${v.reviews?.length || 0})</button>
+            <button class="btn-pill" style="${v.features?.leadForm !== false ? 'color: #34D399; border-color: rgba(52,211,153,0.4);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-leads="${v.id}" title="${v.features?.leadForm !== false ? 'View Leads & Edit Lead Form' : 'Lead Form is turned OFF'}">
+              📝 Leads ${v.features?.leadForm !== false ? `(${v.leads?.length || 0})` : '(OFF)'}
+            </button>
+            <button class="btn-pill" style="${v.features?.quoteBuilder !== false ? 'color: var(--theme-primary);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-services="${v.id}" title="${v.features?.quoteBuilder !== false ? 'Manage Services' : 'Services Tab is turned OFF'}">
+              📋 Services ${v.features?.quoteBuilder !== false ? `(${v.services?.length || 0})` : '(OFF)'}
+            </button>
+            <button class="btn-pill" style="${v.features?.ecommerceShop !== false ? 'color: #10B981;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-products="${v.id}" title="${v.features?.ecommerceShop !== false ? 'Manage E-Commerce Catalog' : 'Shop Tab is turned OFF'}">
+              🛍️ Products ${v.features?.ecommerceShop !== false ? `(${v.products?.length || 0})` : '(OFF)'}
+            </button>
+            <button class="btn-pill" style="${v.features?.calendarBooking !== false ? 'color: #00E5FF;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-bookings="${v.id}" title="${v.features?.calendarBooking !== false ? 'Manage Bookings' : 'Bookings Tab is turned OFF'}">
+              📅 Bookings ${v.features?.calendarBooking !== false ? `(${v.bookings?.length || 0})` : '(OFF)'}
+            </button>
+            <button class="btn-pill" style="${v.features?.customerReviews !== false ? 'color: #F59E0B;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-reviews="${v.id}" title="${v.features?.customerReviews !== false ? 'Manage Customer Reviews' : 'Reviews Tab is turned OFF'}">
+              ★ Reviews ${v.features?.customerReviews !== false ? `(${v.reviews?.length || 0})` : '(OFF)'}
+            </button>
             <button class="btn-pill active" data-manage-vendor="${v.id}">🔐 Console</button>
             <button class="btn-pill" style="color: var(--theme-primary); border-color: rgba(212,255,0,0.3);" data-assign-demo="${v.id}" title="Assign 3-Day Free Demo">🎁 3d Demo</button>
             <button class="btn-pill" style="${v.status === 'suspended' ? 'background: rgba(16,185,129,0.15); color: #10B981; border-color: rgba(16,185,129,0.45); font-weight: 700;' : 'color: #F87171; border-color: rgba(248,113,113,0.4);'}" data-toggle-suspend="${v.id}">${v.status === 'suspended' ? '▶️ Activate' : '⏸️ Suspend'}</button>
@@ -1570,10 +1580,11 @@ export class AdminConsoleController {
               <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;">Preview ↗</a>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
-              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-primary);" data-manage-services="${v.id}">📋 Services (${v.services?.length || 0})</button>
-              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #10B981;" data-manage-products="${v.id}">🛍️ Products (${v.products?.length || 0})</button>
-              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #00E5FF;" data-manage-bookings="${v.id}">📅 Bookings (${v.bookings?.length || 0})</button>
-              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #F59E0B;" data-manage-reviews="${v.id}">★ Reviews (${v.reviews?.length || 0})</button>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.leadForm !== false ? 'color: #34D399; border-color: rgba(52,211,153,0.4);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-leads="${v.id}" title="${v.features?.leadForm !== false ? 'View Leads & Edit Lead Form' : 'Lead Form is turned OFF'}">📝 Leads ${v.features?.leadForm !== false ? `(${v.leads?.length || 0})` : '(OFF)'}</button>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.quoteBuilder !== false ? 'color: var(--theme-primary);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-services="${v.id}" title="${v.features?.quoteBuilder !== false ? 'Manage Services' : 'Services Tab is turned OFF'}">📋 Services ${v.features?.quoteBuilder !== false ? `(${v.services?.length || 0})` : '(OFF)'}</button>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.ecommerceShop !== false ? 'color: #10B981;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-products="${v.id}" title="${v.features?.ecommerceShop !== false ? 'Manage E-Commerce Catalog' : 'Shop Tab is turned OFF'}">🛍️ Products ${v.features?.ecommerceShop !== false ? `(${v.products?.length || 0})` : '(OFF)'}</button>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.calendarBooking !== false ? 'color: #00E5FF;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-bookings="${v.id}" title="${v.features?.calendarBooking !== false ? 'Manage Bookings' : 'Bookings Tab is turned OFF'}">📅 Bookings ${v.features?.calendarBooking !== false ? `(${v.bookings?.length || 0})` : '(OFF)'}</button>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.customerReviews !== false ? 'color: #F59E0B;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-reviews="${v.id}" title="${v.features?.customerReviews !== false ? 'Manage Customer Reviews' : 'Reviews Tab is turned OFF'}">★ Reviews ${v.features?.customerReviews !== false ? `(${v.reviews?.length || 0})` : '(OFF)'}</button>
               <button class="btn-pill active" style="padding: 3px 8px; font-size: 0.72rem;" data-manage-vendor="${v.id}">🔐 Manage Console</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-primary); border-color: rgba(212,255,0,0.3);" data-assign-demo="${v.id}" title="Assign 3-Day Free Demo (Sets expiry to +3 days from today)">🎁 3d Demo</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.status === 'suspended' ? 'color: #10B981; border-color: rgba(16,185,129,0.4); font-weight: 700;' : 'color: #F87171; border-color: rgba(248,113,113,0.4);'}" data-toggle-suspend="${v.id}">

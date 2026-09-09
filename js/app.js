@@ -63,9 +63,9 @@ class OmniAppManager {
       } else if (this.currentView === "home") {
         this.homeCtrl.render();
       } else if (this.currentView === "admin") {
-        this.adminCtrl.renderDashboard();
+        this.adminCtrl.render();
       } else if (this.currentView === "vendor") {
-        this.vendorCtrl.renderDashboard();
+        this.vendorCtrl.render();
       }
     });
   }

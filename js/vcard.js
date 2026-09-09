@@ -35,6 +35,7 @@ export class VCardController {
     this.vendor = v;
     this.selectedServices.clear();
     this.cart = {};
+    this.activeTab = "home";
     this.applyTheme();
     PWAHandler.updateManifestForVendor(v);
 
@@ -581,6 +582,7 @@ export class VCardController {
         </div>
 
         <!-- Tab 2: Services Catalog & Quote Request Builder (Clean Dedicated Page) -->
+        ${v.features?.quoteBuilder !== false ? `
         <div class="tab-pane ${this.activeTab === 'services' ? 'active' : ''}" id="pane-services">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
@@ -602,8 +604,10 @@ export class VCardController {
             ${this.renderServicesList()}
           </div>
         </div>
+        ` : ''}
 
         <!-- Tab 3: Shop / Product Catalog (Clean Dedicated Page) -->
+        ${v.features?.ecommerceShop !== false ? `
         <div class="tab-pane ${this.activeTab === 'shop' ? 'active' : ''}" id="pane-shop">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
@@ -625,8 +629,10 @@ export class VCardController {
             ${this.renderProductsList(currency)}
           </div>
         </div>
+        ` : ''}
 
         <!-- Tab 4: Appointment & Booking Calendar (Clean Dedicated Page) -->
+        ${v.features?.calendarBooking !== false ? `
         <div class="tab-pane ${this.activeTab === 'calendar' ? 'active' : ''}" id="pane-calendar">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
@@ -692,8 +698,10 @@ export class VCardController {
             </button>
           </div>
         </div>
+        ` : ''}
 
         <!-- Tab 5: Ratings & Customer Reviews (Clean Dedicated Page) -->
+        ${v.features?.customerReviews !== false ? `
         <div class="tab-pane ${this.activeTab === 'reviews' ? 'active' : ''}" id="pane-reviews">
           <div class="vcard-tab-topbar">
             <div class="tab-topbar-left">
@@ -730,6 +738,7 @@ export class VCardController {
             ${this.renderReviewsList()}
           </div>
         </div>
+        ` : ''}
       </div>
     `;
 
@@ -823,15 +832,20 @@ export class VCardController {
     this.bindDockPreviewEvents(currency);
 
     const screen = document.getElementById("app-content-root");
-    const hasPreview = (this.activeTab === "services" && this.selectedServices.size > 0) ||
-                       (this.activeTab === "shop" && this.getCartTotalItems() > 0);
+    const canQuote = this.vendor?.features?.quoteBuilder !== false;
+    const canShop = this.vendor?.features?.ecommerceShop !== false;
+    const hasPreview = (canQuote && this.activeTab === "services" && this.selectedServices.size > 0) ||
+                       (canShop && this.activeTab === "shop" && this.getCartTotalItems() > 0);
     if (screen) {
       screen.classList.toggle("has-dock-preview", hasPreview);
     }
   }
 
   renderDockPreviewBar(currency) {
-    if (this.activeTab === "services" && this.selectedServices.size > 0) {
+    const canQuote = this.vendor?.features?.quoteBuilder !== false;
+    const canShop = this.vendor?.features?.ecommerceShop !== false;
+
+    if (canQuote && this.activeTab === "services" && this.selectedServices.size > 0) {
       const count = this.selectedServices.size;
       return `
         <div class="dock-preview-bar" id="dock-preview-services">
@@ -846,7 +860,7 @@ export class VCardController {
       `;
     }
 
-    if (this.activeTab === "shop" && this.getCartTotalItems() > 0) {
+    if (canShop && this.activeTab === "shop" && this.getCartTotalItems() > 0) {
       const totalItems = this.getCartTotalItems();
       const subtotal = this.getCartSubtotal();
       return `
@@ -895,8 +909,10 @@ export class VCardController {
       previewContainer.innerHTML = this.renderDockPreviewBar(currency);
       this.bindDockPreviewEvents(currency);
 
-      const hasPreview = (this.activeTab === "services" && this.selectedServices.size > 0) ||
-                         (this.activeTab === "shop" && this.getCartTotalItems() > 0);
+      const canQuote = this.vendor?.features?.quoteBuilder !== false;
+      const canShop = this.vendor?.features?.ecommerceShop !== false;
+      const hasPreview = (canQuote && this.activeTab === "services" && this.selectedServices.size > 0) ||
+                         (canShop && this.activeTab === "shop" && this.getCartTotalItems() > 0);
       if (screen) {
         screen.classList.toggle("has-dock-preview", hasPreview);
       }
@@ -1230,6 +1246,7 @@ export class VCardController {
       </div>
 
       <!-- Modal: Selected Services Quote Preview -->
+      ${v.features?.quoteBuilder !== false ? `
       <div class="modal-overlay" id="modal-services-cart">
         <div class="modal-card">
           <div class="modal-header">
@@ -1244,8 +1261,10 @@ export class VCardController {
           </div>
         </div>
       </div>
+      ` : ''}
 
       <!-- Modal: Products Cart & Order -->
+      ${v.features?.ecommerceShop !== false ? `
       <div class="modal-overlay" id="modal-products-cart">
         <div class="modal-card">
           <div class="modal-header">
@@ -1260,6 +1279,7 @@ export class VCardController {
           </div>
         </div>
       </div>
+      ` : ''}
 
       <!-- Modal: Customized Lead Form Popup -->
       ${(v.features?.leadForm !== false && v.leadForm?.enabled !== false) ? `
@@ -1423,14 +1443,6 @@ export class VCardController {
 
   bindEvents() {
     const v = this.vendor;
-
-    // Bottom Navigation Dock Tabs
-    this.container.querySelectorAll(".dock-item").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const tab = btn.getAttribute("data-tab");
-        this.switchTab(tab);
-      });
-    });
 
     // Share Card -> Native share or copy clean link
     const shareBtn = this.container.querySelector("#btn-vcard-share");
@@ -2364,6 +2376,12 @@ export class VCardController {
   }
 
   switchTab(tabName) {
+    // Feature authorization guards: Prevent navigating to revoked tabs
+    if (tabName === "services" && this.vendor?.features?.quoteBuilder === false) tabName = "home";
+    if (tabName === "shop" && this.vendor?.features?.ecommerceShop === false) tabName = "home";
+    if (tabName === "calendar" && this.vendor?.features?.calendarBooking === false) tabName = "home";
+    if (tabName === "reviews" && this.vendor?.features?.customerReviews === false) tabName = "home";
+
     this.activeTab = tabName;
     const dockRoot = document.getElementById("app-dock-root");
     if (dockRoot) {

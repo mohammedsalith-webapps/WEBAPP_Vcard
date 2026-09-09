@@ -94,6 +94,11 @@ class DatabaseService {
             }
           });
         }
+        // Ensure apex-medical has active expiry
+        if ((v.id === "apex-medical" || v.slug === "apex-medical") && v.expiresAt && new Date(v.expiresAt) < new Date("2026-09-08")) {
+          v.expiresAt = "2027-01-15T14:00:00.000Z";
+          cleaned = true;
+        }
       });
       if (cleaned) {
         this.saveLocal();
@@ -178,6 +183,9 @@ class DatabaseService {
 
   saveLocal() {
     try {
+      if (this.data) {
+        this.data.updatedAt = Date.now();
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
       this.notifyListeners();
     } catch (err) {
@@ -224,11 +232,19 @@ class DatabaseService {
           if (snapshot && snapshot.exists()) {
             const cloudData = snapshot.val();
             if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
-              this.data = cloudData;
-              // Ensure local firebaseConfig is preserved
-              if (!this.data.platformSettings) this.data.platformSettings = {};
-              this.data.platformSettings.firebaseConfig = { ...fbConf };
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+              const localTime = Number(this.data?.updatedAt) || 0;
+              const cloudTime = Number(cloudData.updatedAt) || 0;
+              if (localTime > cloudTime) {
+                // Local edits are newer than cloud: sync to cloud
+                console.log("⚡ [DB] Local data is newer than cloud. Syncing local state to Firebase.");
+                await this.syncToCloud();
+              } else {
+                this.data = cloudData;
+                // Ensure local firebaseConfig is preserved
+                if (!this.data.platformSettings) this.data.platformSettings = {};
+                this.data.platformSettings.firebaseConfig = { ...fbConf };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+              }
             }
           } else if (snapshot && !snapshot.exists()) {
             // Cloud is empty, seed it with current local data!
@@ -242,15 +258,19 @@ class DatabaseService {
         this.firebaseDb.ref("omnicard").on("value", (snapshot) => {
           const cloudData = snapshot.val();
           if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
-            this.data = cloudData;
-            if (!this.data.platformSettings) {
-              this.data.platformSettings = JSON.parse(JSON.stringify(INITIAL_DATA.platformSettings || {}));
+            const localTime = Number(this.data?.updatedAt) || 0;
+            const cloudTime = Number(cloudData.updatedAt) || 0;
+            if (cloudTime >= localTime) {
+              this.data = cloudData;
+              if (!this.data.platformSettings) {
+                this.data.platformSettings = JSON.parse(JSON.stringify(INITIAL_DATA.platformSettings || {}));
+              }
+              if (fbConf) {
+                this.data.platformSettings.firebaseConfig = { ...fbConf };
+              }
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+              this.notifyListeners();
             }
-            if (fbConf) {
-              this.data.platformSettings.firebaseConfig = { ...fbConf };
-            }
-            this.saveLocal();
-            this.notifyListeners();
           }
         });
       } catch (err) {
@@ -318,16 +338,17 @@ class DatabaseService {
 
   async saveVendor(vendorData) {
     const vendors = this.getVendors();
-    const index = vendors.findIndex((v) => v.id === vendorData.id);
+    const index = vendors.findIndex((v) => (v.id && v.id === vendorData.id) || (v.slug && v.slug === vendorData.slug));
+    const cleanVendor = JSON.parse(JSON.stringify(vendorData));
     if (index >= 0) {
-      vendors[index] = { ...vendors[index], ...vendorData };
+      vendors[index] = { ...vendors[index], ...cleanVendor, features: { ...(vendors[index].features || {}), ...(cleanVendor.features || {}) } };
     } else {
-      vendors.push(vendorData);
+      vendors.push(cleanVendor);
     }
     this.data.vendors = vendors;
     this.saveLocal();
     await this.syncToCloud();
-    return vendorData;
+    return cleanVendor;
   }
 
   async deleteVendor(vendorId) {

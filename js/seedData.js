@@ -580,7 +580,7 @@ export const INITIAL_DATA = {
       status: "active",
       planId: "plan-starter",
       createdAt: "2026-03-01T08:00:00.000Z",
-      expiresAt: "2026-09-07T14:00:00.000Z", // < 24 hours expiry from local time 2026-09-06!
+      expiresAt: "2027-01-15T14:00:00.000Z", // Future active date
       verified: true,
       isOpen: true,
       openHours: "09:00 AM - 07:00 PM (Mon-Sat)",
