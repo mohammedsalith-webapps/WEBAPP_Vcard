@@ -1,7 +1,7 @@
 // Module 1: Public Digital Business Card (vCard) Controller
-import { db } from "./db.js?v=20260909_v9";
-import { WhatsAppEngine } from "./whatsapp.js?v=20260909_v9";
-import { PWAHandler } from "./pwa.js?v=20260909_v9";
+import { db } from "./db.js?v=20260909_v10";
+import { WhatsAppEngine } from "./whatsapp.js?v=20260909_v10";
+import { PWAHandler } from "./pwa.js?v=20260909_v10";
 
 export class VCardController {
   constructor(containerEl) {
@@ -1492,7 +1492,7 @@ export class VCardController {
     const pwaBanner = this.container.querySelector("#vcard-pwa-install-banner");
     const handleInstallClick = (e) => {
       if (e) e.stopPropagation();
-      PWAHandler.showInstallModal(v?.branding?.businessName, v);
+      PWAHandler.promptInstall(v?.branding?.businessName, v);
     };
     if (pwaBtn) pwaBtn.addEventListener("click", handleInstallClick);
     if (pwaBanner) pwaBanner.addEventListener("click", handleInstallClick);

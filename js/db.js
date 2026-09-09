@@ -243,7 +243,13 @@ class DatabaseService {
           const cloudData = snapshot.val();
           if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
             this.data = cloudData;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+            if (!this.data.platformSettings) {
+              this.data.platformSettings = JSON.parse(JSON.stringify(INITIAL_DATA.platformSettings || {}));
+            }
+            if (fbConf) {
+              this.data.platformSettings.firebaseConfig = { ...fbConf };
+            }
+            this.saveLocal();
             this.notifyListeners();
           }
         });
@@ -267,10 +273,18 @@ class DatabaseService {
 
   // Platform Settings
   getPlatformSettings() {
+    if (!this.data) {
+      this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
+    }
+    if (!this.data.platformSettings) {
+      this.data.platformSettings = JSON.parse(JSON.stringify(INITIAL_DATA.platformSettings || {}));
+    }
     return this.data.platformSettings;
   }
 
   async updatePlatformSettings(newSettings) {
+    if (!this.data) this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
+    if (!this.data.platformSettings) this.data.platformSettings = {};
     this.data.platformSettings = { ...this.data.platformSettings, ...newSettings };
     this.saveLocal();
     await this.syncToCloud();
@@ -279,7 +293,18 @@ class DatabaseService {
 
   // Vendors
   getVendors() {
+    if (!this.data) {
+      this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
+    }
     return this.data.vendors || [];
+  }
+
+  // Subscription Plans
+  getSubscriptionPlans() {
+    if (!this.data) {
+      this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
+    }
+    return this.data.subscriptionPlans || [];
   }
 
   getVendor(idOrSlug) {

@@ -199,6 +199,36 @@ export const PWAHandler = {
   },
 
   promptInstall(vendorName = "Smart vCard", vendor = null) {
+    const v = vendor || {};
+    const bizName = vendorName || v.branding?.businessName || "Smart vCard";
+
+    // 1. Direct 1-Tap native prompt if ready on phone (Chrome Android, Edge)
+    const prompt = this.deferredPrompt || window.deferredPWAPrompt;
+    if (prompt) {
+      try {
+        const promptPromise = prompt.prompt();
+        if (promptPromise && typeof promptPromise.catch === "function") {
+          promptPromise.catch((err) => {
+            console.warn("[PWA] Native prompt requires user gesture or already consumed:", err);
+            this.showInstallModal(vendorName, vendor);
+          });
+        }
+        if (prompt.userChoice && typeof prompt.userChoice.then === "function") {
+          prompt.userChoice.then((choiceResult) => {
+            if (choiceResult && choiceResult.outcome === "accepted") {
+              window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
+            }
+            this.deferredPrompt = null;
+            window.deferredPWAPrompt = null;
+          }).catch(() => {});
+        }
+        return;
+      } catch (err) {
+        console.warn("[PWA] Prompt trigger error:", err);
+      }
+    }
+
+    // 2. If native prompt not ready (iOS Safari, in-app browser, or desktop): show the bottom sheet!
     this.showInstallModal(vendorName, vendor);
   },
 
@@ -371,16 +401,21 @@ export const PWAHandler = {
       const prompt = this.deferredPrompt || window.deferredPWAPrompt;
       if (prompt) {
         try {
-          prompt.prompt();
-          prompt.userChoice.then((choiceResult) => {
-            if (choiceResult && choiceResult.outcome === "accepted") {
-              window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
-            }
-            this.deferredPrompt = null;
-            window.deferredPWAPrompt = null;
-          }).catch((err) => {
-            console.warn("[PWA] Prompt outcome error:", err);
-          });
+          const promptPromise = prompt.prompt();
+          if (promptPromise && typeof promptPromise.catch === "function") {
+            promptPromise.catch((err) => console.warn("[PWA] Prompt outcome error:", err));
+          }
+          if (prompt.userChoice && typeof prompt.userChoice.then === "function") {
+            prompt.userChoice.then((choiceResult) => {
+              if (choiceResult && choiceResult.outcome === "accepted") {
+                window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
+              }
+              this.deferredPrompt = null;
+              window.deferredPWAPrompt = null;
+            }).catch((err) => {
+              console.warn("[PWA] Prompt outcome error:", err);
+            });
+          }
         } catch (e) {
           console.warn("[PWA] Prompt trigger error:", e);
         }
@@ -415,7 +450,7 @@ if (typeof document !== "undefined") {
       e.stopPropagation();
       const currentSlug = new URLSearchParams(window.location.search).get("v") || window.OmniApp?.currentVendorSlug;
       const vendor = currentSlug && window.OmniApp?.db ? window.OmniApp.db.getVendor(currentSlug) : null;
-      PWAHandler.showInstallModal(vendor?.branding?.businessName, vendor);
+      PWAHandler.promptInstall(vendor?.branding?.businessName, vendor);
     }
   });
 }

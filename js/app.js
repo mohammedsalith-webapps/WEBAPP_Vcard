@@ -1,10 +1,10 @@
 // Main Application Bootstrap & Master View Orchestrator
-import { db } from "./db.js?v=20260909_v9";
-import { VCardController } from "./vcard.js?v=20260909_v9";
-import { VendorConsoleController } from "./vendor.js?v=20260909_v9";
-import { AdminConsoleController } from "./admin.js?v=20260909_v9";
-import { HomeController } from "./home.js?v=20260909_v9";
-import { PWAHandler } from "./pwa.js?v=20260909_v9";
+import { db } from "./db.js?v=20260909_v10";
+import { VCardController } from "./vcard.js?v=20260909_v10";
+import { VendorConsoleController } from "./vendor.js?v=20260909_v10";
+import { AdminConsoleController } from "./admin.js?v=20260909_v10";
+import { HomeController } from "./home.js?v=20260909_v10";
+import { PWAHandler } from "./pwa.js?v=20260909_v10";
 
 class OmniAppManager {
   constructor() {
