@@ -192,16 +192,18 @@ class OmniAppManager {
     }
   }
 
-  // Admin Impersonation: Direct 1-Click login as a specific vendor and navigate into target feature section
+  // Admin Impersonation: Direct 1-Click login as a specific vendor and navigate into target feature section (No Popups!)
   adminManageVendor(vendorId, targetTab = "profile") {
     this.isAdminManaging = true;
-    this.setView("vendor", vendorId);
-    this.vendorCtrl.loginVendorDirect(vendorId);
-    if (targetTab && this.vendorCtrl) {
-      this.vendorCtrl.activeTab = targetTab;
-      this.vendorCtrl.render();
-    }
     const v = db.getVendor(vendorId);
+    if (this.vendorCtrl) {
+      this.vendorCtrl.currentVendor = v;
+      this.vendorCtrl.activeTab = targetTab || "profile";
+    }
+    this.setView("vendor", vendorId);
+    if (this.vendorCtrl) {
+      this.vendorCtrl.loginVendorDirect(vendorId, targetTab);
+    }
     const tabNames = {
       profile: "Profile & Plan",
       services: "Services & Quote",

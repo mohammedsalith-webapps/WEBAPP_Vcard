@@ -92,10 +92,11 @@ export class VendorConsoleController {
   }
 
   // Admin Direct Login Helper (Allows Admin to manage any vendor from the Super Admin Console)
-  loginVendorDirect(vendorId) {
+  loginVendorDirect(vendorId, targetTab = "profile") {
     const v = db.getVendor(vendorId);
     if (v) {
       this.currentVendor = v;
+      if (targetTab) this.activeTab = targetTab;
       this.renderDashboard();
     }
   }
@@ -228,6 +229,121 @@ export class VendorConsoleController {
         <!-- 1. Branding & Profile Pane -->
         <div class="portal-pane ${this.activeTab === 'profile' ? 'active' : ''}" id="vpane-profile">
           <form id="form-vendor-profile">
+            ${isAdmin ? `
+              <!-- Super Admin Master Controls & Entitlements Card (Direct Edit Mode) -->
+              <div class="bento-card" style="margin-bottom: 20px; border: 1.5px solid rgba(212, 255, 0, 0.45); background: linear-gradient(135deg, rgba(212, 255, 0, 0.05) 0%, rgba(0, 229, 255, 0.03) 100%); box-shadow: 0 4px 24px rgba(0,0,0,0.35);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                  <div>
+                    <h3 style="font-size: 1.1rem; color: var(--theme-primary); display: flex; align-items: center; gap: 8px; margin: 0;">
+                      <span>👑</span> <span>Super Admin Master Controls & Entitlements</span>
+                    </h3>
+                    <div style="font-size: 0.76rem; color: var(--theme-text-muted); margin-top: 3px;">
+                      You are in full Super Admin edit mode. Changes saved here update subscriptions, access PINs, and feature tabs instantly.
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="pill-status-active" style="background: rgba(212,255,0,0.18); color: var(--theme-primary); font-weight: 800; font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(212,255,0,0.4);">
+                      SUPER ADMIN EDIT ACTIVE
+                    </span>
+                    <button type="submit" class="btn-pill active" style="padding: 5px 14px; font-weight: 800; font-size: 0.8rem; background: var(--theme-primary); color: #000;">
+                      💾 Quick Save
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Plan, Expiry, Status, PIN -->
+                <div class="bento-grid bento-grid-2" style="margin-bottom: 16px; gap: 14px;">
+                  <div class="form-group">
+                    <label class="form-label" style="font-weight: 700; color: #A78BFA; display: flex; justify-content: space-between;">
+                      <span>💳 Assigned Subscription Plan</span>
+                      <span style="font-size: 0.7rem; color: #94A3B8;">Current: ${v.planId || 'free'}</span>
+                    </label>
+                    <select class="form-select" id="v-plan" style="border-color: rgba(167,139,250,0.5); font-weight: 600;">
+                      ${db.getSubscriptionPlans().map(p => `
+                        <option value="${p.id}" ${v.planId === p.id ? 'selected' : ''}>
+                          ${p.name} (${p.durationDays}d) — ${p.price === 0 || p.id === 'plan-demo' ? 'FREE' : `${currency}${p.price}`}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" style="font-weight: 700; color: #F59E0B; display: flex; justify-content: space-between;">
+                      <span>📅 Subscription Expiry Date</span>
+                      <span style="font-size: 0.7rem; color: ${v.expiresAt && new Date(v.expiresAt) < new Date() ? '#EF4444' : '#10B981'}; font-weight: 700;">
+                        ${v.expiresAt ? (new Date(v.expiresAt) < new Date() ? '⚠️ Expired' : '✓ Active') : 'No Expiry'}
+                      </span>
+                    </label>
+                    <div style="display: flex; gap: 6px;">
+                      <input type="date" class="form-input" id="v-expiry" value="${v.expiresAt ? v.expiresAt.substring(0, 10) : ''}" style="border-color: rgba(245,158,11,0.5);" />
+                      <button type="button" class="btn-pill" id="btn-admin-ext-30" style="padding: 4px 10px; font-size: 0.75rem; white-space: nowrap;" title="Set expiry to +30 days from today">+30d</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bento-grid bento-grid-2" style="margin-bottom: 16px; gap: 14px;">
+                  <div class="form-group">
+                    <label class="form-label" style="font-weight: 700; color: var(--theme-primary);">🔐 Vendor Security PIN / Password</label>
+                    <input type="text" class="form-input" id="v-pin" value="${v.password || v.pin || '2026'}" placeholder="PIN / Password" style="border-color: rgba(212,255,0,0.5); font-weight: 700;" />
+                    <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 3px;">
+                      Vendor uses this password to log in or long-press the avatar logo.
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" style="font-weight: 700; color: #00E5FF;">🚦 Vendor Account Status</label>
+                    <select class="form-select" id="v-status" style="border-color: rgba(0,229,255,0.4); font-weight: 600;">
+                      <option value="active" ${v.status === 'active' ? 'selected' : ''}>🟢 Active (Public vCard Live & Accessible)</option>
+                      <option value="suspended" ${v.status === 'suspended' ? 'selected' : ''}>⏸️ Suspended (Public Access Paused)</option>
+                      <option value="expired" ${v.status === 'expired' ? 'selected' : ''}>⚠️ Expired (Requires Renewal)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Granted Feature Toggles -->
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 4px;">
+                  <div style="font-size: 0.85rem; font-weight: 700; color: #FFF; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <span>🎯 Granted Modules & vCard Tabs (Turn ON/OFF for this vendor)</span>
+                    <button type="button" class="btn-pill" id="btn-sync-plan-features" style="font-size: 0.72rem; padding: 4px 10px; color: #A78BFA; border-color: rgba(167,139,250,0.4);">
+                      ⚡ Sync Toggles from Selected Plan
+                    </button>
+                  </div>
+                  <div class="bento-grid bento-grid-2" style="gap: 10px;">
+                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                      <input type="checkbox" class="switch-input" id="feat-quote" ${v.features?.quoteBuilder !== false ? 'checked' : ''} />
+                      <span class="switch-slider"></span>
+                      <span>📋 <strong>Services & Quote Scope</strong></span>
+                    </label>
+                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                      <input type="checkbox" class="switch-input" id="feat-shop" ${v.features?.ecommerceShop !== false ? 'checked' : ''} />
+                      <span class="switch-slider"></span>
+                      <span>🛍️ <strong>E-Commerce Shop Catalog</strong></span>
+                    </label>
+                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                      <input type="checkbox" class="switch-input" id="feat-booking" ${v.features?.calendarBooking !== false ? 'checked' : ''} />
+                      <span class="switch-slider"></span>
+                      <span>📅 <strong>Appointment Booking Calendar</strong></span>
+                    </label>
+                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                      <input type="checkbox" class="switch-input" id="feat-reviews" ${v.features?.customerReviews !== false ? 'checked' : ''} />
+                      <span class="switch-slider"></span>
+                      <span>⭐ <strong>Customer Reviews & Ratings</strong></span>
+                    </label>
+                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                      <input type="checkbox" class="switch-input" id="feat-pwa" ${v.features?.pwaInstall !== false ? 'checked' : ''} />
+                      <span class="switch-slider"></span>
+                      <span>📱 <strong>PWA 1-Tap Install Web App</strong></span>
+                    </label>
+                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
+                      <input type="checkbox" class="switch-input" id="feat-leadform" ${v.features?.leadForm !== false ? 'checked' : ''} />
+                      <span class="switch-slider"></span>
+                      <span>📝 <strong>Lead Form Builder Popup</strong></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+
             <div class="bento-grid bento-grid-2" style="margin-bottom: 20px;">
               <div class="bento-card">
                 <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--theme-primary);">General Business Details</h3>
@@ -326,13 +442,24 @@ export class VendorConsoleController {
                 <div class="form-group">
                   <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Official WhatsApp Number</span>
-                    <span style="font-size: 0.7rem; color: #EF4444; background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);">🔒 Admin Managed</span>
+                    ${isAdmin ? `
+                      <span style="font-size: 0.7rem; color: #10B981; background: rgba(16, 185, 129, 0.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">👑 Super Admin Editable</span>
+                    ` : `
+                      <span style="font-size: 0.7rem; color: #EF4444; background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);">🔒 Admin Managed</span>
+                    `}
                   </label>
-                  <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" disabled readonly style="opacity: 0.65; cursor: not-allowed; background: rgba(255,255,255,0.03);" />
-                  <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                    <span>🔒 Official order receiving number is secured.</span>
-                    <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" style="color: var(--theme-primary); text-decoration: underline; font-weight: 600;">Contact Admin to change ↗</a>
-                  </div>
+                  ${isAdmin ? `
+                    <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" style="border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.04); font-weight: 600;" placeholder="+919876543210" />
+                    <div style="font-size: 0.72rem; color: #10B981; margin-top: 4px;">
+                      ✓ Super Admin mode: You can directly change this vendor's order routing WhatsApp number.
+                    </div>
+                  ` : `
+                    <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" disabled readonly style="opacity: 0.65; cursor: not-allowed; background: rgba(255,255,255,0.03);" />
+                    <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                      <span>🔒 Official order receiving number is secured.</span>
+                      <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" style="color: var(--theme-primary); text-decoration: underline; font-weight: 600;">Contact Admin to change ↗</a>
+                    </div>
+                  `}
                 </div>
                 <div class="form-group">
                   <label class="form-label">Email Address</label>
@@ -1069,6 +1196,7 @@ export class VendorConsoleController {
       this.currentVendor = db.getVendor(this.currentVendor.id) || this.currentVendor;
     }
     const v = this.currentVendor;
+    const isAdmin = !!(sessionStorage.getItem("admin_auth") === "true" || window.OmniApp?.isAdminManaging);
 
     // Logout
     const logoutBtn = this.container.querySelector("#btn-vendor-logout");
@@ -1124,8 +1252,6 @@ export class VendorConsoleController {
         v.notices.marquee = this.container.querySelector("#v-marquee").value.trim();
 
         v.contacts.phone = this.container.querySelector("#v-phone").value.trim();
-        // WhatsApp number is protected and ONLY modifiable by Super Admin:
-        // v.contacts.whatsapp remains preserved
         v.contacts.email = this.container.querySelector("#v-email").value.trim();
         v.contacts.location = this.container.querySelector("#v-location").value.trim();
         v.contacts.mapUrl = this.container.querySelector("#v-mapUrl").value.trim();
@@ -1138,10 +1264,113 @@ export class VendorConsoleController {
         v.promo.discount = this.container.querySelector("#v-promoDiscount").value.trim();
         v.promo.enabled = this.container.querySelector("#v-promoEnabled").checked;
 
+        // Super Admin exclusive controls update
+        if (isAdmin) {
+          const waInput = this.container.querySelector("#v-whatsapp");
+          if (waInput && waInput.value.trim()) {
+            v.contacts.whatsapp = waInput.value.trim();
+          }
+
+          const planEl = this.container.querySelector("#v-plan");
+          if (planEl) v.planId = planEl.value;
+
+          const expiryEl = this.container.querySelector("#v-expiry");
+          if (expiryEl && expiryEl.value) {
+            v.expiresAt = new Date(expiryEl.value + "T23:59:59Z").toISOString();
+          }
+
+          const pinEl = this.container.querySelector("#v-pin");
+          if (pinEl && pinEl.value.trim()) {
+            v.pin = pinEl.value.trim();
+            v.password = pinEl.value.trim();
+          }
+
+          const statusEl = this.container.querySelector("#v-status");
+          if (statusEl) v.status = statusEl.value;
+
+          if (!v.features) v.features = {};
+          const fQuote = this.container.querySelector("#feat-quote");
+          if (fQuote) v.features.quoteBuilder = fQuote.checked;
+          const fShop = this.container.querySelector("#feat-shop");
+          if (fShop) v.features.ecommerceShop = fShop.checked;
+          const fBook = this.container.querySelector("#feat-booking");
+          if (fBook) v.features.calendarBooking = fBook.checked;
+          const fRev = this.container.querySelector("#feat-reviews");
+          if (fRev) v.features.customerReviews = fRev.checked;
+          const fPwa = this.container.querySelector("#feat-pwa");
+          if (fPwa) v.features.pwaInstall = fPwa.checked;
+          const fLead = this.container.querySelector("#feat-leadform");
+          if (fLead) v.features.leadForm = fLead.checked;
+
+          await db.recordAdminChange(`Admin updated settings & entitlements for '${v.branding.businessName}'`);
+        }
+
         await db.saveVendor(v);
-        window.OmniApp.showToast("Profile & branding updated successfully!");
+        window.OmniApp.showToast(isAdmin ? `Settings & entitlements saved for '${v.branding.businessName}'!` : "Profile & branding updated successfully!");
         this.renderDashboard();
       });
+    }
+
+    // Super Admin Master Controls Event Handlers
+    if (isAdmin) {
+      // Sync features and set expiry when plan dropdown changes
+      const planSelect = this.container.querySelector("#v-plan");
+      if (planSelect) {
+        planSelect.addEventListener("change", () => {
+          const planId = planSelect.value;
+          const plan = db.getSubscriptionPlans().find(p => p.id === planId);
+          if (plan) {
+            const days = Number(plan.durationDays) || 30;
+            const targetDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+            const expiryInput = this.container.querySelector("#v-expiry");
+            if (expiryInput) {
+              expiryInput.value = targetDate.toISOString().substring(0, 10);
+            }
+            if (plan.features) {
+              if (this.container.querySelector("#feat-quote")) this.container.querySelector("#feat-quote").checked = plan.features.quoteBuilder !== false;
+              if (this.container.querySelector("#feat-shop")) this.container.querySelector("#feat-shop").checked = plan.features.ecommerceShop !== false;
+              if (this.container.querySelector("#feat-booking")) this.container.querySelector("#feat-booking").checked = plan.features.calendarBooking !== false;
+              if (this.container.querySelector("#feat-reviews")) this.container.querySelector("#feat-reviews").checked = plan.features.customerReviews !== false;
+              if (this.container.querySelector("#feat-pwa")) this.container.querySelector("#feat-pwa").checked = plan.features.pwaInstall !== false;
+              if (this.container.querySelector("#feat-leadform")) this.container.querySelector("#feat-leadform").checked = plan.features.leadForm !== false;
+            }
+            window.OmniApp.showToast(`Selected "${plan.name}" (${days}d) - Expiry & features updated.`);
+          }
+        });
+      }
+
+      // Quick +30 Days expiry button
+      const ext30Btn = this.container.querySelector("#btn-admin-ext-30");
+      if (ext30Btn) {
+        ext30Btn.addEventListener("click", () => {
+          const expiryInput = this.container.querySelector("#v-expiry");
+          const currentVal = expiryInput?.value ? new Date(expiryInput.value) : new Date();
+          const baseDate = currentVal > new Date() ? currentVal : new Date();
+          const newDate = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+          if (expiryInput) {
+            expiryInput.value = newDate.toISOString().substring(0, 10);
+            window.OmniApp.showToast(`Extended expiry to ${newDate.toLocaleDateString()}`);
+          }
+        });
+      }
+
+      // Sync toggles from selected plan button
+      const syncPlanBtn = this.container.querySelector("#btn-sync-plan-features");
+      if (syncPlanBtn) {
+        syncPlanBtn.addEventListener("click", () => {
+          const planId = this.container.querySelector("#v-plan")?.value;
+          const plan = db.getSubscriptionPlans().find(p => p.id === planId);
+          if (plan && plan.features) {
+            if (this.container.querySelector("#feat-quote")) this.container.querySelector("#feat-quote").checked = plan.features.quoteBuilder !== false;
+            if (this.container.querySelector("#feat-shop")) this.container.querySelector("#feat-shop").checked = plan.features.ecommerceShop !== false;
+            if (this.container.querySelector("#feat-booking")) this.container.querySelector("#feat-booking").checked = plan.features.calendarBooking !== false;
+            if (this.container.querySelector("#feat-reviews")) this.container.querySelector("#feat-reviews").checked = plan.features.customerReviews !== false;
+            if (this.container.querySelector("#feat-pwa")) this.container.querySelector("#feat-pwa").checked = plan.features.pwaInstall !== false;
+            if (this.container.querySelector("#feat-leadform")) this.container.querySelector("#feat-leadform").checked = plan.features.leadForm !== false;
+            window.OmniApp.showToast(`Synced feature toggles to '${plan.name}' defaults`);
+          }
+        });
+      }
     }
 
     // Modal triggers & handlers
@@ -1171,6 +1400,7 @@ export class VendorConsoleController {
           visible: true
         };
         await db.addService(v.id, newSrv);
+        if (isAdmin) await db.recordAdminChange(`Admin added service '${newSrv.name}' to '${v.branding.businessName}'`);
         this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-add-service")?.classList.remove("active");
         window.OmniApp.showToast("New service added!");
@@ -1205,6 +1435,7 @@ export class VendorConsoleController {
         const visible = this.container.querySelector("#edit-srv-visible").checked;
 
         await db.updateService(v.id, id, { name, category, description: "", visible });
+        if (isAdmin) await db.recordAdminChange(`Admin updated service '${name}' for '${v.branding.businessName}'`);
         this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-edit-service")?.classList.remove("active");
         window.OmniApp.showToast("Service updated successfully!");
@@ -1229,6 +1460,7 @@ export class VendorConsoleController {
         if (confirm("Are you sure you want to remove this service?")) {
           await db.deleteService(v.id, id);
           if (v.services) v.services = v.services.filter(s => String(s.id) !== String(id));
+          if (isAdmin) await db.recordAdminChange(`Admin deleted service from '${v.branding.businessName}'`);
           this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Service deleted.");
           this.renderDashboard();
@@ -1262,6 +1494,7 @@ export class VendorConsoleController {
         if (!v.products) v.products = [];
         v.products.push(newProd);
         await db.saveVendor(v);
+        if (isAdmin) await db.recordAdminChange(`Admin added product '${newProd.name}' to '${v.branding.businessName}'`);
         this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-add-product")?.classList.remove("active");
         window.OmniApp.showToast("Product added to catalog!");
@@ -1303,6 +1536,7 @@ export class VendorConsoleController {
         const visible = this.container.querySelector("#edit-prod-visible").checked;
 
         await db.updateProduct(v.id, id, { name, category: category || "General", emoji, unit, price, description: "", visible });
+        if (isAdmin) await db.recordAdminChange(`Admin updated product '${name}' for '${v.branding.businessName}'`);
         this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-edit-product")?.classList.remove("active");
         window.OmniApp.showToast(`Updated product '${name}' successfully!`);
@@ -1327,6 +1561,7 @@ export class VendorConsoleController {
         if (confirm("Delete this product permanently from your catalog?")) {
           await db.deleteProduct(v.id, id);
           if (v.products) v.products = v.products.filter(p => String(p.id) !== String(id));
+          if (isAdmin) await db.recordAdminChange(`Admin deleted product from '${v.branding.businessName}'`);
           this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Product deleted.");
           this.renderDashboard();
@@ -1380,6 +1615,7 @@ export class VendorConsoleController {
         const notes = this.container.querySelector("#edit-bkg-notes").value.trim();
 
         await db.updateBooking(v.id, id, { clientName, clientPhone, service, date, timeSlot, status, notes });
+        if (isAdmin) await db.recordAdminChange(`Admin updated booking for '${v.branding.businessName}'`);
         this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-vendor-booking")?.classList.remove("active");
         window.OmniApp.showToast("Booking details updated successfully!");
@@ -1394,6 +1630,7 @@ export class VendorConsoleController {
         if (confirm("Delete this booking record permanently?")) {
           await db.deleteBooking(v.id, id);
           if (v.bookings) v.bookings = v.bookings.filter(b => String(b.id) !== String(id));
+          if (isAdmin) await db.recordAdminChange(`Admin deleted booking for '${v.branding.businessName}'`);
           this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Booking deleted.");
           this.renderDashboard();
@@ -1441,6 +1678,7 @@ export class VendorConsoleController {
         const content = this.container.querySelector("#edit-rev-content").value.trim();
 
         await db.updateReview(v.id, id, { author, rating, date, content });
+        if (isAdmin) await db.recordAdminChange(`Admin updated review for '${v.branding.businessName}'`);
         this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-vendor-review")?.classList.remove("active");
         window.OmniApp.showToast("Review updated successfully!");
@@ -1455,6 +1693,7 @@ export class VendorConsoleController {
         if (confirm("Delete this customer review permanently?")) {
           await db.deleteReview(v.id, id);
           if (v.reviews) v.reviews = v.reviews.filter(r => String(r.id) !== String(id));
+          if (isAdmin) await db.recordAdminChange(`Admin deleted review for '${v.branding.businessName}'`);
           this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Review deleted.");
           this.renderDashboard();
@@ -1507,6 +1746,7 @@ export class VendorConsoleController {
 
         await db.saveLeadFormConfig(v.id, updatedConfig);
         v.leadForm = { ...v.leadForm, ...updatedConfig };
+        if (isAdmin) await db.recordAdminChange(`Admin updated lead form settings for '${v.branding.businessName}'`);
         window.OmniApp.showToast("Lead Form settings saved successfully!");
       });
     }

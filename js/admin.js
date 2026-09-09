@@ -2442,52 +2442,11 @@ export class AdminConsoleController {
   }
 
   bindVendorActionButtons() {
-    // Edit Vendor Card & Security Modal
+    // Direct Edit Vendor Card in Full Vendor Console Edit Mode (No Popups!)
     this.container.querySelectorAll("[data-edit-vendor]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-edit-vendor");
-        const v = db.getVendor(id);
-        if (!v) return;
-        const modal = this.container.querySelector("#modal-admin-edit-vendor");
-        if (modal) {
-          modal.querySelector("#edit-v-id").value = v.id;
-          modal.querySelector("#edit-v-name").value = v.branding.businessName || "";
-          modal.querySelector("#edit-v-owner").value = v.branding.ownerName || "";
-          modal.querySelector("#edit-v-category").value = v.branding.category || "";
-          modal.querySelector("#edit-v-tagline").value = v.branding.tagline || "";
-          modal.querySelector("#edit-v-emoji").value = v.branding.avatarEmoji || "🏢";
-          modal.querySelector("#edit-v-theme").value = v.branding.theme || "Sunset Dark";
-          modal.querySelector("#edit-v-status").value = v.status || "active";
-          modal.querySelector("#edit-v-whatsapp").value = v.contacts.whatsapp || "";
-          modal.querySelector("#edit-v-password").value = v.password || v.pin || "2026";
-          modal.querySelector("#edit-v-plan").value = v.planId || "growth";
-          modal.querySelector("#edit-v-expiry").value = v.expiresAt ? v.expiresAt.substring(0, 10) : "";
-          modal.querySelector("#edit-v-phone").value = v.contacts.phone || "";
-          modal.querySelector("#edit-v-email").value = v.contacts.email || "";
-          modal.querySelector("#edit-v-location").value = v.contacts.location || "";
-          modal.querySelector("#edit-v-mapUrl").value = v.contacts.mapUrl || "";
-          modal.querySelector("#edit-v-website").value = v.contacts.website || "";
-          modal.querySelector("#edit-v-aboutTagline").value = v.about?.tagline || "";
-          modal.querySelector("#edit-v-aboutDesc").value = v.about?.description || "";
-          modal.querySelector("#edit-v-aboutYear").value = v.about?.establishedYear || 2020;
-          modal.querySelector("#edit-v-openHours").value = v.openHours || "09:00 AM - 08:00 PM";
-          modal.querySelector("#edit-v-consultationFee").value = v.about?.consultationFee || 0;
-          modal.querySelector("#edit-v-marquee").value = v.notices?.marquee || "";
-          modal.querySelector("#edit-v-promoTitle").value = v.promo?.title || "";
-          modal.querySelector("#edit-v-promoBadge").value = v.promo?.badge || "";
-          modal.querySelector("#edit-v-promoCode").value = v.promo?.code || "";
-          modal.querySelector("#edit-v-promoDiscount").value = v.promo?.discount || "";
-          modal.querySelector("#edit-v-promoEnabled").checked = v.promo?.enabled !== false;
-          if (!v.features) v.features = {};
-          if (modal.querySelector("#edit-feat-quote")) modal.querySelector("#edit-feat-quote").checked = v.features.quoteBuilder !== false;
-          if (modal.querySelector("#edit-feat-shop")) modal.querySelector("#edit-feat-shop").checked = v.features.ecommerceShop !== false;
-          if (modal.querySelector("#edit-feat-booking")) modal.querySelector("#edit-feat-booking").checked = v.features.calendarBooking !== false;
-          if (modal.querySelector("#edit-feat-reviews")) modal.querySelector("#edit-feat-reviews").checked = v.features.customerReviews !== false;
-          if (modal.querySelector("#edit-feat-pwa")) modal.querySelector("#edit-feat-pwa").checked = v.features.pwaInstall !== false;
-          if (modal.querySelector("#edit-feat-leadform")) modal.querySelector("#edit-feat-leadform").checked = v.features.leadForm !== false;
-          modal.classList.add("active");
-          document.body.classList.add("has-modal-open");
-        }
+        window.OmniApp.adminManageVendor(id, "profile");
       });
     });
 
@@ -2637,14 +2596,11 @@ export class AdminConsoleController {
       });
     });
 
-    // Manage Leads for Vendor -> 1-Click navigate to vendor console on leadform tab
+    // Manage Leads for Vendor -> 1-Click navigate directly inside vendor console on leadform tab (No Popups!)
     this.container.querySelectorAll("[data-manage-leads]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-manage-leads");
-        window.OmniApp.setView("vendor", id);
-        window.OmniApp.vendorCtrl.loginVendorDirect(id);
-        window.OmniApp.vendorCtrl.activeTab = "leadform";
-        window.OmniApp.vendorCtrl.render();
+        window.OmniApp.adminManageVendor(id, "leadform");
       });
     });
 
