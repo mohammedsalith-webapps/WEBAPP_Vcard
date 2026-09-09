@@ -16,7 +16,7 @@ export const PWAHandler = {
     if (!("serviceWorker" in navigator)) return;
 
     const doRegister = () => {
-      navigator.serviceWorker.register("./sw.js")
+      navigator.serviceWorker.register("./sw.js?v=20260910_v15")
         .then((reg) => {
           console.log("[PWA] ServiceWorker registered with scope:", reg.scope);
           reg.update().catch(() => {});
@@ -36,13 +36,19 @@ export const PWAHandler = {
   },
 
   setupInstallPrompt() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    const installBtn = document.getElementById("btn-pwa-install");
+    if (installBtn && !isStandalone) {
+      installBtn.style.display = "inline-flex";
+    }
+
     const handlePrompt = (e) => {
       if (!e) return;
       this.deferredPrompt = e;
       window.deferredPWAPrompt = e;
       console.log("⚡ [PWA] 1-Click native install prompt ready.");
-      const installBtn = document.getElementById("btn-pwa-install");
-      if (installBtn) {
+      if (installBtn && !isStandalone) {
         installBtn.style.display = "inline-flex";
       }
     };
@@ -239,7 +245,7 @@ export const PWAHandler = {
         dismissPrompt();
         this.promptInstall(bizName, vendor);
       });
-    }, 2800);
+    }, 1500);
   },
 
   promptInstall(vendorName = "Smart vCard", vendor = null) {

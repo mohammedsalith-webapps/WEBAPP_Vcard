@@ -402,12 +402,10 @@ export class VCardController {
               </a>
             ` : `<div></div>`}
             <div style="display: flex; align-items: center; gap: 8px;">
-              ${!isStandalone && v.features?.pwaInstall !== false ? `
-                <button type="button" class="vcard-top-install-btn" id="btn-vcard-top-install" data-action="pwa-install" title="Install App to Phone Home Screen">
-                  <span style="font-size: 0.95rem; line-height: 1;">📲</span>
-                  <span class="vcard-top-install-text">Install App</span>
-                </button>
-              ` : ""}
+              <button type="button" class="vcard-top-install-btn" id="btn-vcard-top-install" data-action="pwa-install" title="Install App to Phone Home Screen">
+                <span style="font-size: 0.95rem; line-height: 1;">📲</span>
+                <span class="vcard-top-install-text">Install App</span>
+              </button>
               <button class="vcard-circle-btn" id="btn-vcard-share" title="Share Business Card">
                 <span>📤</span>
               </button>
@@ -506,22 +504,20 @@ export class VCardController {
             </div>
           ` : ""}
 
-          <!-- PWA Web App Installation Banner (Granted by Admin) -->
-          ${!isStandalone && v.features?.pwaInstall !== false ? `
-            <div class="vcard-pwa-banner" id="vcard-pwa-install-banner" data-action="pwa-install" style="cursor: pointer;">
-              <div class="pwa-banner-content">
-                <div class="pwa-banner-icon">📲</div>
-                <div class="pwa-banner-text">
-                  <div class="pwa-banner-title">Install ${v.branding?.businessName || 'Business'} App</div>
-                  <div class="pwa-banner-desc">Save to your home screen for 1-tap fast offline access</div>
-                </div>
+          <!-- PWA Web App Installation Banner -->
+          <div class="vcard-pwa-banner" id="vcard-pwa-install-banner" data-action="pwa-install" style="cursor: pointer;">
+            <div class="pwa-banner-content">
+              <div class="pwa-banner-icon">📲</div>
+              <div class="pwa-banner-text">
+                <div class="pwa-banner-title">Install ${v.branding?.businessName || 'Business'} App</div>
+                <div class="pwa-banner-desc">Save to your home screen for 1-tap fast offline access</div>
               </div>
-              <button type="button" class="pwa-banner-btn" id="btn-vcard-install-pwa" data-action="pwa-install">
-                <span>Install</span>
-                <span>⬇</span>
-              </button>
             </div>
-          ` : ""}
+            <button type="button" class="pwa-banner-btn" id="btn-vcard-install-pwa" data-action="pwa-install">
+              <span>Install</span>
+              <span>⬇</span>
+            </button>
+          </div>
 
           <!-- BUSINESS INFORMATION Section Card -->
           <div class="biz-info-card">
@@ -623,6 +619,12 @@ export class VCardController {
                 <div class="tab-topbar-subtitle">Select services to request a quote</div>
               </div>
             </div>
+            <div>
+              <button type="button" class="vcard-top-install-btn" data-action="pwa-install" title="Install Web App">
+                <span style="font-size: 0.92rem; line-height: 1;">📲</span>
+                <span class="vcard-top-install-text">Install</span>
+              </button>
+            </div>
           </div>
 
           <!-- Category filter chips -->
@@ -648,6 +650,12 @@ export class VCardController {
                 <div class="tab-topbar-subtitle">Order items directly via WhatsApp</div>
               </div>
             </div>
+            <div>
+              <button type="button" class="vcard-top-install-btn" data-action="pwa-install" title="Install Web App">
+                <span style="font-size: 0.92rem; line-height: 1;">📲</span>
+                <span class="vcard-top-install-text">Install</span>
+              </button>
+            </div>
           </div>
 
           <!-- Product Category filter chips -->
@@ -672,6 +680,12 @@ export class VCardController {
                 <div class="tab-topbar-title">Book an Appointment</div>
                 <div class="tab-topbar-subtitle">Select date & preferred time slot</div>
               </div>
+            </div>
+            <div>
+              <button type="button" class="vcard-top-install-btn" data-action="pwa-install" title="Install Web App">
+                <span style="font-size: 0.92rem; line-height: 1;">📲</span>
+                <span class="vcard-top-install-text">Install</span>
+              </button>
             </div>
           </div>
 
@@ -742,10 +756,16 @@ export class VCardController {
                 <div class="tab-topbar-subtitle">Verified feedback from genuine clients</div>
               </div>
             </div>
-            <button class="btn-pill active" id="btn-open-review-modal" style="font-size: 0.74rem; padding: 4px 10px;">
-              <span>Write Review</span>
-              <span>★</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" class="vcard-top-install-btn" data-action="pwa-install" title="Install Web App" style="padding: 0 10px; height: 32px;">
+                <span style="font-size: 0.92rem; line-height: 1;">📲</span>
+                <span class="vcard-top-install-text">Install</span>
+              </button>
+              <button class="btn-pill active" id="btn-open-review-modal" style="font-size: 0.74rem; padding: 4px 10px;">
+                <span>Write Review</span>
+                <span>★</span>
+              </button>
+            </div>
           </div>
 
           <!-- Rating Overview -->

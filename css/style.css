@@ -3557,6 +3557,21 @@ input[type="date"]:valid {
   transform: scale(0.97);
 }
 
+/* Universal PWA Install Buttons */
+#btn-pwa-install {
+  background: var(--theme-primary, #D4FF00) !important;
+  color: #000000 !important;
+  border: 1px solid var(--theme-primary, #D4FF00) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 8px rgba(212, 255, 0, 0.4);
+  touch-action: manipulation;
+  display: inline-flex;
+}
+
+#btn-pwa-install:active {
+  transform: scale(0.96);
+}
+
 /* Top Navigation Install Button in vCard Header */
 .vcard-top-install-btn {
   height: 38px;
