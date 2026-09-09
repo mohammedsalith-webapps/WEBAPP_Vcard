@@ -137,6 +137,7 @@ export class AdminConsoleController {
     const settings = db.getPlatformSettings();
     const currency = settings.currencySymbol || "₹";
     const metrics = this.calculateMetrics();
+    const lastChange = db.getLastAdminChange() || settings.lastAdminChange;
 
     this.container.innerHTML = `
       <div class="portal-container">
@@ -203,6 +204,23 @@ export class AdminConsoleController {
             <div class="kpi-card-neon neon-gold">
               <div class="kpi-neon-val">${currency}${metrics.totalRevenue.toLocaleString()}</div>
               <div class="kpi-neon-lbl">💳 REVENUE</div>
+            </div>
+          </div>
+
+          <!-- Latest Admin Change Quick Bar -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--theme-border); border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.2rem;">🕒</span>
+              <div>
+                <span style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Latest Admin Action:</span>
+                <span style="font-size: 0.88rem; font-weight: 700; color: #FFFFFF; margin-left: 6px;">
+                  ${lastChange?.action || 'Initial system configuration & setup'}
+                </span>
+              </div>
+            </div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--theme-primary, #D4FF00); display: flex; align-items: center; gap: 6px;">
+              <span>🗓️</span>
+              <span>${lastChange?.dateString || '—'}</span>
             </div>
           </div>
 
@@ -483,6 +501,31 @@ export class AdminConsoleController {
 
         <!-- 5. Platform Settings & Backup Pane (Admin Exclusive) -->
         <div class="portal-pane ${this.activeTab === 'settings' ? 'active' : ''}" id="apane-settings">
+          <!-- Latest Admin Setting Update Card -->
+          <div class="bento-card" style="margin-bottom: 20px; border-color: rgba(212, 255, 0, 0.4); background: linear-gradient(135deg, rgba(212, 255, 0, 0.06), rgba(0, 229, 255, 0.04)); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(212, 255, 0, 0.15); border: 1.5px solid rgba(212, 255, 0, 0.45); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                  🕒
+                </div>
+                <div>
+                  <div style="font-size: 0.72rem; font-weight: 800; color: var(--theme-primary, #D4FF00); text-transform: uppercase; letter-spacing: 0.6px;">
+                    Latest Setting / Action Changed by Admin
+                  </div>
+                  <div style="font-size: 1.02rem; font-weight: 700; color: #FFFFFF; margin-top: 3px;">
+                    ${lastChange?.action || 'Initial system configuration & setup'}
+                  </div>
+                </div>
+              </div>
+              <div style="text-align: right; background: rgba(0, 0, 0, 0.3); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                <div style="font-size: 0.68rem; color: #94A3B8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Last Updated Date & Time</div>
+                <div style="font-size: 0.88rem; font-weight: 700; color: #00E5FF; margin-top: 2px;">
+                  ${lastChange?.dateString || '—'}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="bento-grid bento-grid-2" style="margin-bottom: 20px;">
             <!-- Global Platform Settings -->
             <div class="bento-card">
@@ -1431,6 +1474,7 @@ export class AdminConsoleController {
     }
 
     await db.saveVendor(v);
+    await db.recordAdminChange(`Plan '${plan.name}' (${days}d) assigned to '${v.branding.businessName}'`);
     window.OmniApp.showToast(`⚡ Assigned "${plan.name}" (${days}d) to ${v.branding.businessName}! Features updated.`);
     this.renderDashboard();
   }
@@ -1846,6 +1890,7 @@ export class AdminConsoleController {
         };
 
         await db.saveVendor(newVendor);
+        await db.recordAdminChange(`New vendor card '${newVendor.branding.businessName}' registered`);
         window.OmniApp.showToast("New smart card deployed successfully!");
         this.activeTab = "vendors";
         this.renderDashboard();
@@ -1858,13 +1903,31 @@ export class AdminConsoleController {
     if (settingsForm) {
       settingsForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        const oldSettings = db.getPlatformSettings() || {};
+        const pName = this.container.querySelector("#set-platformName").value.trim();
+        const curr = this.container.querySelector("#set-currency").value.trim();
+        const pin = this.container.querySelector("#set-adminPin").value.trim();
+        const wa = this.container.querySelector("#set-supportWa").value.trim();
+        const upi = this.container.querySelector("#set-adminUpi")?.value.trim() || "7019601569@ybl";
+
+        // Compute exact diff for granular, meaningful admin update notice
+        const diffs = [];
+        if (oldSettings.supportWhatsApp !== wa) diffs.push(`Support WhatsApp: ${wa}`);
+        if (oldSettings.adminUpi !== upi) diffs.push(`Admin UPI: ${upi}`);
+        if (oldSettings.platformName !== pName) diffs.push(`Platform Name: "${pName}"`);
+        if (oldSettings.currencySymbol !== curr) diffs.push(`Currency: ${curr}`);
+        if (oldSettings.adminPin !== pin) diffs.push(`Admin PIN updated`);
+
+        const changeDesc = diffs.length > 0 ? diffs.join(", ") : "Platform Settings saved";
+
         await db.updatePlatformSettings({
-          platformName: this.container.querySelector("#set-platformName").value.trim(),
-          currencySymbol: this.container.querySelector("#set-currency").value.trim(),
-          adminPin: this.container.querySelector("#set-adminPin").value.trim(),
-          supportWhatsApp: this.container.querySelector("#set-supportWa").value.trim(),
-          adminUpi: this.container.querySelector("#set-adminUpi")?.value.trim() || "7019601569@ybl"
+          platformName: pName,
+          currencySymbol: curr,
+          adminPin: pin,
+          supportWhatsApp: wa,
+          adminUpi: upi
         });
+        await db.recordAdminChange(changeDesc);
         window.OmniApp.showToast("Platform settings saved & synced to cloud! 🔥");
         this.renderDashboard();
       });
@@ -1897,6 +1960,7 @@ export class AdminConsoleController {
         const text = await file.text();
         const res = await db.importBackupJson(text);
         if (res.success) {
+          await db.recordAdminChange("Database restored from backup JSON file");
           window.OmniApp.showToast("Database restored successfully!");
           this.renderDashboard();
         } else {
@@ -1911,6 +1975,7 @@ export class AdminConsoleController {
       resetBtn.addEventListener("click", async () => {
         if (confirm("Reset entire platform to default demo dataset? All custom additions will be reverted.")) {
           await db.resetToDefaults();
+          await db.recordAdminChange("Platform reset to demo seed data");
           window.OmniApp.showToast("Platform reset to demo seed state.");
           this.renderDashboard();
         }
@@ -1945,6 +2010,7 @@ export class AdminConsoleController {
           }
         };
         await db.saveSubscriptionPlan(newPlan);
+        await db.recordAdminChange(`Subscription plan created: "${newPlan.name}"`);
         this.container.querySelector("#modal-add-plan")?.classList.remove("active");
         window.OmniApp.showToast("Subscription plan created!");
         this.renderDashboard();
@@ -1955,6 +2021,7 @@ export class AdminConsoleController {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-del-plan");
         await db.deleteSubscriptionPlan(id);
+        await db.recordAdminChange(`Subscription plan deleted: "${id}"`);
         window.OmniApp.showToast("Plan deleted.");
         this.renderDashboard();
       });
@@ -1975,6 +2042,7 @@ export class AdminConsoleController {
           appId: this.container.querySelector("#fb-appId").value.trim()
         };
         const res = await db.updateFirebaseConfig(conf);
+        await db.recordAdminChange(`Firebase Cloud Sync connected (${conf.projectId || 'cloud RTDB'})`);
         window.OmniApp.showToast(res.message || "Firebase configuration saved.");
         this.renderDashboard();
       });
@@ -1997,9 +2065,10 @@ export class AdminConsoleController {
     // Firebase Disconnect
     const discFbBtn = this.container.querySelector("#btn-disconnect-firebase");
     if (discFbBtn) {
-      discFbBtn.addEventListener("click", () => {
+      discFbBtn.addEventListener("click", async () => {
         if (confirm("Disconnect Firebase cloud sync and revert to LocalStorage only?")) {
           db.disconnectFirebase();
+          await db.recordAdminChange("Firebase cloud sync disconnected (LocalStorage mode)");
           window.OmniApp.showToast("Firebase cloud sync disconnected. Running in LocalStorage mode.");
           this.renderDashboard();
         }
@@ -2078,6 +2147,7 @@ export class AdminConsoleController {
         if (editLeadEl) v.features.leadForm = editLeadEl.checked;
 
         await db.saveVendor(v);
+        await db.recordAdminChange(`Vendor details updated: "${v.branding.businessName}"`);
         this.container.querySelector("#modal-admin-edit-vendor")?.classList.remove("active");
         window.OmniApp.showToast(`Updated '${v.branding.businessName}' & all card texts successfully!`);
         this.renderDashboard();
@@ -2543,6 +2613,7 @@ export class AdminConsoleController {
             window.OmniApp.showToast(`Vendor ${v.branding.businessName} suspended.`);
           }
           await db.saveVendor(v);
+          await db.recordAdminChange(`Vendor '${v.branding.businessName}' ${v.status === 'active' ? 'activated' : 'suspended'}`);
           this.renderDashboard();
         }
       });
@@ -2557,6 +2628,7 @@ export class AdminConsoleController {
           const baseDate = new Date(v.expiresAt) > new Date() ? new Date(v.expiresAt) : new Date();
           v.expiresAt = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
           await db.saveVendor(v);
+          await db.recordAdminChange(`Vendor '${v.branding.businessName}' subscription extended by 30 days`);
           window.OmniApp.showToast(`Extended expiry for ${v.branding.businessName} by 30 days.`);
           this.renderDashboard();
         }
@@ -2569,6 +2641,7 @@ export class AdminConsoleController {
         const id = btn.getAttribute("data-del-vendor");
         if (confirm(`Delete vendor card '${id}' permanently?`)) {
           await db.deleteVendor(id);
+          await db.recordAdminChange(`Vendor '${id}' deleted permanently`);
           window.OmniApp.showToast("Vendor card deleted.");
           this.renderDashboard();
         }
@@ -2588,6 +2661,7 @@ export class AdminConsoleController {
         v.features[tabKey] = !currentVal;
         await db.saveVendor(v);
         const tabName = tabKey === 'quoteBuilder' ? 'Services' : tabKey === 'ecommerceShop' ? 'Shop' : tabKey === 'calendarBooking' ? 'Book Appointment' : tabKey === 'customerReviews' ? 'Reviews' : tabKey === 'leadForm' ? 'Lead Form Builder' : 'PWA Web App';
+        await db.recordAdminChange(`Vendor '${v.branding.businessName}': ${tabName} module ${!currentVal ? 'enabled' : 'disabled'}`);
         window.OmniApp.showToast(`${tabName} ${!currentVal ? 'GRANTED' : 'REVOKED'} for ${v.branding.businessName}`);
         this.refreshVendorsList();
       });

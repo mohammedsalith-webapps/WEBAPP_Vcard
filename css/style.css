@@ -3557,6 +3557,163 @@ input[type="date"]:valid {
   transform: scale(0.97);
 }
 
+/* Top Navigation Install Button in vCard Header */
+.vcard-top-install-btn {
+  height: 38px;
+  padding: 0 13px;
+  border-radius: 20px;
+  background: rgba(212, 255, 0, 0.12);
+  border: 1.5px solid rgba(212, 255, 0, 0.45);
+  color: var(--theme-primary, #D4FF00);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vcard-top-install-btn:hover {
+  background: rgba(212, 255, 0, 0.22);
+  border-color: rgba(212, 255, 0, 0.7);
+  transform: scale(1.03);
+}
+
+.vcard-top-install-btn:active {
+  transform: scale(0.96);
+}
+
+/* Non-Intrusive Floating Install Banner (Mobile Auto-Prompt) */
+.pwa-floating-prompt-banner {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom, 12px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 420px;
+  z-index: 99999;
+  background: rgba(15, 19, 28, 0.96);
+  border: 1.5px solid var(--theme-primary, #D4FF00);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+  animation: slideUpFloatPrompt 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.pwa-floating-prompt-banner.dismissing {
+  opacity: 0;
+  transform: translate(-50%, 16px);
+  transition: all 0.22s ease-in;
+}
+
+@keyframes slideUpFloatPrompt {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.pwa-floating-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pwa-floating-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.pwa-floating-text {
+  min-width: 0;
+}
+
+.pwa-floating-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.pwa-floating-sub {
+  font-size: 0.7rem;
+  color: #94A3B8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.pwa-floating-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-pwa-floating-action {
+  background: var(--theme-primary, #D4FF00);
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(212, 255, 0, 0.35);
+  transition: transform 0.1s ease;
+  touch-action: manipulation;
+}
+
+.btn-pwa-floating-action:active {
+  transform: scale(0.96);
+}
+
+.btn-pwa-floating-close {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn-pwa-floating-close:hover {
+  color: #FFFFFF;
+}
+
 /* ==========================================================================
    Lead Form & Call Action Styles (Home Page & Popup)
    ========================================================================== */

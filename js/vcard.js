@@ -52,6 +52,7 @@ export class VCardController {
     // Normal active card: restore body modal status if needed
     document.body.classList.remove("has-modal-open");
     this.render();
+    PWAHandler.autoPromptInstallIfEligible(v);
   }
 
   refreshData(newVendor) {
@@ -400,7 +401,13 @@ export class VCardController {
                 <span>←</span>
               </a>
             ` : `<div></div>`}
-            <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${!isStandalone && v.features?.pwaInstall !== false ? `
+                <button type="button" class="vcard-top-install-btn" id="btn-vcard-top-install" data-action="pwa-install" title="Install App to Phone Home Screen">
+                  <span style="font-size: 0.95rem; line-height: 1;">📲</span>
+                  <span class="vcard-top-install-text">Install App</span>
+                </button>
+              ` : ""}
               <button class="vcard-circle-btn" id="btn-vcard-share" title="Share Business Card">
                 <span>📤</span>
               </button>
@@ -1528,12 +1535,14 @@ export class VCardController {
     // PWA Install Web App Button & Banner
     const pwaBtn = this.container.querySelector("#btn-vcard-install-pwa");
     const pwaBanner = this.container.querySelector("#vcard-pwa-install-banner");
+    const pwaTopBtn = this.container.querySelector("#btn-vcard-top-install");
     const handleInstallClick = (e) => {
       if (e) e.stopPropagation();
       PWAHandler.promptInstall(v?.branding?.businessName, v);
     };
     if (pwaBtn) pwaBtn.addEventListener("click", handleInstallClick);
     if (pwaBanner) pwaBanner.addEventListener("click", handleInstallClick);
+    if (pwaTopBtn) pwaTopBtn.addEventListener("click", handleInstallClick);
 
     // Category filter chips
     this.container.querySelectorAll(".filter-chip[data-category]").forEach(chip => {

@@ -376,6 +376,41 @@ class DatabaseService {
     return this.data.platformSettings;
   }
 
+  // Record the single latest change made by the admin (no logs, just latest action)
+  async recordAdminChange(actionDescription) {
+    if (!actionDescription) return null;
+    if (!this.data) this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
+    if (!this.data.platformSettings) this.data.platformSettings = {};
+
+    const now = new Date();
+    const dateFormatted = now.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+    const timeFormatted = now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+
+    const record = {
+      action: String(actionDescription).trim(),
+      timestamp: now.getTime(),
+      dateString: `${dateFormatted}, ${timeFormatted}`
+    };
+
+    this.data.platformSettings.lastAdminChange = record;
+    this.saveLocal({ touchUpdatedAt: true });
+    await this.syncToCloud();
+    this.notifyListeners();
+    return record;
+  }
+
+  getLastAdminChange() {
+    return this.getPlatformSettings()?.lastAdminChange || null;
+  }
+
   // Vendors
   getVendors() {
     if (!this.data) {

@@ -8,6 +8,11 @@ export const INITIAL_DATA = {
     supportEmail: "support@omnicard.io",
     adminPin: "1234",
     adminUpi: "7019601569@ybl",
+    lastAdminChange: {
+      action: "Initial system configuration & setup",
+      timestamp: 1773177600000,
+      dateString: "10 Sep 2026, 04:00 AM"
+    },
     firebaseConfig: {
       apiKey: "AIzaSyC1F2gHzKlIiyGDEF8hMT8L2Dc1eO1YUYk",
       authDomain: "flavours-catering-3b122.firebaseapp.com",

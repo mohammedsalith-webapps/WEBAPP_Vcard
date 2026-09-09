@@ -170,9 +170,76 @@ export const PWAHandler = {
   },
 
   autoPromptInstallIfEligible(vendor) {
-    // Keep mobile browsing smooth, responsive, and uninterrupted:
-    // Installation is seamlessly available via the 1-click install banner and action buttons without intrusive auto-popups
     if (!vendor) return;
+    const vendorSlug = vendor.slug || vendor.id;
+    if (!vendorSlug) return;
+    if (vendor.features?.pwaInstall === false) return;
+
+    // Do not prompt if already running in standalone mode (installed)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    if (isStandalone || this.isVendorInstalled(vendorSlug)) return;
+
+    // Session storage check: don't re-prompt if dismissed in this browser session
+    const dismissKey = `pwa_prompt_dismissed_${vendorSlug}`;
+    if (sessionStorage.getItem(dismissKey)) return;
+
+    // Remove any existing floating prompt banner
+    const existing = document.getElementById("pwa-floating-prompt");
+    if (existing) existing.remove();
+
+    // After a smooth delay of 2.8s (allowing fast initial paint and fluid first interaction), show floating prompt
+    setTimeout(() => {
+      const isStandaloneNow = window.matchMedia('(display-mode: standalone)').matches || 
+                              window.navigator.standalone === true;
+      if (isStandaloneNow || this.isVendorInstalled(vendorSlug)) return;
+      if (sessionStorage.getItem(dismissKey)) return;
+      if (document.getElementById("pwa-floating-prompt")) return;
+
+      const bizName = vendor.branding?.businessName || "Business";
+      const emoji = vendor.branding?.avatarEmoji || "📲";
+
+      const promptDiv = document.createElement("div");
+      promptDiv.id = "pwa-floating-prompt";
+      promptDiv.className = "pwa-floating-prompt-banner";
+      promptDiv.innerHTML = `
+        <div class="pwa-floating-content">
+          <div class="pwa-floating-icon">${emoji}</div>
+          <div class="pwa-floating-text">
+            <div class="pwa-floating-title">Install ${bizName}</div>
+            <div class="pwa-floating-sub">Save to home screen for 1-tap fast access</div>
+          </div>
+        </div>
+        <div class="pwa-floating-actions">
+          <button type="button" class="btn-pwa-floating-action" id="btn-pwa-floating-action">
+            <span>Install</span>
+            <span>⬇</span>
+          </button>
+          <button type="button" class="btn-pwa-floating-close" id="btn-pwa-floating-close" title="Dismiss">
+            ×
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(promptDiv);
+
+      const dismissPrompt = () => {
+        sessionStorage.setItem(dismissKey, "1");
+        promptDiv.classList.add("dismissing");
+        setTimeout(() => promptDiv.remove(), 250);
+      };
+
+      promptDiv.querySelector("#btn-pwa-floating-close")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dismissPrompt();
+      });
+
+      promptDiv.querySelector("#btn-pwa-floating-action")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dismissPrompt();
+        this.promptInstall(bizName, vendor);
+      });
+    }, 2800);
   },
 
   promptInstall(vendorName = "Smart vCard", vendor = null) {
@@ -421,7 +488,7 @@ export const PWAHandler = {
 // Global delegated click listener for any PWA install trigger across all vCards and views
 if (typeof document !== "undefined") {
   document.addEventListener("click", (e) => {
-    const trigger = e.target.closest("#btn-vcard-install-pwa, #vcard-pwa-install-banner, #btn-pwa-install, [data-action='pwa-install']");
+    const trigger = e.target.closest("#btn-vcard-top-install, #btn-vcard-install-pwa, #vcard-pwa-install-banner, #btn-pwa-install, [data-action='pwa-install']");
     if (trigger) {
       e.preventDefault();
       e.stopPropagation();
