@@ -16,7 +16,7 @@ export const PWAHandler = {
     if (!("serviceWorker" in navigator)) return;
 
     const doRegister = () => {
-      navigator.serviceWorker.register("./sw.js?v=20260910_v18")
+      navigator.serviceWorker.register("./sw.js?v=20260910_v19")
         .then((reg) => {
           console.log("[PWA] ServiceWorker registered with scope:", reg.scope);
           reg.update().catch(() => {});
@@ -124,10 +124,9 @@ export const PWAHandler = {
     // 1. True installed PWA app opened via home screen shortcut with ?pwa=1
     if (urlParams.get("pwa") === "1") return true;
 
-    // 2. Persistent storage indicators
+    // 2. Persistent storage indicators for THIS specific vendor
     try {
       if (localStorage.getItem(`vcard_installed_${vendorSlug}`) === "true") return true;
-      if (localStorage.getItem("omnicard_installed") === "true") return true;
       const installed = JSON.parse(localStorage.getItem("pwa_installed_cards") || "[]");
       if (installed.includes(vendorSlug)) return true;
     } catch (e) {}
@@ -139,8 +138,8 @@ export const PWAHandler = {
     return this.isVendorInstalled(vendorSlug);
   },
 
-  // Dynamically update manifest URL and meta tags so installed app opens THIS vendor's vCard directly
-  // NEVER use blob: or data: URLs which Chrome Android WebAPK builders reject
+  // Dynamically update document title and icons matching the vendor's branding
+  // Keeps link[rel="manifest"] static to ensure Chrome fires beforeinstallprompt reliably
   updateManifestForVendor(vendor) {
     if (!vendor) return;
     try {
@@ -151,19 +150,6 @@ export const PWAHandler = {
       try {
         localStorage.setItem("omnicard_last_active_vcard", vendorSlug);
       } catch (e) {}
-
-      // Update manifest href to real HTTPS same-origin URL with query params
-      let manifestLink = document.querySelector('link[rel="manifest"]') || document.getElementById("app-manifest-link");
-      if (!manifestLink) {
-        manifestLink = document.createElement("link");
-        manifestLink.rel = "manifest";
-        manifestLink.id = "app-manifest-link";
-        document.head.appendChild(manifestLink);
-      }
-      const targetHref = `manifest.webmanifest?v=${encodeURIComponent(vendorSlug)}&name=${encodeURIComponent(bizName)}`;
-      if (manifestLink.getAttribute("href") !== targetHref) {
-        manifestLink.setAttribute("href", targetHref);
-      }
 
       // Update document title and mobile web app meta tags
       document.title = `${bizName} - Smart Business vCard`;
@@ -369,7 +355,7 @@ export const PWAHandler = {
 
     // 1. If inside WhatsApp / in-app browser on Android: automatically open in Google Chrome for 1-tap install!
     if (isInAppBrowser && isAndroid) {
-      window.OmniApp?.showToast("Launching Google Chrome for 1-Tap App Install... 🚀");
+      window.OmniApp?.showToast("Opening Google Chrome for 1-Tap App Install... 🚀");
       const chromeIntentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`;
       try {
         window.location.href = chromeIntentUrl;
@@ -379,21 +365,11 @@ export const PWAHandler = {
       return;
     }
 
-    // 2. Direct 1-Tap native prompt if ready on phone (Chrome Android, Edge, Desktop Chrome)
-    let prompt = this.deferredPrompt || window.deferredPWAPrompt;
-    if (!prompt && !isInAppBrowser) {
-      prompt = await this.waitForInstallPrompt(2000);
-    }
-
+    // 2. Direct 1-Tap native prompt on Android Chrome, Edge, Desktop Chrome
+    const prompt = this.deferredPrompt || window.deferredPWAPrompt;
     if (prompt) {
       try {
-        const promptPromise = prompt.prompt();
-        if (promptPromise && typeof promptPromise.catch === "function") {
-          promptPromise.catch((err) => {
-            console.warn("[PWA] Native prompt requires user gesture or already consumed:", err);
-            this.showInstallModal(vendorName, vendor);
-          });
-        }
+        prompt.prompt();
         if (prompt.userChoice && typeof prompt.userChoice.then === "function") {
           prompt.userChoice.then((choiceResult) => {
             if (choiceResult && choiceResult.outcome === "accepted") {
@@ -408,9 +384,6 @@ export const PWAHandler = {
                   }
                 } catch (e) {}
               }
-              try {
-                localStorage.setItem("omnicard_installed", "true");
-              } catch (e) {}
               window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
               document.querySelectorAll("#btn-vcard-top-install, #vcard-pwa-install-banner, .vcard-top-install-btn, #btn-pwa-install").forEach((el) => {
                 el.style.display = "none";
@@ -610,9 +583,6 @@ export const PWAHandler = {
                     }
                   } catch (e) {}
                 }
-                try {
-                  localStorage.setItem("omnicard_installed", "true");
-                } catch (e) {}
                 window.OmniApp?.showToast(`${bizName} added to your home screen! 🎉`);
                 document.querySelectorAll("#btn-vcard-top-install, #vcard-pwa-install-banner, .vcard-top-install-btn, #btn-pwa-install").forEach((el) => {
                   el.style.display = "none";

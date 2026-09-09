@@ -506,22 +506,6 @@ export class VCardController {
             </div>
           ` : ""}
 
-          ${!isInstalled ? `
-          <!-- PWA Web App Installation Banner -->
-          <div class="vcard-pwa-banner" id="vcard-pwa-install-banner" data-action="pwa-install" style="cursor: pointer;">
-            <div class="pwa-banner-content">
-              <div class="pwa-banner-icon">📲</div>
-              <div class="pwa-banner-text">
-                <div class="pwa-banner-title">Install ${v.branding?.businessName || 'Business'} App</div>
-                <div class="pwa-banner-desc">Save to your home screen for 1-tap fast offline access</div>
-              </div>
-            </div>
-            <button type="button" class="pwa-banner-btn" id="btn-vcard-install-pwa" data-action="pwa-install">
-              <span>Install</span>
-              <span>⬇</span>
-            </button>
-          </div>
-          ` : ""}
 
           <!-- BUSINESS INFORMATION Section Card -->
           <div class="biz-info-card">

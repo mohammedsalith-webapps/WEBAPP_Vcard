@@ -2,7 +2,6 @@
   "name": "OmniCard OS - Smart Business vCard",
   "short_name": "OmniCard",
   "description": "Next-Gen Smart Business vCard & Vendor Operating System with E-Commerce, Quotes & Booking",
-  "id": "/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -13,19 +12,25 @@
       "src": "./assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "./assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "./assets/icons/icon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

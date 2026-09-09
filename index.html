@@ -28,16 +28,12 @@
       window.dispatchEvent(new CustomEvent("pwa-prompt-ready", { detail: e }));
     });
 
-    // If page is loaded directly with a vendor slug, pre-sync the manifest link
+    // Save active vendor slug for standalone app launches
     (function() {
       try {
         var params = new URLSearchParams(window.location.search);
         var vSlug = params.get("v");
         if (vSlug) {
-          var mLink = document.getElementById("app-manifest-link");
-          if (mLink) {
-            mLink.href = "manifest.webmanifest?v=" + encodeURIComponent(vSlug);
-          }
           localStorage.setItem("omnicard_last_active_vcard", vSlug);
         }
       } catch (e) {}
@@ -123,6 +119,6 @@
   <div class="toast-container" id="toast-root"></div>
 
   <!-- Main Application Bootstrap with Cache-Buster -->
-  <script type="module" src="js/app.js?v=20260910_v18"></script>
+  <script type="module" src="js/app.js?v=20260910_v19"></script>
 </body>
 </html>

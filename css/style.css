@@ -1909,7 +1909,7 @@ button, input, select, textarea {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 6px;
 }
 
@@ -1922,7 +1922,7 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 8px;
+  gap: 6px 10px;
   font-size: 0.88rem;
   font-weight: 700;
   line-height: 1.35;
@@ -1931,17 +1931,19 @@ button, input, select, textarea {
 .review-author-avatar {
   font-size: 0.95rem;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .review-author-name-text {
   color: #FFFFFF;
   word-break: break-word;
+  font-weight: 700;
 }
 
 .review-verified-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-size: 0.65rem;
   font-weight: 700;
   white-space: nowrap;
@@ -1949,8 +1951,8 @@ button, input, select, textarea {
   background: rgba(16, 185, 129, 0.15);
   color: #10B981;
   border: 1px solid rgba(16, 185, 129, 0.35);
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
   line-height: 1.2;
 }
 
@@ -2025,7 +2027,18 @@ button, input, select, textarea {
   z-index: 100000;
 }
 
-/* Dock is completely hidden when any modal is open to eliminate clipping/overlapping */
+/* Body & Dock lock when any modal is open to eliminate clipping/overlapping and background scrolling */
+body.has-modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+body.has-modal-open .modal-card {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 body.has-modal-open #app-dock-root,
 .has-modal-open #app-dock-root {
   display: none !important;
@@ -3404,6 +3417,13 @@ input[type="date"]:valid {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus */
+  input, select, textarea,
+  .form-input, .form-textarea, .form-select,
+  .lead-field-input, .lead-field-select, .lead-field-textarea {
+    font-size: 16px !important;
   }
 
   /* 7. Canvas Shell */
