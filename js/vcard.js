@@ -1,7 +1,7 @@
 // Module 1: Public Digital Business Card (vCard) Controller
-import { db } from "./db.js?v=20260909_v10";
-import { WhatsAppEngine } from "./whatsapp.js?v=20260909_v10";
-import { PWAHandler } from "./pwa.js?v=20260909_v10";
+import { db } from "./db.js";
+import { WhatsAppEngine } from "./whatsapp.js";
+import { PWAHandler } from "./pwa.js";
 
 export class VCardController {
   constructor(containerEl) {
@@ -52,7 +52,31 @@ export class VCardController {
     // Normal active card: restore body modal status if needed
     document.body.classList.remove("has-modal-open");
     this.render();
-    PWAHandler.autoPromptInstallIfEligible(v);
+  }
+
+  refreshData(newVendor) {
+    if (!newVendor || !this.vendor) return;
+    if (newVendor.id !== this.vendor.id && newVendor.slug !== this.vendor.slug) return;
+    const currentTab = this.activeTab;
+    this.vendor = newVendor;
+    this.applyTheme();
+    PWAHandler.updateManifestForVendor(newVendor);
+
+    const isSuspended = newVendor.status === "suspended";
+    const now = new Date();
+    const isExpired = newVendor.status === "expired" || (newVendor.expiresAt && new Date(newVendor.expiresAt) < now);
+
+    if (isSuspended || isExpired) {
+      this.renderDisabledVCard(isSuspended, isExpired);
+      return;
+    }
+
+    const currentScroll = this.container ? this.container.scrollTop : 0;
+    this.render();
+    this.switchTab(currentTab);
+    if (this.container) {
+      this.container.scrollTop = currentScroll;
+    }
   }
 
   renderDisabledVCard(isSuspended, isExpired) {
@@ -941,7 +965,7 @@ export class VCardController {
 
   renderServicesList() {
     const services = (this.vendor?.services || []).filter(s => {
-      if (!s.visible) return false;
+      if (s.visible === false) return false;
       if (this.serviceFilter === "All") return true;
       return s.category === this.serviceFilter;
     });
@@ -968,7 +992,7 @@ export class VCardController {
 
   renderProductsList(currency) {
     const products = (this.vendor?.products || []).filter(p => {
-      if (!p.visible) return false;
+      if (p.visible === false) return false;
       if (this.productFilter === "All") return true;
       return (p.category || "").toLowerCase() === this.productFilter.toLowerCase();
     });
@@ -1011,14 +1035,16 @@ export class VCardController {
     return reviews.map(r => `
       <div class="review-item-card">
         <div class="review-author-row">
-          <div class="review-author-name" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
-            <span style="font-size: 0.95rem;">👤</span>
-            <span>${r.author}</span>
-            <span style="font-size: 0.65rem; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Verified Customer</span>
+          <div class="review-author-meta">
+            <div class="review-author-headline">
+              <span class="review-author-avatar">👤</span>
+              <span class="review-author-name-text">${r.author}</span>
+              <span class="review-verified-badge">✓ Verified Customer</span>
+            </div>
           </div>
           <div class="review-date">${r.date || 'Recently'}</div>
         </div>
-        <div style="color: #F59E0B; font-size: 0.82rem; margin: 4px 0;">
+        <div style="color: #F59E0B; font-size: 0.82rem; margin: 5px 0 3px 0;">
           ${"★".repeat(Math.max(1, Math.min(5, Number(r.rating) || 5)))}${"☆".repeat(Math.max(0, 5 - (Number(r.rating) || 5)))}
         </div>
         ${r.tags?.length ? `

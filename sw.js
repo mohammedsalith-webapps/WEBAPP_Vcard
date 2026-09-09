@@ -1,5 +1,5 @@
 // OmniCard Service Worker for Offline Caching & PWA Support
-const CACHE_NAME = "omnicard-cache-v11";
+const CACHE_NAME = "omnicard-cache-v13";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

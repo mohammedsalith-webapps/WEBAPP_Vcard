@@ -1,10 +1,10 @@
 // Main Application Bootstrap & Master View Orchestrator
-import { db } from "./db.js?v=20260909_v10";
-import { VCardController } from "./vcard.js?v=20260909_v10";
-import { VendorConsoleController } from "./vendor.js?v=20260909_v10";
-import { AdminConsoleController } from "./admin.js?v=20260909_v10";
-import { HomeController } from "./home.js?v=20260909_v10";
-import { PWAHandler } from "./pwa.js?v=20260909_v10";
+import { db } from "./db.js";
+import { VCardController } from "./vcard.js";
+import { VendorConsoleController } from "./vendor.js";
+import { AdminConsoleController } from "./admin.js";
+import { HomeController } from "./home.js";
+import { PWAHandler } from "./pwa.js";
 
 class OmniAppManager {
   constructor() {
@@ -56,10 +56,10 @@ class OmniAppManager {
     });
 
     // 7. Real-time Live Cloud Sync Listener (Updates UI across phones & desktops when Firebase changes)
-    db.listeners.push(() => {
+    db.subscribe(() => {
       if (this.currentView === "card") {
         const v = db.getVendor(this.currentVendorSlug);
-        if (v) this.vcardCtrl.loadVendor(this.currentVendorSlug);
+        if (v) this.vcardCtrl.refreshData(v);
       } else if (this.currentView === "home") {
         this.homeCtrl.render();
       } else if (this.currentView === "admin") {

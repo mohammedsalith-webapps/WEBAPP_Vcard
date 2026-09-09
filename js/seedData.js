@@ -4,10 +4,10 @@ export const INITIAL_DATA = {
     platformName: "OmniCard OS",
     tagline: "Next-Gen Smart Business vCards & Vendor OS",
     currencySymbol: "₹",
-    supportWhatsApp: "+919876543210",
+    supportWhatsApp: "+917019601569",
     supportEmail: "support@omnicard.io",
     adminPin: "1234",
-    adminUpi: "9876543210@upi",
+    adminUpi: "7019601569@ybl",
     firebaseConfig: {
       apiKey: "AIzaSyC1F2gHzKlIiyGDEF8hMT8L2Dc1eO1YUYk",
       authDomain: "flavours-catering-3b122.firebaseapp.com",

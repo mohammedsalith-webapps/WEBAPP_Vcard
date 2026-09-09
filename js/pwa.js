@@ -170,32 +170,9 @@ export const PWAHandler = {
   },
 
   autoPromptInstallIfEligible(vendor) {
+    // Keep mobile browsing smooth, responsive, and uninterrupted:
+    // Installation is seamlessly available via the 1-click install banner and action buttons without intrusive auto-popups
     if (!vendor) return;
-    const vendorSlug = vendor.slug || vendor.id;
-
-    // If already running in installed standalone mode, do not show
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-    if (isStandalone) return;
-
-    if (vendor && vendor.features?.pwaInstall === false) {
-      return;
-    }
-
-    // Check if dismissed during current browser session
-    try {
-      if (sessionStorage.getItem(`pwa_dismissed_${vendorSlug}`)) return;
-    } catch (e) {}
-
-    // Delay 1.2s after page load for smooth entry
-    setTimeout(() => {
-      const stillStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                              window.navigator.standalone === true;
-      if (stillStandalone) return;
-      if (document.querySelector(".modal-overlay.active")) return;
-
-      this.showInstallModal(vendor?.branding?.businessName, vendor);
-    }, 1200);
   },
 
   promptInstall(vendorName = "Smart vCard", vendor = null) {

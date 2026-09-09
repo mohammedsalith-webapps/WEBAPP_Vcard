@@ -506,7 +506,7 @@ export class AdminConsoleController {
                 </div>
                 <div class="form-group">
                   <label class="form-label">Platform Admin UPI ID / Number</label>
-                  <input type="text" class="form-input" id="set-adminUpi" value="${settings.adminUpi || '9876543210@upi'}" placeholder="e.g. 9876543210@upi or +919876543210" />
+                  <input type="text" class="form-input" id="set-adminUpi" value="${settings.adminUpi || '7019601569@ybl'}" placeholder="e.g. 7019601569@ybl or +917019601569" />
                   <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 3px;">
                     Displayed on vCard renewal popup for prepaid subscription renewals.
                   </div>
@@ -570,8 +570,8 @@ export class AdminConsoleController {
                 </div>
               </div>
               <div>
-                <span class="${db.isFirebaseReady ? 'pill-status-active' : 'pill-status-pending'}" style="font-size: 0.75rem; padding: 4px 10px;">
-                  ${db.isFirebaseReady ? '🟢 Cloud Connected' : '🟡 Offline (LocalStorage Only)'}
+                <span class="${(db.isFirebaseReady || db.isFirebaseConnected) ? 'pill-status-active' : 'pill-status-pending'}" id="admin-fb-status-pill" style="font-size: 0.75rem; padding: 4px 10px;">
+                  ${(db.isFirebaseReady || db.isFirebaseConnected) ? '🟢 Cloud Connected' : '🟡 Offline (LocalStorage Only)'}
                 </span>
               </div>
             </div>
@@ -1863,9 +1863,9 @@ export class AdminConsoleController {
           currencySymbol: this.container.querySelector("#set-currency").value.trim(),
           adminPin: this.container.querySelector("#set-adminPin").value.trim(),
           supportWhatsApp: this.container.querySelector("#set-supportWa").value.trim(),
-          adminUpi: this.container.querySelector("#set-adminUpi")?.value.trim() || "9876543210@upi"
+          adminUpi: this.container.querySelector("#set-adminUpi")?.value.trim() || "7019601569@ybl"
         });
-        window.OmniApp.showToast("Platform settings saved!");
+        window.OmniApp.showToast("Platform settings saved & synced to cloud! 🔥");
         this.renderDashboard();
       });
     }
@@ -2696,8 +2696,8 @@ export class AdminConsoleController {
                   <span style="background: rgba(212,255,0,0.12); color: var(--theme-primary); border: 1px solid rgba(212,255,0,0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
                     📁 ${s.category || 'General'}
                   </span>
-                  <span class="${s.visible ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem; padding: 2px 7px;">
-                    ${s.visible ? 'Visible' : 'Hidden'}
+                  <span class="${s.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}" style="font-size: 0.68rem; padding: 2px 7px;">
+                    ${s.visible !== false ? 'Visible' : 'Hidden'}
                   </span>
                 </div>
               </div>
@@ -2706,8 +2706,8 @@ export class AdminConsoleController {
             <!-- Action Controls Row -->
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; flex-wrap: wrap;">
               <!-- Toggle ON/OFF -->
-              <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; font-weight: 700; background: ${s.visible ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.1)'}; color: ${s.visible ? '#10B981' : '#94A3B8'}; border-color: ${s.visible ? 'rgba(16,185,129,0.4)' : 'rgba(148,163,184,0.3)'};" data-admin-toggle-srv="${s.id}">
-                ${s.visible ? '🟢 Active (ON)' : '⚪ Hidden (OFF)'}
+              <button class="btn-pill" style="font-size: 0.75rem; padding: 5px 12px; font-weight: 700; background: ${s.visible !== false ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.1)'}; color: ${s.visible !== false ? '#10B981' : '#94A3B8'}; border-color: ${s.visible !== false ? 'rgba(16,185,129,0.4)' : 'rgba(148,163,184,0.3)'};" data-admin-toggle-srv="${s.id}">
+                ${s.visible !== false ? '🟢 Active (ON)' : '⚪ Hidden (OFF)'}
               </button>
 
               <div style="display: flex; gap: 6px;">
@@ -2747,7 +2747,8 @@ export class AdminConsoleController {
     container.querySelectorAll("[data-admin-toggle-srv]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const sId = btn.getAttribute("data-admin-toggle-srv");
-        await db.toggleService(vendorId, sId);
+        const s = await db.toggleService(vendorId, sId);
+        window.OmniApp.showToast(s?.visible !== false ? "Service is now visible." : "Service hidden from clients.");
         this.renderAdminServicesList(vendorId);
         this.refreshVendorsList();
       });
@@ -2919,7 +2920,8 @@ export class AdminConsoleController {
     container.querySelectorAll("[data-admin-toggle-prod]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const pId = btn.getAttribute("data-admin-toggle-prod");
-        await db.toggleProduct(vendorId, pId);
+        const p = await db.toggleProduct(vendorId, pId);
+        window.OmniApp.showToast(p?.visible !== false ? "Product is now visible in shop." : "Product hidden from shop.");
         this.renderAdminProductsList(vendorId);
         this.refreshVendorsList();
       });

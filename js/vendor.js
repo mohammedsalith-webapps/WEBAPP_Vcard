@@ -102,6 +102,9 @@ export class VendorConsoleController {
 
   // Logged-in Vendor Dashboard
   renderDashboard() {
+    if (this.currentVendor?.id) {
+      this.currentVendor = db.getVendor(this.currentVendor.id) || this.currentVendor;
+    }
     const v = this.currentVendor;
     const settings = db.getPlatformSettings();
     const currency = settings?.currencySymbol || "₹";
@@ -405,14 +408,16 @@ export class VendorConsoleController {
                       </td>
                       <td><span class="pill-status-pending">${s.category || 'General'}</span></td>
                       <td>
-                        <span class="${s.visible ? 'pill-status-active' : 'pill-status-suspended'}">
-                          ${s.visible ? 'Visible' : 'Hidden'}
+                        <span class="${s.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}">
+                          ${s.visible !== false ? 'Visible' : 'Hidden'}
                         </span>
                       </td>
                       <td>
                         <div style="display: flex; gap: 6px;">
                           <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-secondary);" data-edit-srv="${s.id}">Edit</button>
-                          <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;" data-toggle-srv="${s.id}">Toggle</button>
+                          <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${s.visible !== false ? 'color: #10B981; border-color: rgba(16,185,129,0.4);' : 'color: #94A3B8; border-color: rgba(148,163,184,0.3);'}" data-toggle-srv="${s.id}" title="Toggle Service Visibility">
+                            ${s.visible !== false ? '🟢 Visible' : '⚪ Hidden'}
+                          </button>
                           <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #EF4444;" data-del-srv="${s.id}">Delete</button>
                         </div>
                       </td>
@@ -460,14 +465,16 @@ export class VendorConsoleController {
                         ${currency}${p.price} <span style="font-size: 0.72rem; color: var(--theme-text-muted); font-weight: 500;">/${p.unit || 'unit'}</span>
                       </td>
                       <td>
-                        <span class="${p.visible ? 'pill-status-active' : 'pill-status-suspended'}">
-                          ${p.visible ? 'In Stock' : 'Hidden'}
+                        <span class="${p.visible !== false ? 'pill-status-active' : 'pill-status-suspended'}">
+                          ${p.visible !== false ? 'In Stock' : 'Hidden'}
                         </span>
                       </td>
                       <td>
                         <div style="display: flex; gap: 6px;">
                           <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-secondary);" data-edit-prod="${p.id}">Edit</button>
-                          <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;" data-toggle-prod="${p.id}">Toggle</button>
+                          <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${p.visible !== false ? 'color: #10B981; border-color: rgba(16,185,129,0.4);' : 'color: #94A3B8; border-color: rgba(148,163,184,0.3);'}" data-toggle-prod="${p.id}" title="Toggle Product Visibility">
+                            ${p.visible !== false ? '🟢 Active' : '⚪ Hidden'}
+                          </button>
                           <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #EF4444;" data-del-prod="${p.id}">Delete</button>
                         </div>
                       </td>
@@ -1050,6 +1057,9 @@ export class VendorConsoleController {
   }
 
   bindDashboardEvents() {
+    if (this.currentVendor?.id) {
+      this.currentVendor = db.getVendor(this.currentVendor.id) || this.currentVendor;
+    }
     const v = this.currentVendor;
 
     // Logout
@@ -1145,6 +1155,7 @@ export class VendorConsoleController {
           visible: true
         };
         await db.addService(v.id, newSrv);
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-add-service")?.classList.remove("active");
         window.OmniApp.showToast("New service added!");
         this.renderDashboard();
@@ -1155,7 +1166,7 @@ export class VendorConsoleController {
     this.container.querySelectorAll("[data-edit-srv]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-edit-srv");
-        const s = v.services?.find(x => x.id === id);
+        const s = v.services?.find(x => String(x.id) === String(id));
         if (!s) return;
         const modal = this.container.querySelector("#modal-edit-service");
         if (modal) {
@@ -1178,6 +1189,7 @@ export class VendorConsoleController {
         const visible = this.container.querySelector("#edit-srv-visible").checked;
 
         await db.updateService(v.id, id, { name, category, description: "", visible });
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-edit-service")?.classList.remove("active");
         window.OmniApp.showToast("Service updated successfully!");
         this.renderDashboard();
@@ -1188,7 +1200,9 @@ export class VendorConsoleController {
     this.container.querySelectorAll("[data-toggle-srv]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-toggle-srv");
-        await db.toggleService(v.id, id);
+        const s = await db.toggleService(v.id, id);
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
+        window.OmniApp.showToast(s?.visible !== false ? "Service is now visible." : "Service hidden from clients.");
         this.renderDashboard();
       });
     });
@@ -1198,6 +1212,8 @@ export class VendorConsoleController {
         const id = btn.getAttribute("data-del-srv");
         if (confirm("Are you sure you want to remove this service?")) {
           await db.deleteService(v.id, id);
+          if (v.services) v.services = v.services.filter(s => String(s.id) !== String(id));
+          this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Service deleted.");
           this.renderDashboard();
         }
@@ -1230,6 +1246,7 @@ export class VendorConsoleController {
         if (!v.products) v.products = [];
         v.products.push(newProd);
         await db.saveVendor(v);
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-add-product")?.classList.remove("active");
         window.OmniApp.showToast("Product added to catalog!");
         this.renderDashboard();
@@ -1240,7 +1257,7 @@ export class VendorConsoleController {
     this.container.querySelectorAll("[data-edit-prod]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-edit-prod");
-        const p = (v.products || []).find(x => x.id === id);
+        const p = (v.products || []).find(x => String(x.id) === String(id));
         if (!p) return;
         const modal = this.container.querySelector("#modal-edit-product");
         if (modal) {
@@ -1270,6 +1287,7 @@ export class VendorConsoleController {
         const visible = this.container.querySelector("#edit-prod-visible").checked;
 
         await db.updateProduct(v.id, id, { name, category: category || "General", emoji, unit, price, description: "", visible });
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-edit-product")?.classList.remove("active");
         window.OmniApp.showToast(`Updated product '${name}' successfully!`);
         this.renderDashboard();
@@ -1280,7 +1298,9 @@ export class VendorConsoleController {
     this.container.querySelectorAll("[data-toggle-prod]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-toggle-prod");
-        await db.toggleProduct(v.id, id);
+        const p = await db.toggleProduct(v.id, id);
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
+        window.OmniApp.showToast(p?.visible !== false ? "Product is now visible in shop." : "Product hidden from shop.");
         this.renderDashboard();
       });
     });
@@ -1290,6 +1310,8 @@ export class VendorConsoleController {
         const id = btn.getAttribute("data-del-prod");
         if (confirm("Delete this product permanently from your catalog?")) {
           await db.deleteProduct(v.id, id);
+          if (v.products) v.products = v.products.filter(p => String(p.id) !== String(id));
+          this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Product deleted.");
           this.renderDashboard();
         }
@@ -1301,6 +1323,7 @@ export class VendorConsoleController {
       select.addEventListener("change", async () => {
         const bkgId = select.getAttribute("data-booking-status-id");
         await db.updateBookingStatus(v.id, bkgId, select.value);
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         window.OmniApp.showToast("Booking status updated to " + select.value);
       });
     });
@@ -1309,7 +1332,7 @@ export class VendorConsoleController {
     this.container.querySelectorAll("[data-edit-bkg]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-edit-bkg");
-        const b = (v.bookings || []).find(x => x.id === id);
+        const b = (v.bookings || []).find(x => String(x.id) === String(id));
         if (!b) return;
         const modal = this.container.querySelector("#modal-vendor-booking");
         if (modal) {
@@ -1341,6 +1364,7 @@ export class VendorConsoleController {
         const notes = this.container.querySelector("#edit-bkg-notes").value.trim();
 
         await db.updateBooking(v.id, id, { clientName, clientPhone, service, date, timeSlot, status, notes });
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-vendor-booking")?.classList.remove("active");
         window.OmniApp.showToast("Booking details updated successfully!");
         this.renderDashboard();
@@ -1353,6 +1377,8 @@ export class VendorConsoleController {
         const id = btn.getAttribute("data-del-bkg");
         if (confirm("Delete this booking record permanently?")) {
           await db.deleteBooking(v.id, id);
+          if (v.bookings) v.bookings = v.bookings.filter(b => String(b.id) !== String(id));
+          this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Booking deleted.");
           this.renderDashboard();
         }
@@ -1373,7 +1399,7 @@ export class VendorConsoleController {
     this.container.querySelectorAll("[data-edit-rev]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-edit-rev");
-        const r = (v.reviews || []).find(x => x.id === id);
+        const r = (v.reviews || []).find(x => String(x.id) === String(id));
         if (!r) return;
         const modal = this.container.querySelector("#modal-vendor-review");
         if (modal) {
@@ -1399,6 +1425,7 @@ export class VendorConsoleController {
         const content = this.container.querySelector("#edit-rev-content").value.trim();
 
         await db.updateReview(v.id, id, { author, rating, date, content });
+        this.currentVendor = db.getVendor(v.id) || this.currentVendor;
         this.container.querySelector("#modal-vendor-review")?.classList.remove("active");
         window.OmniApp.showToast("Review updated successfully!");
         this.renderDashboard();
@@ -1411,6 +1438,8 @@ export class VendorConsoleController {
         const id = btn.getAttribute("data-del-rev");
         if (confirm("Delete this customer review permanently?")) {
           await db.deleteReview(v.id, id);
+          if (v.reviews) v.reviews = v.reviews.filter(r => String(r.id) !== String(id));
+          this.currentVendor = db.getVendor(v.id) || this.currentVendor;
           window.OmniApp.showToast("Review deleted.");
           this.renderDashboard();
         }

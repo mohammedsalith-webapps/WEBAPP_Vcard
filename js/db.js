@@ -2,6 +2,7 @@
 import { INITIAL_DATA } from "./seedData.js";
 
 const STORAGE_KEY = "OMNICARD_SYSTEM_DATA_2026";
+const PENDING_SYNC_KEY = "OMNICARD_PENDING_SYNC";
 
 class DatabaseService {
   constructor() {
@@ -9,6 +10,9 @@ class DatabaseService {
     this.firebaseApp = null;
     this.firebaseDb = null;
     this.isFirebaseReady = false;
+    this.isFirebaseConnected = false;
+    this.isFreshSeed = false;
+    this.isSyncing = false;
     this.listeners = [];
   }
 
@@ -17,34 +21,45 @@ class DatabaseService {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
+        this.isFreshSeed = false;
         this.data = JSON.parse(stored);
       } else {
+        this.isFreshSeed = true;
         this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
-        this.saveLocal();
+        this.saveLocal({ touchUpdatedAt: false });
       }
     } catch (err) {
       console.warn("Error reading localStorage, initializing seed data:", err);
+      this.isFreshSeed = true;
       this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
-      this.saveLocal();
+      this.saveLocal({ touchUpdatedAt: false });
     }
 
-    // Ensure Firebase cloud config from INITIAL_DATA is adopted across all devices
+    // Ensure Firebase cloud config from INITIAL_DATA is adopted if missing
     const initFbConf = INITIAL_DATA.platformSettings?.firebaseConfig;
     if (initFbConf && initFbConf.apiKey) {
       if (!this.data.platformSettings) this.data.platformSettings = {};
       const curFb = this.data.platformSettings.firebaseConfig;
-      if (!curFb || !curFb.apiKey) {
+      if (!curFb || (!curFb.apiKey && !curFb.disabled)) {
         this.data.platformSettings.firebaseConfig = { ...initFbConf };
-        this.saveLocal();
+        this.saveLocal({ touchUpdatedAt: false });
       }
     }
 
-    // Ensure platformSettings has adminUpi
+    // Ensure platformSettings has adminUpi and supportWhatsApp
     if (this.data) {
       if (!this.data.platformSettings) this.data.platformSettings = {};
+      let settingsMigrated = false;
       if (!this.data.platformSettings.adminUpi) {
-        this.data.platformSettings.adminUpi = INITIAL_DATA.platformSettings?.adminUpi || "9876543210@upi";
-        this.saveLocal();
+        this.data.platformSettings.adminUpi = INITIAL_DATA.platformSettings?.adminUpi || "7019601569@ybl";
+        settingsMigrated = true;
+      }
+      if (!this.data.platformSettings.supportWhatsApp) {
+        this.data.platformSettings.supportWhatsApp = INITIAL_DATA.platformSettings?.supportWhatsApp || "+917019601569";
+        settingsMigrated = true;
+      }
+      if (settingsMigrated) {
+        this.saveLocal({ touchUpdatedAt: false });
       }
     }
 
@@ -63,11 +78,12 @@ class DatabaseService {
             calendarBooking: true,
             customerReviews: true,
             promoBanner: true,
-            pwaInstall: true
+            pwaInstall: true,
+            leadForm: true
           }
         };
         this.data.subscriptionPlans.unshift(demoPlan);
-        this.saveLocal();
+        this.saveLocal({ touchUpdatedAt: false });
       }
     }
 
@@ -101,7 +117,7 @@ class DatabaseService {
         }
       });
       if (cleaned) {
-        this.saveLocal();
+        this.saveLocal({ touchUpdatedAt: false });
       }
     }
 
@@ -150,7 +166,7 @@ class DatabaseService {
         }
       });
       if (leadUpdated) {
-        this.saveLocal();
+        this.saveLocal({ touchUpdatedAt: false });
       }
     }
 
@@ -171,7 +187,7 @@ class DatabaseService {
         }
       });
       if (pwaUpdated) {
-        this.saveLocal();
+        this.saveLocal({ touchUpdatedAt: false });
       }
     }
 
@@ -181,10 +197,14 @@ class DatabaseService {
     return this.data;
   }
 
-  saveLocal() {
+  saveLocal(options = {}) {
     try {
-      if (this.data) {
+      const touch = options && options.touchUpdatedAt === true;
+      if (touch && this.data) {
         this.data.updatedAt = Date.now();
+        try {
+          localStorage.setItem(PENDING_SYNC_KEY, "true");
+        } catch (_) {}
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
       this.notifyListeners();
@@ -210,84 +230,129 @@ class DatabaseService {
     };
   }
 
-  // Firebase Realtime DB optional sync
+  // Firebase Realtime DB sync initialization with authoritative cloud resolution
   async tryInitFirebase() {
     const fbConf = this.data?.platformSettings?.firebaseConfig;
-    if (fbConf && fbConf.apiKey && fbConf.databaseURL && typeof window !== "undefined" && window.firebase) {
-      try {
-        if (!window.firebase.apps || !window.firebase.apps.length) {
-          this.firebaseApp = window.firebase.initializeApp(fbConf);
+    if (!fbConf || !fbConf.apiKey || !fbConf.databaseURL || fbConf.disabled) {
+      this.isFirebaseReady = false;
+      this.isFirebaseConnected = false;
+      return;
+    }
+
+    if (typeof window === "undefined" || !window.firebase) {
+      console.warn("Firebase SDK not loaded, operating in LocalStorage mode.");
+      this.isFirebaseReady = false;
+      this.isFirebaseConnected = false;
+      return;
+    }
+
+    try {
+      if (!window.firebase.apps || !window.firebase.apps.length) {
+        this.firebaseApp = window.firebase.initializeApp(fbConf);
+      } else {
+        this.firebaseApp = window.firebase.apps[0];
+      }
+      this.firebaseDb = window.firebase.database();
+      this.isFirebaseReady = true;
+
+      // Real-time connection listener on .info/connected
+      this.firebaseDb.ref(".info/connected").on("value", (snap) => {
+        const isConn = snap.val() === true;
+        this.isFirebaseConnected = isConn;
+        if (isConn) {
+          this.isFirebaseReady = true;
+          console.log("🟢 [Firebase] Actively connected to cloud RTDB.");
         } else {
-          this.firebaseApp = window.firebase.apps[0];
+          console.log("🟡 [Firebase] Connection state changed: waiting for cloud link.");
         }
-        this.firebaseDb = window.firebase.database();
-        this.isFirebaseReady = true;
-        console.log("Firebase Realtime DB connected successfully.");
+        this.notifyListeners();
+      });
 
-        // Initial fetch: wait for cloud snapshot (with 2.5s timeout fallback so offline mode doesn't freeze)
-        try {
-          const fetchPromise = this.firebaseDb.ref("omnicard").once("value");
-          const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 2500));
-          const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
-          if (snapshot && snapshot.exists()) {
-            const cloudData = snapshot.val();
-            if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
-              const localTime = Number(this.data?.updatedAt) || 0;
-              const cloudTime = Number(cloudData.updatedAt) || 0;
-              if (localTime > cloudTime) {
-                // Local edits are newer than cloud: sync to cloud
-                console.log("⚡ [DB] Local data is newer than cloud. Syncing local state to Firebase.");
-                await this.syncToCloud();
-              } else {
-                this.data = cloudData;
-                // Ensure local firebaseConfig is preserved
-                if (!this.data.platformSettings) this.data.platformSettings = {};
-                this.data.platformSettings.firebaseConfig = { ...fbConf };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-              }
-            }
-          } else if (snapshot && !snapshot.exists()) {
-            // Cloud is empty, seed it with current local data!
-            await this.syncToCloud();
-          }
-        } catch (fetchErr) {
-          console.warn("Initial Firebase fetch warning:", fetchErr);
-        }
+      // Initial fetch: resolve authoritative state between cloud and local
+      try {
+        const fetchPromise = this.firebaseDb.ref("omnicard").once("value");
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 3500));
+        const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
 
-        // Listen for live updates across all devices
-        this.firebaseDb.ref("omnicard").on("value", (snapshot) => {
+        if (snapshot && snapshot.exists()) {
           const cloudData = snapshot.val();
           if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
+            const hasPendingSync = localStorage.getItem(PENDING_SYNC_KEY) === "true";
             const localTime = Number(this.data?.updatedAt) || 0;
             const cloudTime = Number(cloudData.updatedAt) || 0;
-            if (cloudTime >= localTime) {
+
+            // Only push local to cloud if THIS device explicitly made offline user edits that haven't been synced yet!
+            if (!this.isFreshSeed && hasPendingSync && localTime > cloudTime) {
+              console.log("⚡ [DB] Pending un-synced user edits detected. Syncing to Firebase.");
+              await this.syncToCloud();
+            } else {
+              // Cloud data takes precedence!
+              console.log("⚡ [DB] Adopting authoritative cloud state from Firebase.");
               this.data = cloudData;
-              if (!this.data.platformSettings) {
-                this.data.platformSettings = JSON.parse(JSON.stringify(INITIAL_DATA.platformSettings || {}));
-              }
-              if (fbConf) {
-                this.data.platformSettings.firebaseConfig = { ...fbConf };
-              }
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-              this.notifyListeners();
+              if (!this.data.platformSettings) this.data.platformSettings = {};
+              this.data.platformSettings.firebaseConfig = { ...fbConf };
+              localStorage.removeItem(PENDING_SYNC_KEY);
+              this.saveLocal({ touchUpdatedAt: false });
             }
           }
-        });
-      } catch (err) {
-        console.warn("Firebase initialization failed, operating in LocalStorage mode:", err);
-        this.isFirebaseReady = false;
+        } else if (snapshot && !snapshot.exists()) {
+          // Cloud database is empty, seed it with current local state
+          console.log("⚡ [DB] Cloud database is empty. Seeding Firebase with initial state.");
+          await this.syncToCloud();
+        }
+      } catch (fetchErr) {
+        console.warn("Initial Firebase fetch warning:", fetchErr);
       }
+
+      // Listen for live updates across all devices in real-time
+      this.firebaseDb.ref("omnicard").on("value", (snapshot) => {
+        if (this.isSyncing) return; // Prevent echoing our own save
+        const cloudData = snapshot.val();
+        if (cloudData && typeof cloudData === "object" && Array.isArray(cloudData.vendors)) {
+          const hasPendingSync = localStorage.getItem(PENDING_SYNC_KEY) === "true";
+          const localTime = Number(this.data?.updatedAt) || 0;
+          const cloudTime = Number(cloudData.updatedAt) || 0;
+
+          if (hasPendingSync && localTime > cloudTime) {
+            // Local has pending unsynced edits that haven't pushed yet
+            return;
+          }
+
+          this.data = cloudData;
+          if (!this.data.platformSettings) {
+            this.data.platformSettings = JSON.parse(JSON.stringify(INITIAL_DATA.platformSettings || {}));
+          }
+          if (fbConf) {
+            this.data.platformSettings.firebaseConfig = { ...fbConf };
+          }
+          localStorage.removeItem(PENDING_SYNC_KEY);
+          this.saveLocal({ touchUpdatedAt: false });
+        }
+      });
+    } catch (err) {
+      console.warn("Firebase initialization failed, operating in LocalStorage mode:", err);
+      this.isFirebaseReady = false;
+      this.isFirebaseConnected = false;
     }
   }
 
   // Sync current data to Firebase if connected
   async syncToCloud() {
-    if (this.isFirebaseReady && this.firebaseDb) {
-      try {
-        await this.firebaseDb.ref("omnicard").set(this.data);
-      } catch (err) {
-        console.warn("Cloud sync failed, persisted locally:", err);
+    if (!this.isFirebaseReady || !this.firebaseDb) return;
+    try {
+      this.isSyncing = true;
+      if (this.data) {
+        this.data.updatedAt = Date.now();
       }
+      await this.firebaseDb.ref("omnicard").set(this.data);
+      try {
+        localStorage.removeItem(PENDING_SYNC_KEY);
+      } catch (_) {}
+      console.log("✅ [DB] Successfully synchronized state to Firebase RTDB.");
+    } catch (err) {
+      console.warn("Cloud sync failed, persisted locally:", err);
+    } finally {
+      this.isSyncing = false;
     }
   }
 
@@ -306,7 +371,7 @@ class DatabaseService {
     if (!this.data) this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
     if (!this.data.platformSettings) this.data.platformSettings = {};
     this.data.platformSettings = { ...this.data.platformSettings, ...newSettings };
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     await this.syncToCloud();
     return this.data.platformSettings;
   }
@@ -346,14 +411,14 @@ class DatabaseService {
       vendors.push(cleanVendor);
     }
     this.data.vendors = vendors;
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     await this.syncToCloud();
     return cleanVendor;
   }
 
   async deleteVendor(vendorId) {
     this.data.vendors = this.getVendors().filter((v) => v.id !== vendorId);
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     await this.syncToCloud();
     return true;
   }
@@ -395,7 +460,7 @@ class DatabaseService {
   async deleteService(vendorId, serviceId) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.services) return false;
-    vendor.services = vendor.services.filter((s) => s.id !== serviceId);
+    vendor.services = vendor.services.filter((s) => String(s.id) !== String(serviceId));
     await this.saveVendor(vendor);
     return true;
   }
@@ -403,9 +468,10 @@ class DatabaseService {
   async toggleService(vendorId, serviceId) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.services) return null;
-    const s = vendor.services.find((x) => x.id === serviceId);
+    const s = vendor.services.find((x) => String(x.id) === String(serviceId));
     if (s) {
-      s.visible = !s.visible;
+      const isCurrentlyVisible = s.visible !== false;
+      s.visible = !isCurrentlyVisible;
       await this.saveVendor(vendor);
       return s;
     }
@@ -415,8 +481,11 @@ class DatabaseService {
   // Firebase Realtime DB Admin Management
   async updateFirebaseConfig(fbConf) {
     if (!this.data.platformSettings) this.data.platformSettings = {};
-    this.data.platformSettings.firebaseConfig = { ...fbConf };
-    this.saveLocal();
+    const cleanConf = { ...fbConf };
+    delete cleanConf.disabled;
+    this.data.platformSettings.firebaseConfig = cleanConf;
+    this.saveLocal({ touchUpdatedAt: true });
+
     if (typeof window !== "undefined" && window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
       try {
         await Promise.all(window.firebase.apps.map(a => a.delete()));
@@ -435,10 +504,17 @@ class DatabaseService {
       return { success: false, error: "Firebase Realtime Database is not currently initialized or connected." };
     }
     try {
+      this.isSyncing = true;
+      if (this.data) this.data.updatedAt = Date.now();
       await this.firebaseDb.ref("omnicard").set(this.data);
+      try {
+        localStorage.removeItem(PENDING_SYNC_KEY);
+      } catch (_) {}
       return { success: true, message: "Successfully synchronized local database to Firebase Realtime Database." };
     } catch (err) {
       return { success: false, error: err.message };
+    } finally {
+      this.isSyncing = false;
     }
   }
 
@@ -451,12 +527,20 @@ class DatabaseService {
       projectId: "",
       storageBucket: "",
       messagingSenderId: "",
-      appId: ""
+      appId: "",
+      disabled: true
     };
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     this.isFirebaseReady = false;
+    this.isFirebaseConnected = false;
+    if (typeof window !== "undefined" && window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+      try {
+        window.firebase.apps.map(a => a.delete());
+      } catch (_) {}
+    }
     this.firebaseApp = null;
     this.firebaseDb = null;
+    this.notifyListeners();
     return { success: true };
   }
 
@@ -471,7 +555,8 @@ class DatabaseService {
       sizeKb: kb,
       vendorCount: vendors.length,
       planCount: plans.length,
-      isFirebaseReady: this.isFirebaseReady
+      isFirebaseReady: this.isFirebaseReady,
+      isFirebaseConnected: this.isFirebaseConnected
     };
   }
 
@@ -523,7 +608,7 @@ class DatabaseService {
   async deleteBooking(vendorId, bookingId) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.bookings) return false;
-    vendor.bookings = vendor.bookings.filter((b) => b.id !== bookingId);
+    vendor.bookings = vendor.bookings.filter((b) => String(b.id) !== String(bookingId));
     await this.saveVendor(vendor);
     return true;
   }
@@ -549,7 +634,7 @@ class DatabaseService {
   async updateReview(vendorId, reviewId, updatedFields) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.reviews) return null;
-    const index = vendor.reviews.findIndex((r) => r.id === reviewId);
+    const index = vendor.reviews.findIndex((r) => String(r.id) === String(reviewId));
     if (index >= 0) {
       vendor.reviews[index] = {
         ...vendor.reviews[index],
@@ -565,7 +650,7 @@ class DatabaseService {
   async deleteReview(vendorId, reviewId) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.reviews) return false;
-    vendor.reviews = vendor.reviews.filter((r) => r.id !== reviewId);
+    vendor.reviews = vendor.reviews.filter((r) => String(r.id) !== String(reviewId));
     await this.saveVendor(vendor);
     return true;
   }
@@ -658,7 +743,7 @@ class DatabaseService {
   async deleteProduct(vendorId, productId) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.products) return false;
-    vendor.products = vendor.products.filter((p) => p.id !== productId);
+    vendor.products = vendor.products.filter((p) => String(p.id) !== String(productId));
     await this.saveVendor(vendor);
     return true;
   }
@@ -666,9 +751,10 @@ class DatabaseService {
   async toggleProduct(vendorId, productId) {
     const vendor = this.getVendor(vendorId);
     if (!vendor || !vendor.products) return null;
-    const p = vendor.products.find((x) => x.id === productId);
+    const p = vendor.products.find((x) => String(x.id) === String(productId));
     if (p) {
-      p.visible = !p.visible;
+      const isCurrentlyVisible = p.visible !== false;
+      p.visible = !isCurrentlyVisible;
       await this.saveVendor(vendor);
       return p;
     }
@@ -689,14 +775,14 @@ class DatabaseService {
       plans.push(planData);
     }
     this.data.subscriptionPlans = plans;
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     await this.syncToCloud();
     return planData;
   }
 
   async deleteSubscriptionPlan(planId) {
     this.data.subscriptionPlans = this.getSubscriptionPlans().filter((p) => p.id !== planId);
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     await this.syncToCloud();
     return true;
   }
@@ -713,7 +799,7 @@ class DatabaseService {
         throw new Error("Invalid OmniCard backup schema.");
       }
       this.data = parsed;
-      this.saveLocal();
+      this.saveLocal({ touchUpdatedAt: true });
       await this.syncToCloud();
       return { success: true };
     } catch (err) {
@@ -724,10 +810,20 @@ class DatabaseService {
   // Reset to default seed data
   async resetToDefaults() {
     this.data = JSON.parse(JSON.stringify(INITIAL_DATA));
-    this.saveLocal();
+    this.saveLocal({ touchUpdatedAt: true });
     await this.syncToCloud();
     return this.data;
   }
 }
 
-export const db = new DatabaseService();
+// Global Singleton pattern across all module scopes
+const db = (typeof window !== "undefined" && window.__OMNICARD_DB__)
+  ? window.__OMNICARD_DB__
+  : new DatabaseService();
+
+if (typeof window !== "undefined") {
+  window.__OMNICARD_DB__ = db;
+  window.OmniDB = db;
+}
+
+export { db, DatabaseService };

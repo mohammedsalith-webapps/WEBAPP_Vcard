@@ -2,8 +2,6 @@
    OmniCard OS - Modern Bento Grid & Minimalist Swiss Architecture CSS
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -16,10 +14,22 @@ html, body {
   background-color: var(--theme-bg);
   color: var(--theme-text);
   min-height: 100vh;
+  min-height: 100dvh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  touch-action: pan-y;
+  -webkit-text-size-adjust: 100%;
+}
+
+button, a, input, select, textarea, .btn-pill, .dock-item, .contact-circle-btn, .avatar-glowing-ring, .category-chip, .service-toggle-btn {
+  touch-action: manipulation;
+}
+
+.btn-pill:active, .contact-circle-btn:active, .dock-item:active, .btn-submit-primary:active, .vcard-circle-btn:active {
+  transform: scale(0.96);
+  transition: transform 0.08s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -136,6 +146,7 @@ button, input, select, textarea {
   align-items: flex-start;
   padding: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #07090E;
 }
 
@@ -144,7 +155,9 @@ button, input, select, textarea {
   width: 100%;
   max-width: 440px;
   min-height: 100vh;
+  min-height: 100dvh;
   height: 100vh;
+  height: 100dvh;
   background: var(--theme-bg);
   border-radius: 0;
   border: none;
@@ -221,6 +234,11 @@ button, input, select, textarea {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  transform: translateZ(0);
+  will-change: scroll-position;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
   padding-bottom: 74px; /* Ensure content never gets hidden behind the fixed bottom dock */
@@ -307,6 +325,8 @@ button, input, select, textarea {
   display: inline-block;
   padding-left: 100%;
   animation: marquee-scroll 24s linear infinite;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 @keyframes marquee-scroll {
@@ -1127,9 +1147,12 @@ button, input, select, textarea {
   width: 100%;
   z-index: 150;
   background: rgba(10, 13, 20, 0.96);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid var(--theme-border);
   position: relative;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .bottom-dock {
@@ -1234,13 +1257,16 @@ button, input, select, textarea {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px 12px;
-  background: rgba(15, 19, 28, 0.85);
-  backdrop-filter: blur(16px);
+  background: rgba(15, 19, 28, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--theme-border);
   margin: -0px -16px 16px -16px;
   position: sticky;
   top: 0;
   z-index: 50;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .tab-topbar-left {
@@ -1881,9 +1907,51 @@ button, input, select, textarea {
 
 .review-author-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 6px;
+}
+
+.review-author-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.review-author-headline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.review-author-avatar {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.review-author-name-text {
+  color: #FFFFFF;
+  word-break: break-word;
+}
+
+.review-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 2px 7px;
+  border-radius: 4px;
+  line-height: 1.2;
 }
 
 .review-author-name {
@@ -1892,8 +1960,11 @@ button, input, select, textarea {
 }
 
 .review-date {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--theme-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .review-tags-cluster {
@@ -3339,6 +3410,7 @@ input[type="date"]:valid {
   .stage-container {
     padding: 0;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .stage-container.view-fullwidth {
@@ -3348,7 +3420,9 @@ input[type="date"]:valid {
   .device-shell {
     max-width: 100%;
     height: 100vh;
+    height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
     border: none;
     box-shadow: none;
@@ -3358,12 +3432,17 @@ input[type="date"]:valid {
     border-radius: 0;
     border: none;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .device-screen {
     height: 100%;
     max-height: 100vh;
+    max-height: 100dvh;
     padding-bottom: 84px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    transform: translateZ(0);
   }
 
   .phone-notch-container {
@@ -3377,6 +3456,11 @@ input[type="date"]:valid {
     right: 0;
     z-index: 9999;
     border-radius: 0;
+    transform: translateZ(0);
+    will-change: transform;
+    background: rgba(10, 13, 20, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 }
 
@@ -3405,11 +3489,13 @@ input[type="date"]:valid {
   gap: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   animation: pwaGlowPulse 3s infinite ease-in-out;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 @keyframes pwaGlowPulse {
-  0%, 100% { border-color: rgba(212, 255, 0, 0.25); }
-  50% { border-color: rgba(212, 255, 0, 0.55); box-shadow: 0 0 16px rgba(212, 255, 0, 0.15); }
+  0%, 100% { opacity: 0.92; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.008); }
 }
 
 .pwa-banner-content {
@@ -3618,18 +3704,19 @@ input[type="date"]:valid {
   margin-top: 14px;
   user-select: none;
   position: relative;
-  animation: greenGlowingPulse 2.4s infinite;
+  animation: greenGlowingPulse 2.4s infinite ease-in-out;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 @keyframes greenGlowingPulse {
-  0% {
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
   }
   50% {
-    box-shadow: 0 0 28px rgba(16, 185, 129, 0.85), 0 0 40px rgba(16, 185, 129, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
-  }
-  100% {
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+    transform: scale(1.018);
+    opacity: 1;
   }
 }
 
