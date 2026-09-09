@@ -41,6 +41,15 @@
           localStorage.setItem("omnicard_last_active_vcard", vSlug);
         }
       } catch (e) {}
+
+      // Promptly refresh service worker if older version is waiting
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var reg of regs) {
+            reg.update().catch(function() {});
+          }
+        }).catch(function() {});
+      }
     })();
   </script>
 
@@ -114,6 +123,6 @@
   <div class="toast-container" id="toast-root"></div>
 
   <!-- Main Application Bootstrap with Cache-Buster -->
-  <script type="module" src="js/app.js?v=20260909_pwa_fix2"></script>
+  <script type="module" src="js/app.js?v=20260909_v9"></script>
 </body>
 </html>

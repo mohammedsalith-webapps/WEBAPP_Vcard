@@ -1,10 +1,10 @@
 // Main Application Bootstrap & Master View Orchestrator
-import { db } from "./db.js";
-import { VCardController } from "./vcard.js";
-import { VendorConsoleController } from "./vendor.js";
-import { AdminConsoleController } from "./admin.js";
-import { HomeController } from "./home.js";
-import { PWAHandler } from "./pwa.js";
+import { db } from "./db.js?v=20260909_v9";
+import { VCardController } from "./vcard.js?v=20260909_v9";
+import { VendorConsoleController } from "./vendor.js?v=20260909_v9";
+import { AdminConsoleController } from "./admin.js?v=20260909_v9";
+import { HomeController } from "./home.js?v=20260909_v9";
+import { PWAHandler } from "./pwa.js?v=20260909_v9";
 
 class OmniAppManager {
   constructor() {
@@ -88,7 +88,9 @@ class OmniAppManager {
 
     // PWA Install Button
     document.getElementById("btn-pwa-install")?.addEventListener("click", () => {
-      PWAHandler.promptInstall();
+      const slug = this.currentVendorSlug || new URLSearchParams(window.location.search).get("v");
+      const v = slug ? db.getVendor(slug) : null;
+      PWAHandler.showInstallModal(v?.branding?.businessName, v);
     });
   }
 

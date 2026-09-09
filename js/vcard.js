@@ -1,7 +1,7 @@
 // Module 1: Public Digital Business Card (vCard) Controller
-import { db } from "./db.js";
-import { WhatsAppEngine } from "./whatsapp.js";
-import { PWAHandler } from "./pwa.js";
+import { db } from "./db.js?v=20260909_v9";
+import { WhatsAppEngine } from "./whatsapp.js?v=20260909_v9";
+import { PWAHandler } from "./pwa.js?v=20260909_v9";
 
 export class VCardController {
   constructor(containerEl) {
@@ -476,15 +476,15 @@ export class VCardController {
 
           <!-- PWA Web App Installation Banner (Granted by Admin) -->
           ${!isStandalone && v.features?.pwaInstall !== false ? `
-            <div class="vcard-pwa-banner" id="vcard-pwa-install-banner" style="cursor: pointer;">
+            <div class="vcard-pwa-banner" id="vcard-pwa-install-banner" data-action="pwa-install" style="cursor: pointer;">
               <div class="pwa-banner-content">
                 <div class="pwa-banner-icon">📲</div>
                 <div class="pwa-banner-text">
-                  <div class="pwa-banner-title">Install ${v.branding.businessName} App</div>
+                  <div class="pwa-banner-title">Install ${v.branding?.businessName || 'Business'} App</div>
                   <div class="pwa-banner-desc">Save to your home screen for 1-tap fast offline access</div>
                 </div>
               </div>
-              <button type="button" class="pwa-banner-btn" id="btn-vcard-install-pwa">
+              <button type="button" class="pwa-banner-btn" id="btn-vcard-install-pwa" data-action="pwa-install">
                 <span>Install</span>
                 <span>⬇</span>
               </button>
@@ -1492,7 +1492,7 @@ export class VCardController {
     const pwaBanner = this.container.querySelector("#vcard-pwa-install-banner");
     const handleInstallClick = (e) => {
       if (e) e.stopPropagation();
-      PWAHandler.showInstallModal(v.branding.businessName, v);
+      PWAHandler.showInstallModal(v?.branding?.businessName, v);
     };
     if (pwaBtn) pwaBtn.addEventListener("click", handleInstallClick);
     if (pwaBanner) pwaBanner.addEventListener("click", handleInstallClick);

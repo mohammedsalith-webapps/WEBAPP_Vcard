@@ -202,6 +202,10 @@ export const PWAHandler = {
     this.showInstallModal(vendorName, vendor);
   },
 
+  showInstallGuideModal(vendorName = "Smart vCard", vendor = null) {
+    this.showInstallModal(vendorName, vendor);
+  },
+
   showInstallModal(vendorName = "Smart vCard", vendor = null) {
     const v = vendor || {};
     const bizName = vendorName || v.branding?.businessName || "Smart vCard";
@@ -221,14 +225,17 @@ export const PWAHandler = {
       this.deferredPrompt = window.deferredPWAPrompt;
     }
 
-    const modalsRoot = document.getElementById("app-modals-root") || document.body;
+    // Always attach modal directly to document.body to prevent clipping inside shell
+    const targetParent = document.body;
     let modalEl = document.getElementById("modal-pwa-install-sheet");
-    if (!modalEl) {
-      modalEl = document.createElement("div");
-      modalEl.id = "modal-pwa-install-sheet";
-      modalEl.className = "modal-overlay";
-      modalsRoot.appendChild(modalEl);
+    if (modalEl) {
+      modalEl.remove();
     }
+    modalEl = document.createElement("div");
+    modalEl.id = "modal-pwa-install-sheet";
+    modalEl.className = "modal-overlay active";
+    modalEl.style.cssText = "position: fixed; inset: 0; z-index: 9999999; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); opacity: 1; pointer-events: auto; visibility: visible;";
+    targetParent.appendChild(modalEl);
 
     const ua = navigator.userAgent || "";
     const isInAppBrowser = /FBAN|FBAV|Instagram|WhatsApp|Line|MicroMessenger|Snapchat|BytedanceWebview/i.test(ua);
@@ -240,7 +247,7 @@ export const PWAHandler = {
     const chromeIntentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`;
 
     modalEl.innerHTML = `
-      <div class="modal-card" style="max-width: 440px; text-align: center; padding: 22px 20px; border-radius: 24px 24px 0 0; background: #0F131C; border: 1px solid var(--theme-border-highlight); box-shadow: 0 -12px 40px rgba(0,0,0,0.95);">
+      <div class="modal-card" style="max-width: 440px; width: 100%; text-align: center; padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 16px)); border-radius: 24px 24px 0 0; background: #0F131C; border: 1px solid var(--theme-border-highlight); box-shadow: 0 -12px 40px rgba(0,0,0,0.95); transform: translateY(0); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
         <!-- Top Bar -->
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
           <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
@@ -250,7 +257,7 @@ export const PWAHandler = {
               <div style="font-size: 0.74rem; color: ${primaryColor}; font-weight: 700;">Fast 1-Tap Home Screen App</div>
             </div>
           </div>
-          <button type="button" class="btn-modal-close" id="btn-close-pwa-sheet" style="font-size: 1.4rem; padding: 4px 10px; color: var(--theme-text-muted); cursor: pointer; background: transparent; border: none;">×</button>
+          <button type="button" class="btn-modal-close" id="btn-close-pwa-sheet" style="font-size: 1.6rem; padding: 4px 10px; color: var(--theme-text-muted); cursor: pointer; background: transparent; border: none; line-height: 1;">×</button>
         </div>
 
         <p style="font-size: 0.8rem; color: var(--theme-text-muted); line-height: 1.45; text-align: left; margin-bottom: 16px;">
@@ -336,11 +343,15 @@ export const PWAHandler = {
       </div>
     `;
 
-    modalEl.classList.add("active");
     document.body.classList.add("has-modal-open");
 
     const closeModal = () => {
       modalEl.classList.remove("active");
+      modalEl.style.opacity = "0";
+      modalEl.style.pointerEvents = "none";
+      setTimeout(() => {
+        if (modalEl.parentNode) modalEl.remove();
+      }, 250);
       if (!document.querySelector(".modal-overlay.active:not(#modal-pwa-install-sheet)")) {
         document.body.classList.remove("has-modal-open");
       }
@@ -394,3 +405,22 @@ export const PWAHandler = {
     });
   }
 };
+
+// Global delegated click listener for any PWA install trigger across all vCards and views
+if (typeof document !== "undefined") {
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest("#btn-vcard-install-pwa, #vcard-pwa-install-banner, #btn-pwa-install, [data-action='pwa-install']");
+    if (trigger) {
+      e.preventDefault();
+      e.stopPropagation();
+      const currentSlug = new URLSearchParams(window.location.search).get("v") || window.OmniApp?.currentVendorSlug;
+      const vendor = currentSlug && window.OmniApp?.db ? window.OmniApp.db.getVendor(currentSlug) : null;
+      PWAHandler.showInstallModal(vendor?.branding?.businessName, vendor);
+    }
+  });
+}
+
+// Global window exposure
+if (typeof window !== "undefined") {
+  window.PWAHandler = PWAHandler;
+}
