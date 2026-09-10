@@ -1328,6 +1328,66 @@ export class VCardController {
       </div>
       ` : ''}
 
+      <!-- Modal: Share & Bio Link (For Social Media, WhatsApp & QR Code) -->
+      <div class="modal-overlay" id="modal-vcard-share">
+        <div class="modal-card" style="max-width: 440px; padding: 22px 18px; text-align: center;">
+          <div class="modal-header" style="text-align: left;">
+            <h3 class="modal-title"><span>🔗</span> Share Business WebApp</h3>
+            <button class="btn-modal-close" data-close-modal="modal-vcard-share">×</button>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 1.05rem; font-weight: 800; color: #FFFFFF;">${v.branding?.businessName || 'Business'}</div>
+            <div style="font-size: 0.76rem; color: var(--theme-primary); font-weight: 600;">${v.branding?.category || ''} • Verified WebApp</div>
+          </div>
+
+          <!-- Dynamic QR Code Card -->
+          <div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+            <img id="vcard-share-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?v=' + (v.slug || v.id))}" alt="Scan QR Code" style="width: 170px; height: 170px; display: block; border-radius: 6px;" />
+            <div style="font-size: 0.68rem; color: #0F172A; font-weight: 700; margin-top: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+              📷 Scan with Phone Camera
+            </div>
+          </div>
+
+          <!-- 1-Click Copy WebApp Link -->
+          <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+            <label class="form-label" style="font-size: 0.72rem;">WebApp / Bio Link</label>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" class="form-input" id="input-vcard-share-url" value="${window.location.origin}${window.location.pathname}?v=${v.slug || v.id}" readonly style="font-size: 0.78rem; font-family: monospace; color: var(--theme-primary); background: rgba(0,0,0,0.4); padding: 8px 10px;" />
+              <button type="button" class="btn-pill active" id="btn-copy-vcard-share-url" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; white-space: nowrap;">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- 1-Click Copy for Instagram Bio -->
+          <div class="form-group" style="text-align: left; margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 0.72rem;">📸 Instagram & Social Media Bio Snippet</label>
+            <textarea class="form-textarea" id="text-vcard-share-bio" rows="2" readonly style="font-size: 0.76rem; background: rgba(0,0,0,0.4); padding: 8px 10px;">🔗 Visit our Smart Business Web App: ${window.location.origin}${window.location.pathname}?v=${v.slug || v.id} | Contact, Book & Shop Online ✨</textarea>
+            <button type="button" class="btn-pill" id="btn-copy-vcard-share-bio" style="width: 100%; justify-content: center; font-size: 0.76rem; margin-top: 5px; color: #00E5FF; border-color: rgba(0,229,255,0.4); font-weight: 700;">
+              📸 Copy for Instagram Bio
+            </button>
+          </div>
+
+          <!-- Quick Action Buttons Row -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn-pill" id="btn-vcard-share-whatsapp" style="width: 100%; justify-content: center; background: rgba(37, 211, 102, 0.15); border-color: rgba(37, 211, 102, 0.4); color: #25D366; font-weight: 700; padding: 9px; font-size: 0.82rem; gap: 6px;">
+              <span>💬 Share to WhatsApp Contacts / Status</span>
+            </button>
+
+            ${(typeof navigator !== 'undefined' && navigator.share) ? `
+              <button type="button" class="btn-pill" id="btn-vcard-share-native" style="width: 100%; justify-content: center; padding: 9px; font-size: 0.82rem; gap: 6px; font-weight: 700;">
+                <span>📲 More Sharing Options (Native Sheet)</span>
+              </button>
+            ` : ""}
+
+            <button type="button" class="btn-pill" id="btn-vcard-share-save-vcf" style="width: 100%; justify-content: center; padding: 9px; font-size: 0.82rem; gap: 6px; border-color: rgba(255,255,255,0.18);">
+              <span>💾 Save Contact to Phonebook (.vcf)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal: Secret Vendor Owner Authentication (Activated via Logo Long-Press) -->
       <div class="modal-overlay" id="modal-owner-pin">
         <div class="modal-card" style="max-width: 380px; text-align: center;">
@@ -1463,30 +1523,84 @@ export class VCardController {
   bindEvents() {
     const v = this.vendor;
 
-    // Share Card -> Native share or copy clean link
+    // Share & Bio-Link Modal Opener
     const shareBtn = this.container.querySelector("#btn-vcard-share");
-    if (shareBtn) {
-      shareBtn.addEventListener("click", async () => {
-        const cleanUrl = `${window.location.origin}${window.location.pathname}?v=${v.slug}`;
-        const shareData = {
-          title: v.branding.businessName,
-          text: `Check out ${v.branding.businessName} smart digital vCard!`,
-          url: cleanUrl
-        };
+    const shareModal = document.getElementById("modal-vcard-share");
+    if (shareBtn && shareModal) {
+      shareBtn.addEventListener("click", () => {
+        shareModal.classList.add("active");
+        document.body.classList.add("has-modal-open");
+      });
+    }
+
+    // 1-Click Copy Clean WebApp Link
+    const copyUrlBtn = document.getElementById("btn-copy-vcard-share-url");
+    if (copyUrlBtn) {
+      copyUrlBtn.addEventListener("click", () => {
+        const urlInput = document.getElementById("input-vcard-share-url");
+        if (urlInput) {
+          navigator.clipboard.writeText(urlInput.value).then(() => {
+            window.OmniApp.showToast("vCard WebApp link copied! Ready to share or use in Instagram Bio. 📋");
+          }).catch(() => {
+            urlInput.select();
+            document.execCommand("copy");
+            window.OmniApp.showToast("Link copied!");
+          });
+        }
+      });
+    }
+
+    // 1-Click Copy Instagram Bio Snippet
+    const copyBioBtn = document.getElementById("btn-copy-vcard-share-bio");
+    if (copyBioBtn) {
+      copyBioBtn.addEventListener("click", () => {
+        const bioText = document.getElementById("text-vcard-share-bio");
+        if (bioText) {
+          navigator.clipboard.writeText(bioText.value).then(() => {
+            window.OmniApp.showToast("Instagram Bio text copied! Ready to paste into profile. 📸");
+          }).catch(() => {
+            bioText.select();
+            document.execCommand("copy");
+            window.OmniApp.showToast("Bio text copied!");
+          });
+        }
+      });
+    }
+
+    // 1-Click WhatsApp Share to Contacts / Status
+    const waShareBtn = document.getElementById("btn-vcard-share-whatsapp");
+    if (waShareBtn) {
+      waShareBtn.addEventListener("click", () => {
+        const cleanUrl = `${window.location.origin}${window.location.pathname}?v=${v.slug || v.id}`;
+        const msg = `✨ Check out *${v.branding.businessName}* on our official Smart Business Web App!\n\n` +
+          `📱 *Browse Catalog, Quotes & Appointments:* ${cleanUrl}\n\n` +
+          `Save to your phone home screen with 1 tap! 🚀`;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+      });
+    }
+
+    // Native Mobile Share Sheet
+    const nativeShareBtn = document.getElementById("btn-vcard-share-native");
+    if (nativeShareBtn) {
+      nativeShareBtn.addEventListener("click", async () => {
+        const cleanUrl = `${window.location.origin}${window.location.pathname}?v=${v.slug || v.id}`;
         if (navigator.share) {
           try {
-            await navigator.share(shareData);
-          } catch (err) {
-            // share cancelled or unsupported
-          }
-        } else {
-          try {
-            await navigator.clipboard.writeText(cleanUrl);
-            window.OmniApp.showToast("vCard link copied to clipboard!");
-          } catch (e) {
-            window.OmniApp.showToast("Link: " + cleanUrl);
-          }
+            await navigator.share({
+              title: v.branding.businessName,
+              text: `Check out ${v.branding.businessName} Smart Business vCard Web App!`,
+              url: cleanUrl
+            });
+          } catch (e) {}
         }
+      });
+    }
+
+    // Save vcf from share modal
+    const shareVcfBtn = document.getElementById("btn-vcard-share-save-vcf");
+    if (shareVcfBtn) {
+      shareVcfBtn.addEventListener("click", () => {
+        this.downloadVCard();
       });
     }
 

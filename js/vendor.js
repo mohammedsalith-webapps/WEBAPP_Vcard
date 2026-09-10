@@ -203,6 +203,10 @@ export class VendorConsoleController {
                 <span>Back to Super Admin</span>
               </button>
             ` : ""}
+            <button type="button" class="btn-pill" id="btn-vendor-header-share" style="background: rgba(0, 229, 255, 0.15); border-color: rgba(0, 229, 255, 0.4); color: #00E5FF; font-weight: 700; gap: 6px; cursor: pointer;" title="Share WebApp & Instagram Bio Link">
+              <span>🔗</span>
+              <span>Share & Bio Link</span>
+            </button>
             <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" class="btn-pill" style="background: rgba(37, 211, 102, 0.15); border-color: rgba(37, 211, 102, 0.4); color: #25D366; font-weight: 700; gap: 6px;" title="Chat directly with Platform Admin on WhatsApp">
               <span>💬</span>
               <span>Admin WhatsApp Support</span>
@@ -229,10 +233,14 @@ export class VendorConsoleController {
                 </div>
               </div>
             </div>
-            <a href="?v=${v.slug}" target="_blank" class="btn-pill active" style="background: #25D366; color: #000; font-weight: 800; padding: 7px 14px; text-decoration: none; border-color: rgba(255,255,255,0.2);">
-              <span>🔄 Open Renewal Popup</span>
-              <span>↗</span>
-            </a>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" class="btn-pill" style="background: rgba(37, 211, 102, 0.2); border-color: rgba(37, 211, 102, 0.5); color: #25D366; font-weight: 800; padding: 7px 14px; text-decoration: none;">
+                <span>💬 Chat Admin to Renew ↗</span>
+              </a>
+              <a href="?v=${v.slug}" target="_blank" class="btn-pill active" style="background: #25D366; color: #000; font-weight: 800; padding: 7px 14px; text-decoration: none; border-color: rgba(255,255,255,0.2);">
+                <span>🔄 Open Renewal Popup ↗</span>
+              </a>
+            </div>
           </div>
         ` : ""}
 
@@ -1103,6 +1111,56 @@ export class VendorConsoleController {
           </form>
         </div>
       </div>
+
+      <!-- Modal: Vendor Share & Bio Link Generator -->
+      <div class="modal-overlay" id="modal-vendor-share">
+        <div class="modal-card" style="max-width: 440px; text-align: center;">
+          <div class="modal-header">
+            <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+              <span>🔗</span> <span>Share WebApp & Bio Link</span>
+            </h3>
+            <button class="btn-modal-close" data-close-modal="modal-vendor-share">×</button>
+          </div>
+
+          <!-- Dynamic QR Code Card -->
+          <div style="background: #FFFFFF; border-radius: 12px; padding: 14px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
+            <img id="vendor-share-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?v=' + (v.slug || v.id))}" alt="Scan QR Code" style="width: 170px; height: 170px; display: block; border-radius: 6px;" />
+            <div style="font-size: 0.68rem; color: #0F172A; font-weight: 700; margin-top: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+              📷 Scan to Open WebApp
+            </div>
+          </div>
+
+          <!-- 1-Click Copy WebApp Link -->
+          <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+            <label class="form-label" style="font-size: 0.72rem;">Clean WebApp Link</label>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" class="form-input" id="input-vendor-share-url" value="${window.location.origin}${window.location.pathname}?v=${v.slug || v.id}" readonly style="font-size: 0.78rem; font-family: monospace; color: var(--theme-primary); background: rgba(0,0,0,0.4); padding: 8px 10px;" />
+              <button type="button" class="btn-pill active" id="btn-copy-vendor-share-url" style="padding: 6px 14px; font-weight: 700; font-size: 0.78rem; white-space: nowrap;">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- 1-Click Copy for Instagram Bio -->
+          <div class="form-group" style="text-align: left; margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 0.72rem;">📸 Instagram & Social Media Bio Snippet</label>
+            <textarea class="form-textarea" id="text-vendor-share-bio" rows="2" readonly style="font-size: 0.76rem; background: rgba(0,0,0,0.4); padding: 8px 10px;">🔗 Visit our Smart Business Web App: ${window.location.origin}${window.location.pathname}?v=${v.slug || v.id} | Contact, Book & Shop Online ✨</textarea>
+            <button type="button" class="btn-pill" id="btn-copy-vendor-share-bio" style="width: 100%; justify-content: center; font-size: 0.76rem; margin-top: 5px; color: #00E5FF; border-color: rgba(0,229,255,0.4); font-weight: 700;">
+              📸 Copy for Instagram Bio
+            </button>
+          </div>
+
+          <!-- Quick Action Buttons Row -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn-pill" id="btn-vendor-share-whatsapp" style="width: 100%; justify-content: center; background: rgba(37, 211, 102, 0.15); border-color: rgba(37, 211, 102, 0.4); color: #25D366; font-weight: 700; padding: 9px; font-size: 0.82rem; gap: 6px;">
+              <span>💬 Share to WhatsApp Contacts / Status</span>
+            </button>
+            <a href="?v=${v.slug || v.id}" target="_blank" class="btn-pill active" style="width: 100%; justify-content: center; padding: 9px; font-size: 0.82rem; gap: 6px; font-weight: 700; text-decoration: none;">
+              <span>👁️ View Live WebApp Card ↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
     `;
 
     this.bindDashboardEvents();
@@ -1114,6 +1172,61 @@ export class VendorConsoleController {
     }
     const v = this.currentVendor;
     const isAdmin = !!(window.OmniApp?.isAdminManaging === true);
+
+    // Share & Bio-Link Modal Opener
+    const vendorShareBtn = this.container.querySelector("#btn-vendor-header-share");
+    const vendorShareModal = this.container.querySelector("#modal-vendor-share");
+    if (vendorShareBtn && vendorShareModal) {
+      vendorShareBtn.addEventListener("click", () => {
+        vendorShareModal.classList.add("active");
+      });
+    }
+
+    // 1-Click Copy Clean WebApp Link
+    const copyUrlBtn = this.container.querySelector("#btn-copy-vendor-share-url");
+    if (copyUrlBtn) {
+      copyUrlBtn.addEventListener("click", () => {
+        const urlInput = this.container.querySelector("#input-vendor-share-url");
+        if (urlInput) {
+          navigator.clipboard.writeText(urlInput.value).then(() => {
+            window.OmniApp.showToast("vCard WebApp link copied! Ready to share or use in Instagram Bio. 📋");
+          }).catch(() => {
+            urlInput.select();
+            document.execCommand("copy");
+            window.OmniApp.showToast("Link copied!");
+          });
+        }
+      });
+    }
+
+    // 1-Click Copy Instagram Bio Snippet
+    const copyBioBtn = this.container.querySelector("#btn-copy-vendor-share-bio");
+    if (copyBioBtn) {
+      copyBioBtn.addEventListener("click", () => {
+        const bioText = this.container.querySelector("#text-vendor-share-bio");
+        if (bioText) {
+          navigator.clipboard.writeText(bioText.value).then(() => {
+            window.OmniApp.showToast("Instagram Bio text copied! Ready to paste into profile. 📸");
+          }).catch(() => {
+            bioText.select();
+            document.execCommand("copy");
+            window.OmniApp.showToast("Bio text copied!");
+          });
+        }
+      });
+    }
+
+    // 1-Click WhatsApp Share to Contacts / Status
+    const waShareBtn = this.container.querySelector("#btn-vendor-share-whatsapp");
+    if (waShareBtn) {
+      waShareBtn.addEventListener("click", () => {
+        const cleanUrl = `${window.location.origin}${window.location.pathname}?v=${v.slug || v.id}`;
+        const msg = `✨ Check out *${v.branding.businessName}* on our official Smart Business Web App!\n\n` +
+          `📱 *Browse Catalog, Quotes & Appointments:* ${cleanUrl}\n\n` +
+          `Save to your phone home screen with 1 tap! 🚀`;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+      });
+    }
 
     // Logout
     const logoutBtn = this.container.querySelector("#btn-vendor-logout");
