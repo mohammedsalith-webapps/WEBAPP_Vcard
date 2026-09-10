@@ -1392,29 +1392,30 @@ export class AdminConsoleController {
             </div>
           </div>
 
-          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 8px 12px; margin: 10px 0;">
-            <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">
-              vCard Tabs & Granted Features (Click to enter & manage section):
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--theme-border); border-radius: 8px; padding: 9px 12px; margin: 10px 0;">
+            <div style="font-size: 0.73rem; color: #94A3B8; font-weight: 700; margin-bottom: 7px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+              <span>vCard Modules & Granted Tabs (Click to Toggle ON / OFF):</span>
+              <span style="font-size: 0.68rem; color: var(--theme-primary); font-weight: 600;">⚡ Admin 1-Click Toggle</span>
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
-              <span class="tab-grant-badge locked" title="Home is always active">🏠 Home: Default</span>
-              <button type="button" class="tab-grant-badge ${v.features?.quoteBuilder !== false ? 'granted' : 'revoked'}" data-nav-feature="services" data-v-id="${v.id}" title="Enter Services section to make changes">
-                📋 Services: ${v.features?.quoteBuilder !== false ? 'ON ↗' : 'OFF ↗'}
+              <span class="tab-grant-badge locked" title="Home tab is always active">🏠 Home: ON</span>
+              <button type="button" class="tab-grant-badge ${v.features?.quoteBuilder !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="quoteBuilder" data-v-id="${v.id}" title="Admin 1-Click: Click to turn Services ${v.features?.quoteBuilder !== false ? 'OFF' : 'ON'} for vendor">
+                📋 Services: ${v.features?.quoteBuilder !== false ? 'ON ✓' : 'OFF ✕'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.ecommerceShop !== false ? 'granted' : 'revoked'}" data-nav-feature="shop" data-v-id="${v.id}" title="Enter Shop / Products section to make changes">
-                🛍️ Shop: ${v.features?.ecommerceShop !== false ? 'ON ↗' : 'OFF ↗'}
+              <button type="button" class="tab-grant-badge ${v.features?.ecommerceShop !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="ecommerceShop" data-v-id="${v.id}" title="Admin 1-Click: Click to turn Shop ${v.features?.ecommerceShop !== false ? 'OFF' : 'ON'} for vendor">
+                🛍️ Shop: ${v.features?.ecommerceShop !== false ? 'ON ✓' : 'OFF ✕'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.calendarBooking !== false ? 'granted' : 'revoked'}" data-nav-feature="bookings" data-v-id="${v.id}" title="Enter Bookings section to make changes">
-                📅 Book: ${v.features?.calendarBooking !== false ? 'ON ↗' : 'OFF ↗'}
+              <button type="button" class="tab-grant-badge ${v.features?.calendarBooking !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="calendarBooking" data-v-id="${v.id}" title="Admin 1-Click: Click to turn Bookings ${v.features?.calendarBooking !== false ? 'OFF' : 'ON'} for vendor">
+                📅 Bookings: ${v.features?.calendarBooking !== false ? 'ON ✓' : 'OFF ✕'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.customerReviews !== false ? 'granted' : 'revoked'}" data-nav-feature="reviews" data-v-id="${v.id}" title="Enter Reviews section to make changes">
-                ⭐ Reviews: ${v.features?.customerReviews !== false ? 'ON ↗' : 'OFF ↗'}
+              <button type="button" class="tab-grant-badge ${v.features?.customerReviews !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="customerReviews" data-v-id="${v.id}" title="Admin 1-Click: Click to turn Reviews ${v.features?.customerReviews !== false ? 'OFF' : 'ON'} for vendor">
+                ⭐ Reviews: ${v.features?.customerReviews !== false ? 'ON ✓' : 'OFF ✕'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.pwaInstall !== false ? 'granted' : 'revoked'}" data-nav-feature="profile" data-v-id="${v.id}" title="Enter PWA section to make changes">
-                📱 PWA: ${v.features?.pwaInstall !== false ? 'ON ↗' : 'OFF ↗'}
+              <button type="button" class="tab-grant-badge ${v.features?.pwaInstall !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="pwaInstall" data-v-id="${v.id}" title="Admin 1-Click: Click to turn PWA Install ${v.features?.pwaInstall !== false ? 'OFF' : 'ON'} for vendor">
+                📱 PWA: ${v.features?.pwaInstall !== false ? 'ON ✓' : 'OFF ✕'}
               </button>
-              <button type="button" class="tab-grant-badge ${v.features?.leadForm !== false ? 'granted' : 'revoked'}" data-nav-feature="leadform" data-v-id="${v.id}" title="Enter Lead Form section to make changes">
-                📝 Lead Form: ${v.features?.leadForm !== false ? 'ON ↗' : 'OFF ↗'}
+              <button type="button" class="tab-grant-badge ${v.features?.leadForm !== false ? 'granted' : 'revoked'}" data-quick-toggle-tab="leadForm" data-v-id="${v.id}" title="Admin 1-Click: Click to turn Lead Form ${v.features?.leadForm !== false ? 'OFF' : 'ON'} for vendor">
+                📝 Lead Form: ${v.features?.leadForm !== false ? 'ON ✓' : 'OFF ✕'}
               </button>
             </div>
           </div>
@@ -1601,6 +1602,23 @@ export class AdminConsoleController {
             <div style="font-size: 0.72rem; color: #10B981;">💬 WhatsApp: <b>${v.contacts.whatsapp || 'None'}</b></div>
             <div style="font-size: 0.72rem; color: ${isExpired ? '#EF4444' : 'var(--theme-text-muted)'};">
               Expires: ${expiryDate.toLocaleDateString()} ${isExpired ? '(EXPIRED)' : ''}
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+              <button type="button" class="tab-grant-badge ${v.features?.quoteBuilder !== false ? 'granted' : 'revoked'}" style="padding: 1px 5px; font-size: 0.65rem;" data-quick-toggle-tab="quoteBuilder" data-v-id="${v.id}" title="Click to toggle Services ON/OFF">
+                Services: ${v.features?.quoteBuilder !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.ecommerceShop !== false ? 'granted' : 'revoked'}" style="padding: 1px 5px; font-size: 0.65rem;" data-quick-toggle-tab="ecommerceShop" data-v-id="${v.id}" title="Click to toggle Shop ON/OFF">
+                Shop: ${v.features?.ecommerceShop !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.calendarBooking !== false ? 'granted' : 'revoked'}" style="padding: 1px 5px; font-size: 0.65rem;" data-quick-toggle-tab="calendarBooking" data-v-id="${v.id}" title="Click to toggle Bookings ON/OFF">
+                Bookings: ${v.features?.calendarBooking !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.customerReviews !== false ? 'granted' : 'revoked'}" style="padding: 1px 5px; font-size: 0.65rem;" data-quick-toggle-tab="customerReviews" data-v-id="${v.id}" title="Click to toggle Reviews ON/OFF">
+                Reviews: ${v.features?.customerReviews !== false ? 'ON' : 'OFF'}
+              </button>
+              <button type="button" class="tab-grant-badge ${v.features?.leadForm !== false ? 'granted' : 'revoked'}" style="padding: 1px 5px; font-size: 0.65rem;" data-quick-toggle-tab="leadForm" data-v-id="${v.id}" title="Click to toggle Lead Form ON/OFF">
+                Leads: ${v.features?.leadForm !== false ? 'ON' : 'OFF'}
+              </button>
             </div>
           </td>
           <td>

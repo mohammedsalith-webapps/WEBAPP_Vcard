@@ -17,6 +17,7 @@ class OmniAppManager {
     this.vcardCtrl = null;
     this.vendorCtrl = null;
     this.adminCtrl = null;
+    this.isAdminManaging = false;
   }
 
   async init() {
@@ -217,6 +218,7 @@ class OmniAppManager {
   }
 
   openVendorPortal() {
+    this.isAdminManaging = false;
     this.navigate("vendor");
   }
 

@@ -23,6 +23,7 @@ export class VendorConsoleController {
 
   // Vendor Authentication View
   renderLoginForm() {
+    if (window.OmniApp) window.OmniApp.isAdminManaging = false;
     const vendors = db.getVendors();
     const urlParams = new URLSearchParams(window.location.search);
     const targetSlug = urlParams.get("v");
@@ -73,6 +74,7 @@ export class VendorConsoleController {
     const form = this.container.querySelector("#form-vendor-login");
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      if (window.OmniApp) window.OmniApp.isAdminManaging = false;
       const phone = this.container.querySelector("#vendor-login-phone").value.trim().replace(/[^\d]/g, "");
       const pin = this.container.querySelector("#vendor-login-pin").value.trim();
 
@@ -83,6 +85,7 @@ export class VendorConsoleController {
       });
 
       if (matched) {
+        if (window.OmniApp) window.OmniApp.isAdminManaging = false;
         this.currentVendor = matched;
         this.renderDashboard();
       } else {
@@ -113,8 +116,8 @@ export class VendorConsoleController {
     const waMsg = encodeURIComponent(`Hello Admin, I need assistance regarding my vendor account: ${v.branding.businessName} (${v.id}).`);
     const adminWhatsAppLink = `https://wa.me/${supportWa}?text=${waMsg}`;
 
-    // Ensure activeTab is valid for granted features (Admins managing vendors have access to all tabs)
-    const isAdmin = !!(sessionStorage.getItem("admin_auth") === "true" || window.OmniApp?.isAdminManaging);
+    // Admin mode is ONLY active when Super Admin clicked an action from the Admin Console
+    const isAdmin = !!(window.OmniApp?.isAdminManaging === true);
     const isTabAvailable = (tab) => {
       if (isAdmin) return true;
       if (tab === "profile") return true;
@@ -1196,12 +1199,13 @@ export class VendorConsoleController {
       this.currentVendor = db.getVendor(this.currentVendor.id) || this.currentVendor;
     }
     const v = this.currentVendor;
-    const isAdmin = !!(sessionStorage.getItem("admin_auth") === "true" || window.OmniApp?.isAdminManaging);
+    const isAdmin = !!(window.OmniApp?.isAdminManaging === true);
 
     // Logout
     const logoutBtn = this.container.querySelector("#btn-vendor-logout");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
+        if (window.OmniApp) window.OmniApp.isAdminManaging = false;
         this.currentVendor = null;
         this.renderLoginForm();
       });
@@ -1211,6 +1215,7 @@ export class VendorConsoleController {
     const backBtn = this.container.querySelector("#btn-back-to-admin");
     if (backBtn) {
       backBtn.addEventListener("click", () => {
+        if (window.OmniApp) window.OmniApp.isAdminManaging = false;
         window.OmniApp.setView("admin");
       });
     }
@@ -1219,6 +1224,17 @@ export class VendorConsoleController {
     this.container.querySelectorAll(".portal-tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-vtab");
+        const isTabAvailable = (t) => {
+          if (isAdmin) return true;
+          if (t === "profile") return true;
+          if (t === "services") return v.features?.quoteBuilder !== false;
+          if (t === "shop") return v.features?.ecommerceShop !== false;
+          if (t === "bookings") return v.features?.calendarBooking !== false;
+          if (t === "reviews") return v.features?.customerReviews !== false;
+          if (t === "leadform") return v.features?.leadForm !== false;
+          return true;
+        };
+        if (!isAdmin && !isTabAvailable(tab)) return;
         this.activeTab = tab;
         this.renderDashboard();
       });
