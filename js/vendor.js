@@ -376,15 +376,26 @@ export class VendorConsoleController {
                   <input type="text" class="form-input" id="v-phone" value="${v.contacts.phone || ''}" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label" style="color: #EF4444; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
+                  <label class="form-label" style="color: ${isAdmin ? '#10B981' : '#EF4444'}; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
                     <span>Official WhatsApp Number</span>
-                    <span style="font-size: 0.72rem; color: #EF4444; background: rgba(239, 68, 68, 0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 800;">🔒 Locked by Admin</span>
+                    ${isAdmin ? `
+                      <span style="font-size: 0.72rem; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 800;">👑 Super Admin Edit Mode</span>
+                    ` : `
+                      <span style="font-size: 0.72rem; color: #EF4444; background: rgba(239, 68, 68, 0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 800;">🔒 Locked by Admin</span>
+                    `}
                   </label>
-                  <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" disabled readonly style="color: #EF4444; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.06); font-weight: 800; cursor: not-allowed;" />
-                  <div style="font-size: 0.74rem; color: #EF4444; font-weight: 600; margin-top: 5px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                    <span>🔒 Official WhatsApp is locked by Admin. Vendors cannot edit this number.</span>
-                    <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" style="color: #EF4444; text-decoration: underline; font-weight: 700;">Contact Admin to update ↗</a>
-                  </div>
+                  ${isAdmin ? `
+                    <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" style="color: #10B981; border-color: rgba(16, 185, 129, 0.6); background: rgba(16, 185, 129, 0.08); font-weight: 800;" placeholder="e.g. +919876543210" />
+                    <div style="font-size: 0.74rem; color: #10B981; font-weight: 600; margin-top: 5px;">
+                      ✓ As Super Admin, you can edit and update this Official WhatsApp order routing number.
+                    </div>
+                  ` : `
+                    <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" disabled readonly style="color: #EF4444; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.06); font-weight: 800; cursor: not-allowed;" />
+                    <div style="font-size: 0.74rem; color: #EF4444; font-weight: 600; margin-top: 5px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                      <span>🔒 Official WhatsApp is locked by Admin. Vendors cannot edit this number.</span>
+                      <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" style="color: #EF4444; text-decoration: underline; font-weight: 700;">Contact Admin to update ↗</a>
+                    </div>
+                  `}
                 </div>
                 <div class="form-group">
                   <label class="form-label">Email Address</label>
@@ -1311,6 +1322,12 @@ export class VendorConsoleController {
         v.notices.marquee = this.container.querySelector("#v-marquee").value.trim();
 
         v.contacts.phone = this.container.querySelector("#v-phone").value.trim();
+        if (isAdmin) {
+          const waInput = this.container.querySelector("#v-whatsapp");
+          if (waInput) {
+            v.contacts.whatsapp = waInput.value.trim();
+          }
+        }
         v.contacts.email = this.container.querySelector("#v-email").value.trim();
         v.contacts.location = this.container.querySelector("#v-location").value.trim();
         v.contacts.mapUrl = this.container.querySelector("#v-mapUrl").value.trim();

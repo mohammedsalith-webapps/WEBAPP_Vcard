@@ -1328,7 +1328,11 @@ export class AdminConsoleController {
               <div class="vendor-card-identity" style="min-width: 0;">
                 <div class="vendor-card-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.branding?.businessName}</div>
                 <div class="vendor-card-subtitle">${v.branding?.ownerName} • ${v.branding?.category}</div>
-                <div class="vendor-card-phone">📱 ${v.contacts?.whatsapp || v.contacts?.phone || 'No Phone'} • 🔑 ${v.password || v.pin || '2026'}</div>
+                <div class="vendor-card-phone" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span>📱 WhatsApp: <strong style="color: #10B981;">${v.contacts?.whatsapp || v.contacts?.phone || 'No Phone'}</strong></span>
+                  <button type="button" class="btn-pill" style="padding: 1px 7px; font-size: 0.65rem; color: #10B981; border-color: rgba(16,185,129,0.4); font-weight: 700; cursor: pointer;" data-edit-whatsapp="${v.id}" title="Change Official WhatsApp Number for ${v.branding?.businessName}">✏️ Change WhatsApp</button>
+                  <span style="color: var(--theme-text-muted);">• 🔑 ${v.password || v.pin || '2026'}</span>
+                </div>
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
@@ -1424,7 +1428,7 @@ export class AdminConsoleController {
             <button class="btn-pill active" style="background: rgba(212,255,0,0.15); color: var(--theme-primary); border-color: rgba(212,255,0,0.45); font-weight: 700;" data-share-vendor="${v.id}" title="Copy Clean Link / Instagram Bio Link">🔗 Bio Link</button>
             <a href="?v=${v.slug}" target="_blank" rel="noopener" class="btn-pill" style="text-decoration: none;">Preview ↗</a>
             <button class="btn-pill" style="color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
-            <button class="btn-pill" style="color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
+            <button class="btn-pill" style="color: #10B981; border-color: rgba(16,185,129,0.45); font-weight: 700;" data-edit-vendor="${v.id}" title="Admin Master Editor: Change WhatsApp Number, Password, Plan & All Details">⚙️ Edit / WhatsApp</button>
             <button class="btn-pill" style="${v.features?.leadForm !== false ? 'color: #34D399; border-color: rgba(52,211,153,0.4);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-leads="${v.id}" title="${v.features?.leadForm !== false ? 'View Leads & Edit Lead Form' : 'Lead Form is turned OFF'}">
               📝 Leads ${v.features?.leadForm !== false ? `(${v.leads?.length || 0})` : '(OFF)'}
             </button>
@@ -1599,7 +1603,10 @@ export class AdminConsoleController {
               ${v.planId === 'plan-demo' ? '<span class="pill-status-active" style="font-size: 0.65rem; background: rgba(212,255,0,0.15); color: var(--theme-primary); border-color: rgba(212,255,0,0.4); padding: 1px 6px;">🎁 3-Day Demo</span>' : ''}
             </div>
             <div style="font-size: 0.72rem; color: var(--theme-secondary);">🔑 Password: <b>${v.password || v.pin || '2026'}</b></div>
-            <div style="font-size: 0.72rem; color: #10B981;">💬 WhatsApp: <b>${v.contacts.whatsapp || 'None'}</b></div>
+            <div style="font-size: 0.72rem; color: #10B981; display: flex; align-items: center; gap: 6px;">
+              <span>💬 WhatsApp: <b>${v.contacts.whatsapp || 'None'}</b></span>
+              <button type="button" class="btn-pill" style="padding: 1px 6px; font-size: 0.65rem; color: #10B981; border-color: rgba(16,185,129,0.4); font-weight: 700; cursor: pointer;" data-edit-whatsapp="${v.id}" title="Change Official WhatsApp Number">✏️ Change</button>
+            </div>
             <div style="font-size: 0.72rem; color: ${isExpired ? '#EF4444' : 'var(--theme-text-muted)'};">
               Expires: ${expiryDate.toLocaleDateString()} ${isExpired ? '(EXPIRED)' : ''}
             </div>
@@ -1641,7 +1648,7 @@ export class AdminConsoleController {
               <button class="btn-pill active" style="padding: 3px 8px; font-size: 0.72rem; background: rgba(212,255,0,0.15); color: var(--theme-primary); border-color: rgba(212,255,0,0.45); font-weight: 700;" data-share-vendor="${v.id}" title="Copy Clean Link / Instagram Bio Link">🔗 Bio Link</button>
               <a href="?v=${v.slug}" target="_blank" class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem;">Preview ↗</a>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #A78BFA; border-color: rgba(167,139,250,0.4); font-weight: 700;" data-open-plan-modal="${v.id}" title="1-Click Assign Any Package">💳 Assign Plan</button>
-              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: var(--theme-secondary);" data-edit-vendor="${v.id}">⚙️ Edit Card</button>
+              <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; color: #10B981; border-color: rgba(16,185,129,0.4); font-weight: 700;" data-edit-vendor="${v.id}" title="Admin Master Editor: Change WhatsApp Number, Password, Plan & All Details">⚙️ Edit / WhatsApp</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.leadForm !== false ? 'color: #34D399; border-color: rgba(52,211,153,0.4);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-leads="${v.id}" title="${v.features?.leadForm !== false ? 'View Leads & Edit Lead Form' : 'Lead Form is turned OFF'}">📝 Leads ${v.features?.leadForm !== false ? `(${v.leads?.length || 0})` : '(OFF)'}</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.quoteBuilder !== false ? 'color: var(--theme-primary);' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-services="${v.id}" title="${v.features?.quoteBuilder !== false ? 'Manage Services' : 'Services Tab is turned OFF'}">📋 Services ${v.features?.quoteBuilder !== false ? `(${v.services?.length || 0})` : '(OFF)'}</button>
               <button class="btn-pill" style="padding: 3px 8px; font-size: 0.72rem; ${v.features?.ecommerceShop !== false ? 'color: #10B981;' : 'color: #64748B; opacity: 0.6; border-color: rgba(100,116,139,0.3);'}" data-manage-products="${v.id}" title="${v.features?.ecommerceShop !== false ? 'Manage E-Commerce Catalog' : 'Shop Tab is turned OFF'}">🛍️ Products ${v.features?.ecommerceShop !== false ? `(${v.products?.length || 0})` : '(OFF)'}</button>
@@ -2167,7 +2174,10 @@ export class AdminConsoleController {
         await db.saveVendor(v);
         await db.recordAdminChange(`Vendor details updated: "${v.branding.businessName}"`);
         this.container.querySelector("#modal-admin-edit-vendor")?.classList.remove("active");
-        window.OmniApp.showToast(`Updated '${v.branding.businessName}' & all card texts successfully!`);
+        if (!document.querySelector(".modal-overlay.active")) {
+          document.body.classList.remove("has-modal-open");
+        }
+        window.OmniApp.showToast(`Updated '${v.branding.businessName}' & WhatsApp number successfully!`);
         this.renderDashboard();
       });
     }
@@ -2459,12 +2469,116 @@ export class AdminConsoleController {
     });
   }
 
+  // Open Master Vendor Editor in Admin Console (Change WhatsApp Number, Password, Plan, Expiry & Details)
+  openVendorEditModal(vendorId) {
+    const v = db.getVendor(vendorId);
+    if (!v) {
+      window.OmniApp.showToast("Vendor not found.");
+      return;
+    }
+    const modal = this.container.querySelector("#modal-admin-edit-vendor");
+    if (!modal) return;
+
+    // 1. Identity & Branding
+    const idEl = modal.querySelector("#edit-v-id");
+    if (idEl) idEl.value = v.id;
+    const nameEl = modal.querySelector("#edit-v-name");
+    if (nameEl) nameEl.value = v.branding?.businessName || "";
+    const ownerEl = modal.querySelector("#edit-v-owner");
+    if (ownerEl) ownerEl.value = v.branding?.ownerName || "";
+    const catEl = modal.querySelector("#edit-v-category");
+    if (catEl) catEl.value = v.branding?.category || "";
+    const tagEl = modal.querySelector("#edit-v-tagline");
+    if (tagEl) tagEl.value = v.branding?.tagline || "";
+    const emojiEl = modal.querySelector("#edit-v-emoji");
+    if (emojiEl) emojiEl.value = v.branding?.avatarEmoji || "🏢";
+    const themeEl = modal.querySelector("#edit-v-theme");
+    if (themeEl) themeEl.value = v.branding?.theme || "Sunset Dark";
+
+    // 2. Official WhatsApp Number (Admin Control Only) & Password
+    const waEl = modal.querySelector("#edit-v-whatsapp");
+    if (waEl) waEl.value = v.contacts?.whatsapp || "";
+    const pwdEl = modal.querySelector("#edit-v-password");
+    if (pwdEl) pwdEl.value = v.password || v.pin || "2026";
+
+    // 3. Contacts
+    const phoneEl = modal.querySelector("#edit-v-phone");
+    if (phoneEl) phoneEl.value = v.contacts?.phone || "";
+    const emailEl = modal.querySelector("#edit-v-email");
+    if (emailEl) emailEl.value = v.contacts?.email || "";
+    const locEl = modal.querySelector("#edit-v-location");
+    if (locEl) locEl.value = v.contacts?.location || "";
+    const mapEl = modal.querySelector("#edit-v-mapUrl");
+    if (mapEl) mapEl.value = v.contacts?.mapUrl || "";
+    const webEl = modal.querySelector("#edit-v-website");
+    if (webEl) webEl.value = v.contacts?.website || "";
+
+    // 4. About & Hours
+    const abTagEl = modal.querySelector("#edit-v-aboutTagline");
+    if (abTagEl) abTagEl.value = v.about?.tagline || "";
+    const abDescEl = modal.querySelector("#edit-v-aboutDesc");
+    if (abDescEl) abDescEl.value = v.about?.description || "";
+    const abYearEl = modal.querySelector("#edit-v-aboutYear");
+    if (abYearEl) abYearEl.value = v.about?.establishedYear || 2020;
+    const hrsEl = modal.querySelector("#edit-v-openHours");
+    if (hrsEl) hrsEl.value = v.openHours || "09:00 AM - 08:00 PM";
+    const feeEl = modal.querySelector("#edit-v-consultationFee");
+    if (feeEl) feeEl.value = v.about?.consultationFee || 0;
+
+    // 5. Announcements & Promo
+    const mrqEl = modal.querySelector("#edit-v-marquee");
+    if (mrqEl) mrqEl.value = v.notices?.marquee || "";
+    const prTitleEl = modal.querySelector("#edit-v-promoTitle");
+    if (prTitleEl) prTitleEl.value = v.promo?.title || "";
+    const prBadgeEl = modal.querySelector("#edit-v-promoBadge");
+    if (prBadgeEl) prBadgeEl.value = v.promo?.badge || "";
+    const prCodeEl = modal.querySelector("#edit-v-promoCode");
+    if (prCodeEl) prCodeEl.value = v.promo?.code || "";
+    const prDiscEl = modal.querySelector("#edit-v-promoDiscount");
+    if (prDiscEl) prDiscEl.value = v.promo?.discount || "";
+    const prEnEl = modal.querySelector("#edit-v-promoEnabled");
+    if (prEnEl) prEnEl.checked = !!v.promo?.enabled;
+
+    // 6. Plan, Expiry & Status
+    const planEl = modal.querySelector("#edit-v-plan");
+    if (planEl) planEl.value = v.planId || "plan-starter";
+    const expEl = modal.querySelector("#edit-v-expiry");
+    if (expEl) {
+      if (v.expiresAt) {
+        expEl.value = new Date(v.expiresAt).toISOString().substring(0, 10);
+      } else {
+        const defDate = new Date();
+        defDate.setDate(defDate.getDate() + 30);
+        expEl.value = defDate.toISOString().substring(0, 10);
+      }
+    }
+    const statusEl = modal.querySelector("#edit-v-status");
+    if (statusEl) statusEl.value = v.status || "active";
+
+    // 7. Feature Toggles
+    const qEl = modal.querySelector("#edit-feat-quote");
+    if (qEl) qEl.checked = v.features?.quoteBuilder !== false;
+    const sEl = modal.querySelector("#edit-feat-shop");
+    if (sEl) sEl.checked = v.features?.ecommerceShop !== false;
+    const bEl = modal.querySelector("#edit-feat-booking");
+    if (bEl) bEl.checked = v.features?.calendarBooking !== false;
+    const rEl = modal.querySelector("#edit-feat-reviews");
+    if (rEl) rEl.checked = v.features?.customerReviews !== false;
+    const pEl = modal.querySelector("#edit-feat-pwa");
+    if (pEl) pEl.checked = v.features?.pwaInstall !== false;
+    const lEl = modal.querySelector("#edit-feat-leadform");
+    if (lEl) lEl.checked = v.features?.leadForm !== false;
+
+    modal.classList.add("active");
+    document.body.classList.add("has-modal-open");
+  }
+
   bindVendorActionButtons() {
-    // Direct Edit Vendor Card in Full Vendor Console Edit Mode (No Popups!)
-    this.container.querySelectorAll("[data-edit-vendor]").forEach(btn => {
+    // Admin Master Edit Modal (Directly Change WhatsApp Number, Password, Plan, Expiry & Details in Super Admin)
+    this.container.querySelectorAll("[data-edit-vendor], [data-edit-whatsapp]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-edit-vendor");
-        window.OmniApp.adminManageVendor(id, "profile");
+        const id = btn.getAttribute("data-edit-vendor") || btn.getAttribute("data-edit-whatsapp");
+        this.openVendorEditModal(id);
       });
     });
 
