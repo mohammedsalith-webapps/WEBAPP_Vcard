@@ -33,7 +33,10 @@ export class VendorConsoleController {
     this.container.innerHTML = `
       <div class="portal-container" style="max-width: 440px;">
         <div class="bento-card" style="padding: 32px 24px; text-align: center;">
-          <div style="font-size: 2.6rem; margin-bottom: 12px;">🏪</div>
+          <div style="font-size: 2.6rem; margin-bottom: 8px;">🏪</div>
+          <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 229, 255, 0.12); border: 1px solid rgba(0, 229, 255, 0.3); color: #00E5FF; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px;">
+            <span>🏪</span> <span>VENDOR LOGIN PANEL</span>
+          </div>
           <h2 style="font-size: 1.45rem; margin-bottom: 6px;">Vendor Console</h2>
           <p style="font-size: 0.82rem; color: var(--theme-text-muted); margin-bottom: 24px;">
             Secure portal for business owners to manage products, quotes, bookings, and card branding.
@@ -119,14 +122,13 @@ export class VendorConsoleController {
     // Admin mode is ONLY active when Super Admin clicked an action from the Admin Console
     const isAdmin = !!(window.OmniApp?.isAdminManaging === true);
     const isTabAvailable = (tab) => {
-      if (isAdmin) return true;
       if (tab === "profile") return true;
       if (tab === "services") return v.features?.quoteBuilder !== false;
       if (tab === "shop") return v.features?.ecommerceShop !== false;
       if (tab === "bookings") return v.features?.calendarBooking !== false;
       if (tab === "reviews") return v.features?.customerReviews !== false;
       if (tab === "leadform") return v.features?.leadForm !== false;
-      return true;
+      return false;
     };
     if (!isTabAvailable(this.activeTab)) {
       this.activeTab = "profile";
@@ -138,6 +140,43 @@ export class VendorConsoleController {
 
     this.container.innerHTML = `
       <div class="portal-container">
+        <!-- Prominent Vendor Panel Identification Top Bar -->
+        <div style="background: ${isAdmin ? 'linear-gradient(90deg, #1E1B4B 0%, #2E1065 100%)' : 'linear-gradient(90deg, #0F172A 0%, #1E293B 100%)'}; border: 1.5px solid ${isAdmin ? 'rgba(212, 255, 0, 0.45)' : 'rgba(0, 229, 255, 0.4)'}; border-radius: 12px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.7rem;">${isAdmin ? '👑' : '🏪'}</span>
+            <div>
+              <div style="font-size: 1.05rem; font-weight: 900; color: ${isAdmin ? 'var(--theme-primary, #D4FF00)' : '#00E5FF'}; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span>🏪 VENDOR LOGIN PANEL</span>
+                ${isAdmin ? `
+                  <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(212,255,0,0.18); color: var(--theme-primary); border: 1px solid rgba(212,255,0,0.4); font-weight: 800;">
+                    ADMIN INSPECTION MODE
+                  </span>
+                ` : `
+                  <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(0,229,255,0.15); color: #00E5FF; border: 1px solid rgba(0,229,255,0.35); font-weight: 800;">
+                    VENDOR ACCESS ONLY
+                  </span>
+                `}
+              </div>
+              <div style="font-size: 0.76rem; color: #CBD5E1; margin-top: 3px;">
+                ${isAdmin 
+                  ? `Super Admin is currently inspecting vendor dashboard for: <strong>${v.branding.businessName}</strong> (${v.branding.category}). Vendor-level edit permissions apply.`
+                  : `Logged in as: <strong>${v.branding.businessName}</strong> (${v.branding.category}) • Limited to admin-granted modules`}
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${isAdmin ? `
+              <button type="button" class="btn-pill" id="btn-top-back-to-admin" style="background: var(--theme-primary); color: #000; font-weight: 800; font-size: 0.78rem; padding: 6px 14px; cursor: pointer; border: none; gap: 6px;" title="Return to Super Admin Dashboard">
+                <span>←</span> <span>Return to Super Admin</span>
+              </button>
+            ` : `
+              <button type="button" class="btn-pill" id="btn-top-vendor-logout" style="font-size: 0.78rem; padding: 6px 14px; cursor: pointer;" title="Sign out of vendor panel">
+                Sign Out
+              </button>
+            `}
+          </div>
+        </div>
+
         <!-- Vendor Header Bar -->
         <div class="portal-header">
           <div>
@@ -197,34 +236,34 @@ export class VendorConsoleController {
           </div>
         ` : ""}
 
-        <!-- Portal Tabs Navigation -->
+        <!-- Portal Tabs Navigation (Strictly Based on Admin-Granted Modules) -->
         <div class="portal-nav-tabs">
           <button class="portal-tab-btn ${this.activeTab === 'profile' ? 'active' : ''}" data-vtab="profile">
             🎨 Profile
           </button>
-          ${(isAdmin || v.features?.leadForm !== false) ? `
+          ${v.features?.leadForm !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'leadform' ? 'active' : ''}" data-vtab="leadform">
-              📝 Lead Form (${v.leads?.length || 0}) ${v.features?.leadForm === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
+              📝 Lead Form (${v.leads?.length || 0})
             </button>
           ` : ""}
-          ${(isAdmin || v.features?.quoteBuilder !== false) ? `
+          ${v.features?.quoteBuilder !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'services' ? 'active' : ''}" data-vtab="services">
-              📋 Services (${v.services?.length || 0}) ${v.features?.quoteBuilder === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
+              📋 Services (${v.services?.length || 0})
             </button>
           ` : ""}
-          ${(isAdmin || v.features?.ecommerceShop !== false) ? `
+          ${v.features?.ecommerceShop !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'shop' ? 'active' : ''}" data-vtab="shop">
-              🛍️ Shop (${v.products?.length || 0}) ${v.features?.ecommerceShop === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
+              🛍️ Shop (${v.products?.length || 0})
             </button>
           ` : ""}
-          ${(isAdmin || v.features?.calendarBooking !== false) ? `
+          ${v.features?.calendarBooking !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'bookings' ? 'active' : ''}" data-vtab="bookings">
-              📅 Bookings (${v.bookings?.length || 0}) ${v.features?.calendarBooking === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
+              📅 Bookings (${v.bookings?.length || 0})
             </button>
           ` : ""}
-          ${(isAdmin || v.features?.customerReviews !== false) ? `
+          ${v.features?.customerReviews !== false ? `
             <button class="portal-tab-btn ${this.activeTab === 'reviews' ? 'active' : ''}" data-vtab="reviews">
-              ★ Reviews (${v.reviews?.length || 0}) ${v.features?.customerReviews === false ? '<span style="font-size: 0.65rem; color: #EF4444; margin-left: 2px;">(OFF)</span>' : ''}
+              ★ Reviews (${v.reviews?.length || 0})
             </button>
           ` : ""}
         </div>
@@ -232,120 +271,6 @@ export class VendorConsoleController {
         <!-- 1. Branding & Profile Pane -->
         <div class="portal-pane ${this.activeTab === 'profile' ? 'active' : ''}" id="vpane-profile">
           <form id="form-vendor-profile">
-            ${isAdmin ? `
-              <!-- Super Admin Master Controls & Entitlements Card (Direct Edit Mode) -->
-              <div class="bento-card" style="margin-bottom: 20px; border: 1.5px solid rgba(212, 255, 0, 0.45); background: linear-gradient(135deg, rgba(212, 255, 0, 0.05) 0%, rgba(0, 229, 255, 0.03) 100%); box-shadow: 0 4px 24px rgba(0,0,0,0.35);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                  <div>
-                    <h3 style="font-size: 1.1rem; color: var(--theme-primary); display: flex; align-items: center; gap: 8px; margin: 0;">
-                      <span>👑</span> <span>Super Admin Master Controls & Entitlements</span>
-                    </h3>
-                    <div style="font-size: 0.76rem; color: var(--theme-text-muted); margin-top: 3px;">
-                      You are in full Super Admin edit mode. Changes saved here update subscriptions, access PINs, and feature tabs instantly.
-                    </div>
-                  </div>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <span class="pill-status-active" style="background: rgba(212,255,0,0.18); color: var(--theme-primary); font-weight: 800; font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(212,255,0,0.4);">
-                      SUPER ADMIN EDIT ACTIVE
-                    </span>
-                    <button type="submit" class="btn-pill active" style="padding: 5px 14px; font-weight: 800; font-size: 0.8rem; background: var(--theme-primary); color: #000;">
-                      💾 Quick Save
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Plan, Expiry, Status, PIN -->
-                <div class="bento-grid bento-grid-2" style="margin-bottom: 16px; gap: 14px;">
-                  <div class="form-group">
-                    <label class="form-label" style="font-weight: 700; color: #A78BFA; display: flex; justify-content: space-between;">
-                      <span>💳 Assigned Subscription Plan</span>
-                      <span style="font-size: 0.7rem; color: #94A3B8;">Current: ${v.planId || 'free'}</span>
-                    </label>
-                    <select class="form-select" id="v-plan" style="border-color: rgba(167,139,250,0.5); font-weight: 600;">
-                      ${db.getSubscriptionPlans().map(p => `
-                        <option value="${p.id}" ${v.planId === p.id ? 'selected' : ''}>
-                          ${p.name} (${p.durationDays}d) — ${p.price === 0 || p.id === 'plan-demo' ? 'FREE' : `${currency}${p.price}`}
-                        </option>
-                      `).join('')}
-                    </select>
-                  </div>
-
-                  <div class="form-group">
-                    <label class="form-label" style="font-weight: 700; color: #F59E0B; display: flex; justify-content: space-between;">
-                      <span>📅 Subscription Expiry Date</span>
-                      <span style="font-size: 0.7rem; color: ${v.expiresAt && new Date(v.expiresAt) < new Date() ? '#EF4444' : '#10B981'}; font-weight: 700;">
-                        ${v.expiresAt ? (new Date(v.expiresAt) < new Date() ? '⚠️ Expired' : '✓ Active') : 'No Expiry'}
-                      </span>
-                    </label>
-                    <div style="display: flex; gap: 6px;">
-                      <input type="date" class="form-input" id="v-expiry" value="${v.expiresAt ? v.expiresAt.substring(0, 10) : ''}" style="border-color: rgba(245,158,11,0.5);" />
-                      <button type="button" class="btn-pill" id="btn-admin-ext-30" style="padding: 4px 10px; font-size: 0.75rem; white-space: nowrap;" title="Set expiry to +30 days from today">+30d</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="bento-grid bento-grid-2" style="margin-bottom: 16px; gap: 14px;">
-                  <div class="form-group">
-                    <label class="form-label" style="font-weight: 700; color: var(--theme-primary);">🔐 Vendor Security PIN / Password</label>
-                    <input type="text" class="form-input" id="v-pin" value="${v.password || v.pin || '2026'}" placeholder="PIN / Password" style="border-color: rgba(212,255,0,0.5); font-weight: 700;" />
-                    <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 3px;">
-                      Vendor uses this password to log in or long-press the avatar logo.
-                    </div>
-                  </div>
-
-                  <div class="form-group">
-                    <label class="form-label" style="font-weight: 700; color: #00E5FF;">🚦 Vendor Account Status</label>
-                    <select class="form-select" id="v-status" style="border-color: rgba(0,229,255,0.4); font-weight: 600;">
-                      <option value="active" ${v.status === 'active' ? 'selected' : ''}>🟢 Active (Public vCard Live & Accessible)</option>
-                      <option value="suspended" ${v.status === 'suspended' ? 'selected' : ''}>⏸️ Suspended (Public Access Paused)</option>
-                      <option value="expired" ${v.status === 'expired' ? 'selected' : ''}>⚠️ Expired (Requires Renewal)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Granted Feature Toggles -->
-                <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 4px;">
-                  <div style="font-size: 0.85rem; font-weight: 700; color: #FFF; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                    <span>🎯 Granted Modules & vCard Tabs (Turn ON/OFF for this vendor)</span>
-                    <button type="button" class="btn-pill" id="btn-sync-plan-features" style="font-size: 0.72rem; padding: 4px 10px; color: #A78BFA; border-color: rgba(167,139,250,0.4);">
-                      ⚡ Sync Toggles from Selected Plan
-                    </button>
-                  </div>
-                  <div class="bento-grid bento-grid-2" style="gap: 10px;">
-                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
-                      <input type="checkbox" class="switch-input" id="feat-quote" ${v.features?.quoteBuilder !== false ? 'checked' : ''} />
-                      <span class="switch-slider"></span>
-                      <span>📋 <strong>Services & Quote Scope</strong></span>
-                    </label>
-                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
-                      <input type="checkbox" class="switch-input" id="feat-shop" ${v.features?.ecommerceShop !== false ? 'checked' : ''} />
-                      <span class="switch-slider"></span>
-                      <span>🛍️ <strong>E-Commerce Shop Catalog</strong></span>
-                    </label>
-                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
-                      <input type="checkbox" class="switch-input" id="feat-booking" ${v.features?.calendarBooking !== false ? 'checked' : ''} />
-                      <span class="switch-slider"></span>
-                      <span>📅 <strong>Appointment Booking Calendar</strong></span>
-                    </label>
-                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
-                      <input type="checkbox" class="switch-input" id="feat-reviews" ${v.features?.customerReviews !== false ? 'checked' : ''} />
-                      <span class="switch-slider"></span>
-                      <span>⭐ <strong>Customer Reviews & Ratings</strong></span>
-                    </label>
-                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
-                      <input type="checkbox" class="switch-input" id="feat-pwa" ${v.features?.pwaInstall !== false ? 'checked' : ''} />
-                      <span class="switch-slider"></span>
-                      <span>📱 <strong>PWA 1-Tap Install Web App</strong></span>
-                    </label>
-                    <label class="switch-label" style="background: rgba(255,255,255,0.02); padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;">
-                      <input type="checkbox" class="switch-input" id="feat-leadform" ${v.features?.leadForm !== false ? 'checked' : ''} />
-                      <span class="switch-slider"></span>
-                      <span>📝 <strong>Lead Form Builder Popup</strong></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            ` : ""}
 
             <div class="bento-grid bento-grid-2" style="margin-bottom: 20px;">
               <div class="bento-card">
@@ -443,26 +368,15 @@ export class VendorConsoleController {
                   <input type="text" class="form-input" id="v-phone" value="${v.contacts.phone || ''}" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                  <label class="form-label" style="color: #EF4444; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
                     <span>Official WhatsApp Number</span>
-                    ${isAdmin ? `
-                      <span style="font-size: 0.7rem; color: #10B981; background: rgba(16, 185, 129, 0.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">👑 Super Admin Editable</span>
-                    ` : `
-                      <span style="font-size: 0.7rem; color: #EF4444; background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);">🔒 Admin Managed</span>
-                    `}
+                    <span style="font-size: 0.72rem; color: #EF4444; background: rgba(239, 68, 68, 0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 800;">🔒 Locked by Admin</span>
                   </label>
-                  ${isAdmin ? `
-                    <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" style="border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.04); font-weight: 600;" placeholder="+919876543210" />
-                    <div style="font-size: 0.72rem; color: #10B981; margin-top: 4px;">
-                      ✓ Super Admin mode: You can directly change this vendor's order routing WhatsApp number.
-                    </div>
-                  ` : `
-                    <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" disabled readonly style="opacity: 0.65; cursor: not-allowed; background: rgba(255,255,255,0.03);" />
-                    <div style="font-size: 0.72rem; color: var(--theme-text-muted); margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                      <span>🔒 Official order receiving number is secured.</span>
-                      <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" style="color: var(--theme-primary); text-decoration: underline; font-weight: 600;">Contact Admin to change ↗</a>
-                    </div>
-                  `}
+                  <input type="text" class="form-input" id="v-whatsapp" value="${v.contacts.whatsapp || ''}" disabled readonly style="color: #EF4444; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.06); font-weight: 800; cursor: not-allowed;" />
+                  <div style="font-size: 0.74rem; color: #EF4444; font-weight: 600; margin-top: 5px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                    <span>🔒 Official WhatsApp is locked by Admin. Vendors cannot edit this number.</span>
+                    <a href="${adminWhatsAppLink}" target="_blank" rel="noopener" style="color: #EF4444; text-decoration: underline; font-weight: 700;">Contact Admin to update ↗</a>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Email Address</label>
@@ -1211,6 +1125,15 @@ export class VendorConsoleController {
       });
     }
 
+    const topLogoutBtn = this.container.querySelector("#btn-top-vendor-logout");
+    if (topLogoutBtn) {
+      topLogoutBtn.addEventListener("click", () => {
+        if (window.OmniApp) window.OmniApp.isAdminManaging = false;
+        this.currentVendor = null;
+        this.renderLoginForm();
+      });
+    }
+
     // Back to Super Admin Console
     const backBtn = this.container.querySelector("#btn-back-to-admin");
     if (backBtn) {
@@ -1220,27 +1143,34 @@ export class VendorConsoleController {
       });
     }
 
-    // Tab switching
+    const topBackBtn = this.container.querySelector("#btn-top-back-to-admin");
+    if (topBackBtn) {
+      topBackBtn.addEventListener("click", () => {
+        if (window.OmniApp) window.OmniApp.isAdminManaging = false;
+        window.OmniApp.setView("admin");
+      });
+    }
+
+    // Tab switching (Strictly enforces granted module access)
     this.container.querySelectorAll(".portal-tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-vtab");
         const isTabAvailable = (t) => {
-          if (isAdmin) return true;
           if (t === "profile") return true;
           if (t === "services") return v.features?.quoteBuilder !== false;
           if (t === "shop") return v.features?.ecommerceShop !== false;
           if (t === "bookings") return v.features?.calendarBooking !== false;
           if (t === "reviews") return v.features?.customerReviews !== false;
           if (t === "leadform") return v.features?.leadForm !== false;
-          return true;
+          return false;
         };
-        if (!isAdmin && !isTabAvailable(tab)) return;
+        if (!isTabAvailable(tab)) return;
         this.activeTab = tab;
         this.renderDashboard();
       });
     });
 
-    // Profile Save
+    // Profile Save (Updates vendor branding & details only - WhatsApp & Admin Master Controls remain locked)
     const profileForm = this.container.querySelector("#form-vendor-profile");
     if (profileForm) {
       profileForm.addEventListener("submit", async (e) => {
@@ -1280,113 +1210,11 @@ export class VendorConsoleController {
         v.promo.discount = this.container.querySelector("#v-promoDiscount").value.trim();
         v.promo.enabled = this.container.querySelector("#v-promoEnabled").checked;
 
-        // Super Admin exclusive controls update
-        if (isAdmin) {
-          const waInput = this.container.querySelector("#v-whatsapp");
-          if (waInput && waInput.value.trim()) {
-            v.contacts.whatsapp = waInput.value.trim();
-          }
-
-          const planEl = this.container.querySelector("#v-plan");
-          if (planEl) v.planId = planEl.value;
-
-          const expiryEl = this.container.querySelector("#v-expiry");
-          if (expiryEl && expiryEl.value) {
-            v.expiresAt = new Date(expiryEl.value + "T23:59:59Z").toISOString();
-          }
-
-          const pinEl = this.container.querySelector("#v-pin");
-          if (pinEl && pinEl.value.trim()) {
-            v.pin = pinEl.value.trim();
-            v.password = pinEl.value.trim();
-          }
-
-          const statusEl = this.container.querySelector("#v-status");
-          if (statusEl) v.status = statusEl.value;
-
-          if (!v.features) v.features = {};
-          const fQuote = this.container.querySelector("#feat-quote");
-          if (fQuote) v.features.quoteBuilder = fQuote.checked;
-          const fShop = this.container.querySelector("#feat-shop");
-          if (fShop) v.features.ecommerceShop = fShop.checked;
-          const fBook = this.container.querySelector("#feat-booking");
-          if (fBook) v.features.calendarBooking = fBook.checked;
-          const fRev = this.container.querySelector("#feat-reviews");
-          if (fRev) v.features.customerReviews = fRev.checked;
-          const fPwa = this.container.querySelector("#feat-pwa");
-          if (fPwa) v.features.pwaInstall = fPwa.checked;
-          const fLead = this.container.querySelector("#feat-leadform");
-          if (fLead) v.features.leadForm = fLead.checked;
-
-          await db.recordAdminChange(`Admin updated settings & entitlements for '${v.branding.businessName}'`);
-        }
-
         await db.saveVendor(v);
-        window.OmniApp.showToast(isAdmin ? `Settings & entitlements saved for '${v.branding.businessName}'!` : "Profile & branding updated successfully!");
+        if (isAdmin) await db.recordAdminChange(`Admin updated profile for '${v.branding.businessName}'`);
+        window.OmniApp.showToast("Profile & branding updated successfully!");
         this.renderDashboard();
       });
-    }
-
-    // Super Admin Master Controls Event Handlers
-    if (isAdmin) {
-      // Sync features and set expiry when plan dropdown changes
-      const planSelect = this.container.querySelector("#v-plan");
-      if (planSelect) {
-        planSelect.addEventListener("change", () => {
-          const planId = planSelect.value;
-          const plan = db.getSubscriptionPlans().find(p => p.id === planId);
-          if (plan) {
-            const days = Number(plan.durationDays) || 30;
-            const targetDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-            const expiryInput = this.container.querySelector("#v-expiry");
-            if (expiryInput) {
-              expiryInput.value = targetDate.toISOString().substring(0, 10);
-            }
-            if (plan.features) {
-              if (this.container.querySelector("#feat-quote")) this.container.querySelector("#feat-quote").checked = plan.features.quoteBuilder !== false;
-              if (this.container.querySelector("#feat-shop")) this.container.querySelector("#feat-shop").checked = plan.features.ecommerceShop !== false;
-              if (this.container.querySelector("#feat-booking")) this.container.querySelector("#feat-booking").checked = plan.features.calendarBooking !== false;
-              if (this.container.querySelector("#feat-reviews")) this.container.querySelector("#feat-reviews").checked = plan.features.customerReviews !== false;
-              if (this.container.querySelector("#feat-pwa")) this.container.querySelector("#feat-pwa").checked = plan.features.pwaInstall !== false;
-              if (this.container.querySelector("#feat-leadform")) this.container.querySelector("#feat-leadform").checked = plan.features.leadForm !== false;
-            }
-            window.OmniApp.showToast(`Selected "${plan.name}" (${days}d) - Expiry & features updated.`);
-          }
-        });
-      }
-
-      // Quick +30 Days expiry button
-      const ext30Btn = this.container.querySelector("#btn-admin-ext-30");
-      if (ext30Btn) {
-        ext30Btn.addEventListener("click", () => {
-          const expiryInput = this.container.querySelector("#v-expiry");
-          const currentVal = expiryInput?.value ? new Date(expiryInput.value) : new Date();
-          const baseDate = currentVal > new Date() ? currentVal : new Date();
-          const newDate = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-          if (expiryInput) {
-            expiryInput.value = newDate.toISOString().substring(0, 10);
-            window.OmniApp.showToast(`Extended expiry to ${newDate.toLocaleDateString()}`);
-          }
-        });
-      }
-
-      // Sync toggles from selected plan button
-      const syncPlanBtn = this.container.querySelector("#btn-sync-plan-features");
-      if (syncPlanBtn) {
-        syncPlanBtn.addEventListener("click", () => {
-          const planId = this.container.querySelector("#v-plan")?.value;
-          const plan = db.getSubscriptionPlans().find(p => p.id === planId);
-          if (plan && plan.features) {
-            if (this.container.querySelector("#feat-quote")) this.container.querySelector("#feat-quote").checked = plan.features.quoteBuilder !== false;
-            if (this.container.querySelector("#feat-shop")) this.container.querySelector("#feat-shop").checked = plan.features.ecommerceShop !== false;
-            if (this.container.querySelector("#feat-booking")) this.container.querySelector("#feat-booking").checked = plan.features.calendarBooking !== false;
-            if (this.container.querySelector("#feat-reviews")) this.container.querySelector("#feat-reviews").checked = plan.features.customerReviews !== false;
-            if (this.container.querySelector("#feat-pwa")) this.container.querySelector("#feat-pwa").checked = plan.features.pwaInstall !== false;
-            if (this.container.querySelector("#feat-leadform")) this.container.querySelector("#feat-leadform").checked = plan.features.leadForm !== false;
-            window.OmniApp.showToast(`Synced feature toggles to '${plan.name}' defaults`);
-          }
-        });
-      }
     }
 
     // Modal triggers & handlers

@@ -206,7 +206,7 @@ class OmniAppManager {
       this.vendorCtrl.loginVendorDirect(vendorId, targetTab);
     }
     const tabNames = {
-      profile: "Profile & Plan",
+      profile: "Business Profile",
       services: "Services & Quote",
       shop: "Shop Products",
       bookings: "Bookings",
