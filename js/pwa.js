@@ -16,7 +16,7 @@ export const PWAHandler = {
     if (!("serviceWorker" in navigator)) return;
 
     const doRegister = () => {
-      navigator.serviceWorker.register("./sw.js?v=20260910_v19")
+      navigator.serviceWorker.register("./sw.js?v=20260912_v26")
         .then((reg) => {
           console.log("[PWA] ServiceWorker registered with scope:", reg.scope);
           reg.update().catch(() => {});
@@ -428,7 +428,7 @@ export const PWAHandler = {
     modalEl = document.createElement("div");
     modalEl.id = "modal-pwa-install-sheet";
     modalEl.className = "modal-overlay active";
-    modalEl.style.cssText = "position: fixed; inset: 0; z-index: 9999999; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); opacity: 1; pointer-events: auto; visibility: visible;";
+    modalEl.style.cssText = "position: fixed; inset: 0; z-index: 9999999; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.85); opacity: 1; pointer-events: auto; visibility: visible;";
     targetParent.appendChild(modalEl);
 
     const ua = navigator.userAgent || "";

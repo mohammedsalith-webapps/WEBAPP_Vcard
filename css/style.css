@@ -13,8 +13,8 @@ html, body {
   font-family: var(--font-body);
   background-color: var(--theme-bg);
   color: var(--theme-text);
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100%;
+  height: 100%;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -23,11 +23,11 @@ html, body {
   -webkit-text-size-adjust: 100%;
 }
 
-button, a, input, select, textarea, .btn-pill, .dock-item, .contact-circle-btn, .avatar-glowing-ring, .category-chip, .service-toggle-btn {
+button, a, input, select, textarea, .btn-pill, .dock-item, .contact-circle-btn, .avatar-glowing-ring, .category-chip, .service-toggle-btn, .service-card, .product-list-item, .filter-chip, .slot-btn, .cal-day-btn, .qty-btn, .lead-choice-chip, .btn-biz-lead-trigger, .btn-biz-call-action, .btn-claim-offer, .dock-preview-action-btn, .tab-pane {
   touch-action: manipulation;
 }
 
-.btn-pill:active, .contact-circle-btn:active, .dock-item:active, .btn-submit-primary:active, .vcard-circle-btn:active {
+.btn-pill:active, .contact-circle-btn:active, .dock-item:active, .btn-submit-primary:active, .vcard-circle-btn:active, .dock-preview-action-btn:active {
   transform: scale(0.96);
   transition: transform 0.08s ease;
 }
@@ -59,8 +59,7 @@ button, input, select, textarea {
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  background: rgba(7, 9, 14, 0.85);
-  backdrop-filter: blur(16px);
+  background: #07090E;
   border-bottom: 1px solid var(--theme-border);
 }
 
@@ -227,7 +226,7 @@ button, input, select, textarea {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Inner Screen Scroll Container */
+/* Inner Screen Scroll Container - Optimized for 60/120Hz Fluid Touch Physics */
 .device-screen {
   flex: 1;
   background: var(--theme-bg);
@@ -235,10 +234,8 @@ button, input, select, textarea {
   overflow-x: hidden;
   position: relative;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  scroll-behavior: smooth;
-  transform: translateZ(0);
-  will-change: scroll-position;
+  touch-action: pan-y;
+  overscroll-behavior-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
   padding-bottom: 74px; /* Ensure content never gets hidden behind the fixed bottom dock */
@@ -558,9 +555,11 @@ button, input, select, textarea {
   transition: all 0.2s ease;
 }
 
-.vcard-circle-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  transform: scale(1.05);
+@media (hover: hover) and (pointer: fine) {
+  .vcard-circle-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: scale(1.05);
+  }
 }
 
 .avatar-glowing-ring {
@@ -584,8 +583,10 @@ button, input, select, textarea {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.avatar-glowing-ring:hover {
-  transform: scale(1.04);
+@media (hover: hover) and (pointer: fine) {
+  .avatar-glowing-ring:hover {
+    transform: scale(1.04);
+  }
 }
 
 .avatar-ring-wrapper.avatar-holding .avatar-glowing-ring {
@@ -745,10 +746,12 @@ button, input, select, textarea {
   filter: drop-shadow(0 0 5px var(--theme-primary, #D4FF00));
 }
 
-.contact-circle-btn:hover {
-  transform: translateY(-3px) scale(1.05);
-  border-color: var(--theme-primary, #D4FF00);
-  box-shadow: 0 0 16px var(--theme-primary, #D4FF00);
+@media (hover: hover) and (pointer: fine) {
+  .contact-circle-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    border-color: var(--theme-primary, #D4FF00);
+    box-shadow: 0 0 16px var(--theme-primary, #D4FF00);
+  }
 }
 
 .contact-circle-btn.btn-wa {
@@ -756,9 +759,11 @@ button, input, select, textarea {
   color: var(--theme-primary, #D4FF00);
 }
 
-.contact-circle-btn.btn-wa:hover {
-  background: rgba(212, 255, 0, 0.12);
-  box-shadow: 0 0 16px var(--theme-primary, #D4FF00);
+@media (hover: hover) and (pointer: fine) {
+  .contact-circle-btn.btn-wa:hover {
+    background: rgba(212, 255, 0, 0.12);
+    box-shadow: 0 0 16px var(--theme-primary, #D4FF00);
+  }
 }
 
 /* Business Information Section Card */
@@ -966,8 +971,10 @@ button, input, select, textarea {
   transition: transform 0.2s ease;
 }
 
-.kpi-card-neon:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .kpi-card-neon:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .kpi-card-neon.neon-purple {
@@ -1134,9 +1141,11 @@ button, input, select, textarea {
   transition: all 0.2s ease;
 }
 
-.btn-claim-offer:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .btn-claim-offer:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
 }
 
 /* ==========================================================================
@@ -1146,13 +1155,9 @@ button, input, select, textarea {
   flex-shrink: 0;
   width: 100%;
   z-index: 150;
-  background: rgba(10, 13, 20, 0.96);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #0A0D14;
   border-top: 1px solid var(--theme-border);
   position: relative;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
 .bottom-dock {
@@ -1257,16 +1262,12 @@ button, input, select, textarea {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px 12px;
-  background: rgba(15, 19, 28, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #0F131C;
   border-bottom: 1px solid var(--theme-border);
   margin: -0px -16px 16px -16px;
   position: sticky;
   top: 0;
   z-index: 50;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
 .tab-topbar-left {
@@ -2041,45 +2042,57 @@ body.has-modal-open .modal-card {
 
 body.has-modal-open #app-dock-root,
 .has-modal-open #app-dock-root {
-  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 100000 !important;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  visibility: hidden;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
 }
 
 .modal-overlay.active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 .modal-card {
   width: 100%;
   max-width: 460px;
   background: #0F131C;
-  border: 1px solid var(--theme-border-highlight);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-top: 4px solid var(--theme-primary, #D4FF00);
   border-bottom: none;
   border-radius: 24px 24px 0 0;
-  padding: 20px 18px calc(28px + env(safe-area-inset-bottom, 16px));
-  max-height: 85vh;
+  padding: 16px 18px calc(28px + env(safe-area-inset-bottom, 16px));
+  max-height: 88vh;
   overflow-y: auto;
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.9);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.96), 0 -2px 10px rgba(212, 255, 0, 0.12);
   position: relative;
   z-index: 100001 !important;
   box-sizing: border-box;
+}
+
+.modal-card::before {
+  content: '';
+  display: block;
+  width: 42px;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  margin: 0 auto 14px auto;
 }
 
 .modal-overlay.active .modal-card {
@@ -3335,10 +3348,14 @@ input[type="date"]:valid {
   .modal-card {
     max-width: 100% !important;
     width: 100% !important;
-    border-radius: 20px 20px 0 0;
-    padding: 18px 16px calc(32px + env(safe-area-inset-bottom, 20px)) !important;
+    border-radius: 24px 24px 0 0 !important;
+    border: 2px solid rgba(255, 255, 255, 0.28) !important;
+    border-top: 4px solid var(--theme-primary, #D4FF00) !important;
+    border-bottom: none !important;
+    padding: 14px 16px calc(32px + env(safe-area-inset-bottom, 20px)) !important;
     box-sizing: border-box;
     max-height: 90vh;
+    box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.98), 0 -2px 10px rgba(212, 255, 0, 0.15) !important;
   }
 
   .modal-card .bento-grid-2 {
@@ -3439,10 +3456,8 @@ input[type="date"]:valid {
 
   .device-shell {
     max-width: 100%;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100vh;
-    max-height: 100dvh;
+    height: 100%;
+    min-height: 100%;
     border-radius: 0;
     border: none;
     box-shadow: none;
@@ -3451,18 +3466,15 @@ input[type="date"]:valid {
   .stage-container.view-fullwidth .device-shell {
     border-radius: 0;
     border: none;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100%;
   }
 
   .device-screen {
     height: 100%;
-    max-height: 100vh;
-    max-height: 100dvh;
     padding-bottom: 84px;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    transform: translateZ(0);
+    touch-action: pan-y;
+    overscroll-behavior-y: auto;
   }
 
   .phone-notch-container {
@@ -3476,11 +3488,8 @@ input[type="date"]:valid {
     right: 0;
     z-index: 9999;
     border-radius: 0;
-    transform: translateZ(0);
-    will-change: transform;
-    background: rgba(10, 13, 20, 0.96);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: #0A0D14;
+    border-top: 1px solid var(--theme-border);
   }
 }
 
@@ -3509,13 +3518,11 @@ input[type="date"]:valid {
   gap: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   animation: pwaGlowPulse 3s infinite ease-in-out;
-  transform: translateZ(0);
-  will-change: transform, opacity;
 }
 
 @keyframes pwaGlowPulse {
-  0%, 100% { opacity: 0.92; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.008); }
+  0%, 100% { opacity: 0.92; }
+  50% { opacity: 1; }
 }
 
 .pwa-banner-content {
@@ -3633,20 +3640,17 @@ input[type="date"]:valid {
   width: calc(100% - 24px);
   max-width: 420px;
   z-index: 99999;
-  background: rgba(15, 19, 28, 0.96);
+  background: #0F131C;
   border: 1.5px solid var(--theme-primary, #D4FF00);
   border-radius: 16px;
   padding: 10px 14px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   box-sizing: border-box;
   animation: slideUpFloatPrompt 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
 }
 
 .pwa-floating-prompt-banner.dismissing {
@@ -3760,8 +3764,6 @@ input[type="date"]:valid {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
@@ -3969,6 +3971,9 @@ input[type="date"]:valid {
   }
   .pwa-install-modal-card {
     border-radius: 26px 26px 0 0;
+    border: 2px solid rgba(255, 255, 255, 0.28) !important;
+    border-top: 4px solid var(--theme-primary, #D4FF00) !important;
+    border-bottom: none !important;
     max-width: 100%;
     padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 14px));
     transform: translateY(100%);
@@ -4126,17 +4131,13 @@ input[type="date"]:valid {
   user-select: none;
   position: relative;
   animation: greenGlowingPulse 2.4s infinite ease-in-out;
-  transform: translateZ(0);
-  will-change: transform, opacity;
 }
 
 @keyframes greenGlowingPulse {
   0%, 100% {
-    transform: scale(1);
     opacity: 0.95;
   }
   50% {
-    transform: scale(1.018);
     opacity: 1;
   }
 }
@@ -4351,9 +4352,7 @@ input[type="date"]:valid {
   position: fixed;
   inset: 0;
   z-index: 999999 !important;
-  background: rgba(4, 7, 13, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(4, 7, 13, 0.94);
   display: flex;
   align-items: center;
   justify-content: center;

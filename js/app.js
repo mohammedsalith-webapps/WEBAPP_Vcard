@@ -193,7 +193,7 @@ class OmniAppManager {
     }
   }
 
-  // Admin Impersonation: Direct 1-Click login as a specific vendor and navigate into target feature section (No Popups!)
+  // Admin Impersonation: Direct 1-Click login as a specific vendor from Super Admin Console
   adminManageVendor(vendorId, targetTab = "profile") {
     this.isAdminManaging = true;
     const v = db.getVendor(vendorId);
@@ -214,7 +214,22 @@ class OmniAppManager {
       leadform: "Lead Form Builder"
     };
     const sectionName = tabNames[targetTab] || targetTab;
-    this.showToast(`Managing ${v ? v.branding.businessName : 'Vendor'} • ${sectionName}`);
+    this.showToast(`Admin Managing ${v ? v.branding.businessName : 'Vendor'} • ${sectionName}`);
+  }
+
+  // Vendor Owner Login: Direct access via vCard avatar PIN (WhatsApp number remains strictly LOCKED & Admin-controlled)
+  vendorOwnerLogin(vendorId, targetTab = "profile") {
+    this.isAdminManaging = false; // Strictly regular vendor permissions: WhatsApp is locked
+    const v = db.getVendor(vendorId);
+    if (this.vendorCtrl) {
+      this.vendorCtrl.currentVendor = v;
+      this.vendorCtrl.activeTab = targetTab || "profile";
+    }
+    this.setView("vendor", vendorId);
+    if (this.vendorCtrl) {
+      this.vendorCtrl.loginVendorDirect(vendorId, targetTab);
+    }
+    this.showToast(`Owner Login: Welcome ${v ? v.branding.businessName : 'Vendor'}`);
   }
 
   openVendorPortal() {

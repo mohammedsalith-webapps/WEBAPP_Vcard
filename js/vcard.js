@@ -74,7 +74,7 @@ export class VCardController {
 
     const currentScroll = this.container ? this.container.scrollTop : 0;
     this.render();
-    this.switchTab(currentTab);
+    this.switchTab(currentTab, false);
     if (this.container) {
       this.container.scrollTop = currentScroll;
     }
@@ -327,7 +327,7 @@ export class VCardController {
         const adminPin = settings.adminPin || "1234";
         if (entered.trim() === validPassword || entered.trim() === vendor.pin) {
           window.OmniApp?.showToast("Owner Authenticated");
-          window.OmniApp?.adminManageVendor(vendor.id);
+          window.OmniApp?.vendorOwnerLogin(vendor.id);
         } else if (entered.trim() === adminPin) {
           window.OmniApp?.showToast("Super Admin Authenticated");
           window.OmniApp?.navigate("admin");
@@ -1343,7 +1343,7 @@ export class VCardController {
 
           <!-- Dynamic QR Code Card -->
           <div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
-            <img id="vcard-share-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?v=' + (v.slug || v.id))}" alt="Scan QR Code" style="width: 170px; height: 170px; display: block; border-radius: 6px;" />
+            <img id="vcard-share-qr-img" loading="lazy" decoding="async" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?v=' + (v.slug || v.id))}" alt="Scan QR Code" style="width: 170px; height: 170px; display: block; border-radius: 6px;" />
             <div style="font-size: 0.68rem; color: #0F172A; font-weight: 700; margin-top: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
               📷 Scan with Phone Camera
             </div>
@@ -2360,22 +2360,29 @@ export class VCardController {
 
   // Long-press detection on Avatar circle to trigger secret vendor owner login (No visible settings icon)
   bindAvatarLongPress() {
-    const avatars = this.container.querySelectorAll("#vcard-avatar-wrapper, #vcard-avatar-ring, [data-tab-avatar='true']");
+    const avatars = this.container.querySelectorAll("#vcard-avatar-ring, [data-tab-avatar='true']");
     if (avatars.length === 0) return;
 
     let pressTimer = null;
+    let visualTimer = null;
     let activeAvatar = null;
     let touchStartX = 0;
     let touchStartY = 0;
 
     const startPress = (el) => {
       activeAvatar = el;
-      el.classList.add("avatar-holding");
-      const wrapper = el.closest("#vcard-avatar-wrapper") || el;
-      wrapper.classList.add("avatar-holding");
+      // Delay visual state by 220ms so normal scrolling touches never trigger twitching
+      visualTimer = setTimeout(() => {
+        if (activeAvatar === el) {
+          el.classList.add("avatar-holding");
+          const wrapper = el.closest("#vcard-avatar-wrapper") || el;
+          wrapper.classList.add("avatar-holding");
+        }
+      }, 220);
 
       pressTimer = setTimeout(() => {
         el.classList.remove("avatar-holding");
+        const wrapper = el.closest("#vcard-avatar-wrapper") || el;
         wrapper.classList.remove("avatar-holding");
         activeAvatar = null;
 
@@ -2399,6 +2406,10 @@ export class VCardController {
     };
 
     const cancelPress = () => {
+      if (visualTimer) {
+        clearTimeout(visualTimer);
+        visualTimer = null;
+      }
       if (pressTimer) {
         clearTimeout(pressTimer);
         pressTimer = null;
@@ -2419,7 +2430,7 @@ export class VCardController {
         return false;
       });
 
-      // Mobile touch events with scroll jitter threshold
+      // Mobile touch events with scroll jitter threshold & passive tracking
       avatar.addEventListener("touchstart", (e) => {
         if (e.touches && e.touches.length > 0) {
           touchStartX = e.touches[0].clientX;
@@ -2432,15 +2443,15 @@ export class VCardController {
         if (e.touches && e.touches.length > 0) {
           const dx = Math.abs(e.touches[0].clientX - touchStartX);
           const dy = Math.abs(e.touches[0].clientY - touchStartY);
-          // If customer is scrolling page (> 15px), abort hold
-          if (dx > 15 || dy > 15) {
+          // If customer is scrolling page (> 8px), abort hold immediately
+          if (dx > 8 || dy > 8) {
             cancelPress();
           }
         }
       }, { passive: true });
 
-      avatar.addEventListener("touchend", cancelPress);
-      avatar.addEventListener("touchcancel", cancelPress);
+      avatar.addEventListener("touchend", cancelPress, { passive: true });
+      avatar.addEventListener("touchcancel", cancelPress, { passive: true });
 
       // Desktop mouse events (Left click hold only)
       avatar.addEventListener("mousedown", (e) => {
@@ -2463,7 +2474,7 @@ export class VCardController {
             document.body.classList.remove("has-modal-open");
           }
           window.OmniApp.showToast(`Owner Verified: Welcome ${this.vendor.branding.businessName}`);
-          window.OmniApp.adminManageVendor(this.vendor.id);
+          window.OmniApp.vendorOwnerLogin(this.vendor.id);
         } else {
           window.OmniApp.showToast("Access Denied: Incorrect Password.");
           const pinInput = document.getElementById("input-owner-secret-pin");
@@ -2510,7 +2521,7 @@ export class VCardController {
     if (totalEl) totalEl.textContent = `${currency}${subtotal.toLocaleString()}`;
   }
 
-  switchTab(tabName) {
+  switchTab(tabName, resetScroll = true) {
     // Feature authorization guards: Prevent navigating to revoked tabs
     if (tabName === "services" && this.vendor?.features?.quoteBuilder === false) tabName = "home";
     if (tabName === "shop" && this.vendor?.features?.ecommerceShop === false) tabName = "home";
@@ -2528,7 +2539,9 @@ export class VCardController {
     this.container.querySelectorAll(".tab-pane").forEach(pane => {
       pane.classList.toggle("active", pane.id === `pane-${tabName}`);
     });
-    this.container.scrollTop = 0;
+    if (resetScroll && this.container) {
+      this.container.scrollTop = 0;
+    }
   }
 
   calculateSelectedTotal() {
